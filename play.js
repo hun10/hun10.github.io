@@ -6,19 +6,23 @@ var Synth = function() {
     wave.header.numChannels = 1;
     wave.header.bitsPerSample = 16;
 
-    function w(semitone) {
-        return Math.PI * 2 * 440 * Math.pow(2, semitone / 12) / 44100;
+    function orchestra(semitone) {
+        return 440 * Math.pow(2, semitone / 12);
+    }
+
+    function wavelength(frequency) {
+        return Math.round(wave.header.sampleRate / frequency);
     }
 
     function genTone(semitone) {
         var data = [];
-        var freq = w(semitone);
         var vol = 32000;
-        for (var i = 0; i < wave.header.sampleRate; i++) {
-            data[i] = Math.round(vol     * (Math.sin(freq * i)
-                                  + 0.25 * Math.sin(freq * 2 * i)
-                                  + 0.5  * Math.sin(freq * 3 * i)) / 1.75);
-            vol *= 0.9999;
+        var lng = wavelength(orchestra(semitone) * 2);
+        for (var i = 0; i < lng; i++) {
+            data[i] = Math.round(vol * Math.random());
+        }
+        for (var i = lng; i < wave.header.sampleRate; i++) {
+            data[i] = -(data[i - lng] + data[i - lng + 1]) * 0.4985;
         }
         return data;
     }
