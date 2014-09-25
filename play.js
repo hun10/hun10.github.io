@@ -6,11 +6,12 @@ var data = []; // yes, it's an array
 
 wave.header.sampleRate = 44100; // set sample rate to 44KHz
 wave.header.numChannels = 2; // two channels (stereo)
+wave.header.bitsPerSample = 16;
 
 var i = 0;
 while (i<100000) { 
-  data[i++] = 128+Math.round(127*Math.sin(i/10)); // left speaker
-  data[i++] = 128+Math.round(127*Math.sin(i/200)); // right speaker
+  data[i++] = Math.round(12007*Math.sin(i/10)); // left speaker
+  data[i++] = Math.round(12007*Math.sin(i/200)); // right speaker
 }
 
 wave.Make(data); // make the wave file
