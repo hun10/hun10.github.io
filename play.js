@@ -13,10 +13,12 @@ var Synth = function() {
     function genTone(semitone) {
         var data = [];
         var freq = w(semitone);
-        for (var i = 0; i < wave.header.sampleRate / 3; i++) {
-            data[i] = Math.round(32000 * (Math.sin(freq * i)
+        var vol = 32000;
+        for (var i = 0; i < wave.header.sampleRate / 2; i++) {
+            data[i] = Math.round(vol     * (Math.sin(freq * i)
                                   + 0.25 * Math.sin(freq * 2 * i)
-                                  + 0.5 * Math.sin(freq * 3 * i)) / 1.75);
+                                  + 0.5  * Math.sin(freq * 3 * i)) / 1.75);
+            vol *= 0.9999;
         }
         return data;
     }
