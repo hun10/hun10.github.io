@@ -10,8 +10,13 @@ wave.header.bitsPerSample = 16;
 
 var i = 0;
 var freq = Math.PI * 2 * 440 / 44100;
-while (i<100000) { 
+var sq = Math.pow(2, 1/12);
+
+while (i<130000) {
   data[i++] = Math.round(12007*Math.sin(freq * i));
+  if (i%10000 == 0) {
+    freq *= sq;
+  }
 }
 
 wave.Make(data); // make the wave file
