@@ -5,8 +5,33 @@
         <script src="riffwave.js"></script>
         <script src="play.js"></script>
         <script src="question.js"></script>
+        <script>
+            var test = Question.randomPerfectPitch(5);
+
+            function check() {
+                for (var i = 0; i < test.length; i++) {
+                    var el = document.getElementById('pitch_' + i);
+                    var guess = el.value;
+                    if (test[i].check(guess)) {
+                        el.style.color = 'green';
+                    } else {
+                        el.style.color = 'red';
+                        el.value += '(' + test[i].letters + ')';
+                    }
+                }
+            }
+
+            document.write('<ol>');
+            for (var i = 0; i < test.length; i++) {
+                document.write('<li>');
+                document.write('<input id="pitch_'+i+'"></input>');
+                document.write('<button onclick="test['+i+'].play();">Play</button>');
+                document.write('</li>');
+            }
+            document.write('</ol>');
+            document.write('<button onclick="check();">Check</button>');
+        </script>
     </head>
     <body>
-        <button onclick="javascript:Synth.play(Question.randomPerfectPitch(50));">Play</button>
     </body>
 </html>
