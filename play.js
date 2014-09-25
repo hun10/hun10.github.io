@@ -1,6 +1,8 @@
+var audio = new Audio(); // create the HTML5 audio element
+var freq = Math.PI * 2 * 440 / 44100;
+
 function Play() {
 
-var audio = new Audio(); // create the HTML5 audio element
 var wave = new RIFFWAVE(); // create an empty wave file
 var data = []; // yes, it's an array
 
@@ -9,7 +11,6 @@ wave.header.numChannels = 1;
 wave.header.bitsPerSample = 16;
 
 var i = 0;
-var freq = Math.PI * 2 * 440 / 44100;
 var sq = Math.pow(2, 1/12);
 
 while (i<130000) {
