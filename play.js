@@ -14,7 +14,9 @@ var Synth = function() {
         var data = [];
         var freq = w(semitone);
         for (var i = 0; i < wave.header.sampleRate / 3; i++) {
-            data[i] = Math.round(32000 * Math.sin(freq * i));
+            data[i] = Math.round(32000 * (Math.sin(freq * i)
+                                  + 0.25 * Math.sin(freq * 2 * i)
+                                  + 0.5 * Math.sin(freq * 3 * i)) / 1.75);
         }
         return data;
     }
