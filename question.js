@@ -14,15 +14,32 @@ var Question = function() {
         ['G#', 'Ab']
     ];
 
-    function getRandomInt(min, max) {
-        return Math.floor(Math.random() * (max - min)) + min;
+    /**
+     * Randomize array element order in-place.
+     * Using Fisher-Yates shuffle algorithm.
+     */
+    function shuffleArray(array) {
+        for (var i = array.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var temp = array[i];
+            array[i] = array[j];
+            array[j] = temp;
+        }
+        return array;
     }
 
     return {
         randomPerfectPitch: function(size) {
             var quest = [];
+
+            var notes = [];
+            for (var i = -9; i < 3; i++) {
+                notes.push(i);
+            }
+            shuffleArray(notes);
+
             for (var i = 0; i < size; i++) {
-                var pitch = getRandomInt(4 - 24, 4 + 12);
+                var pitch = notes[i];
                 var normalized = ((pitch % 12) + 12) % 12;
                 quest[i] = {
                     pitch: pitch,
