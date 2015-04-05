@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=320">
+        <title>Reminders Due Today</title>
+        <script>
+
+function download(text) {
+  var filename = 'duetoday.ics';
+  var pom = document.createElement('a');
+  pom.setAttribute('href', 'data:text/calendar;charset=utf-8,' + encodeURIComponent(text));
+  pom.setAttribute('download', filename);
+
+  pom.style.display = 'none';
+  document.body.appendChild(pom);
+
+  pom.click();
+
+  document.body.removeChild(pom);
+}
+
+function dateToday() {
+  var today = new Date();
+  var dd = today.getDate();
+  var mm = today.getMonth()+1; //January is 0!
+  var yyyy = today.getFullYear();
+
+  if (dd < 10) {
+    dd = '0' + dd;
+  }
+
+  if (mm<10) {
+    mm = '0' + mm;
+  }
+
+  return yyyy+mm+dd;
+}
+
+function makeIcs(todoList) {
+  var res = "BEGIN:VCALENDAR\n";
+  res += "VERSION:2.0\n";
+  res += "CALSCALE:GREGORIAN\n";
+  var today = dateToday();
+  for (var i = 0; i < todoList.length; i++) {
+    var summ = todoList[i];
+    res += "BEGIN:VTODO\n";
+    res += "SUMMARY:" + summ + "\n";
+    res += "DUE:" + today + "\n";
+    res += "END:VTODO\n";
+  }
+  res += "END:VCALENDAR\n";
+  return res;
+}
+
+function splitRawText(text) {
+  var s = text.split("\n");
+  var res = [];
+  for (var i in s) {
+    var t = s[i].trim();
+    if (t.length > 0) {
+      res.push(t);
+    }
+  }
+  return res;
+}
+
+function downloadIcs(text) {
+  var sp = splitRawText(text);
+  var ics = makeIcs(sp);
+  download(ics);
+}
+
+        </script>
+    </head>
+    <body>
+        <form>
+            <textarea id="todoList"></textarea>
+        </form>
+        <button onclick="downloadIcs(document.getElementById('todoList').value)">
+            Due Today
+        </button>
+    </body>
+</html>
