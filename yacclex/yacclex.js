@@ -4,28 +4,39 @@ var mainparser;
 
 function bnfSyntaxError(e) {
   if (arguments.length < 1) {
+    $("#generatorFeedback").text("");
+    $("#generatorFeedback").removeClass("error").removeClass("warning").removeClass("good");
     return;
   }
-  alert(e);
+  $("#generatorFeedback").text(e);
+  $("#generatorFeedback").addClass("error");
 }
 
 function grammarConflicts(e) {
   if (arguments.length < 1) {
+    $("#generatorFeedback").text("");
+    $("#generatorFeedback").removeClass("error").removeClass("warning").removeClass("good");
     return;
   }
-  alert(e);
+  $("#generatorFeedback").text(e);
+  $("#generatorFeedback").addClass("warning");
 }
 
 function execError(e) {
   if (arguments.length < 1) {
+    $("#output").text("");
+    $("#output").removeClass("error").removeClass("warning").removeClass("good");
     return;
   }
-  alert(e);
+  $("#output").text(e);
+  $("#output").addClass("error");
 }
 
 function generate() {
   bnfSyntaxError();
   grammarConflicts();
+  execError();
+  mainparser = undefined;
   var txt = $("#grammar").val();
   var cfg;
   try {
@@ -41,11 +52,16 @@ function generate() {
   var js = gen.generate();
   eval(js);
   mainparser = parser;
+  $("#generatorFeedback").text("Generated.");
+  $("#generatorFeedback").addClass("good");
 }
 
 function parse() {
-  execError();
   generate();
+  if (!mainparser) {
+    execError("No generated parser.");
+    return;
+  }
   var txt = $("#input").val();
   var res;
   try {

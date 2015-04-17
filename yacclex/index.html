@@ -7,13 +7,26 @@
 textarea {
   font-family: monospace;
 }
+
+.error {
+  color: red;
+}
+
+.warning {
+  color: orange;
+}
+
+.good {
+  color: green;
+}
         </style>
         <script src="jquery-1.11.2.js"></script>
         <script src="jison.js"></script>
         <script src="yacclex.js"></script>
     </head>
     <body>
-        Using <a href="https://github.com/zaach/jison">Jison</a> parser generator project.
+        <h1>Yacc and Lex Playground</h1>
+        <p>Uses <a href="https://github.com/zaach/jison">Jison</a> parser generator.</p>
         <div>
             <textarea id="grammar" rows="20" cols="80">
 %lex
@@ -140,6 +153,8 @@ function process(node) {
             <p>
                 <button id="generate">Generate Parser</button>
             </p>
+            <pre id="generatorFeedback">
+            </pre>
         </div>
         <div>
             <textarea id="input">
@@ -148,7 +163,7 @@ function process(node) {
                 <button id="parse">Parse</button>
             </p>
         </div>
-        <pre id = "output">
+        <pre id="output">
         </pre>
     </body>
 </html>
