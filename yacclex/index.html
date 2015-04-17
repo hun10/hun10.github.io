@@ -3,6 +3,11 @@
     <head>
         <meta name="viewport" content="width=320">
         <title>Yacc and Lex Playground</title>
+        <style>
+textarea {
+  font-family: monospace;
+}
+        </style>
         <script src="jquery-1.11.2.js"></script>
         <script src="jison.js"></script>
         <script>
@@ -78,66 +83,73 @@ $(document).ready(function () {
         Using <a href="https://github.com/zaach/jison">Jison</a> parser generator project.
         <div>
             <textarea id="grammar" rows="20" cols="80">
-/* description: Parses end executes mathematical expressions. */
-
-/* lexical grammar */
 %lex
 %%
 
-\s+                   /* skip whitespace */
-[0-9]+("."[0-9]+)?\b  return 'NUMBER'
-"*"                   return '*'
-"/"                   return '/'
-"-"                   return '-'
-"+"                   return '+'
-"^"                   return '^'
-"("                   return '('
-")"                   return ')'
-"PI"                  return 'PI'
-"E"                   return 'E'
-<<EOF>>               return 'EOF'
-.                     return 'INVALID'
+[0-9]                 return 'DIGIT';
+<<EOF>>               return 'EOF';
+.                     return yytext;
 
 /lex
 
-/* operator associations and precedence */
+%start exp
 
-%left '+' '-'
-%left '*' '/'
-%left '^'
-%left UMINUS
+%%
 
-%start expressions
-
-%% /* language grammar */
-
-expressions
-    : e EOF
-        {return $1;}
+exp : e EOF  { return process($1); }
     ;
 
-e
-    : e '+' e
-        {$$ = $1+$3;}
-    | e '-' e
-        {$$ = $1-$3;}
-    | e '*' e
-        {$$ = $1*$3;}
-    | e '/' e
-        {$$ = $1/$3;}
-    | e '^' e
-        {$$ = Math.pow($1, $3);}
-    | '-' e %prec UMINUS
-        {$$ = -$2;}
-    | '(' e ')'
-        {$$ = $2;}
-    | NUMBER
-        {$$ = Number(yytext);}
-    | E
-        {$$ = Math.E;}
-    | PI
-        {$$ = Math.PI;}
+e   : e S r  { $$ = { type: 'e', children: [$1, $2, $3] }; }
+    | r      { $$ = { type: 'e', children: [$1] }; }
     ;
+
+r   : r M n   { $$ = { type: 'r', children: [$1, $2, $3] }; }
+    | n       { $$ = { type: 'r', children: [$1] }; }
+    ;
+
+n   : n d  { $$ = { type: 'n', children: [$1, $2] }; }
+    | d    { $$ = { type: 'n', children: [$1] }; }
+    ;
+
+d   : DIGIT  { $$ = { type: 'd', value: yytext }; }
+    ;
+
+S   : '+'  { $$ = { type: '+' }; }
+    ;
+
+M   : '*'  { $$ = { type: '*' }; }
+    ;
+
+%%
+
+function indent(ind) {
+  var res = "";
+  for (var i = 0; i < ind; i++) {
+    res += " ";
+  }
+  return res;
+}
+
+function drawtree(node, ind) {
+  var ENDL = "\n";
+  var res = "";
+  if (node.type == 'd') {
+    res += indent(ind) + node.type + " : " + node.value + ENDL;
+  } else if (node.type == '*' || node.type == '+') {
+    res += indent(ind) + node.type + ENDL;
+  } else {
+    res += indent(ind) + node.type + ENDL;
+    for (var i = 0; i < node.children.length; i++) {
+      res += drawtree(node.children[i], ind + 1);
+    }
+  }
+  return res;
+}
+
+function process(node) {
+  return drawtree(node, 0);
+}
+
             </textarea>
             <p>
                 <button id="generate">Generate Parser</button>
@@ -145,8 +157,7 @@ e
         </div>
         <div>
             <textarea id="input">
-5+5^2
-            </textarea>
+5+5*2</textarea>
             <p>
                 <button id="parse">Parse</button>
             </p>
