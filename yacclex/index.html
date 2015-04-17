@@ -3,12 +3,16 @@
     <head>
         <meta name="viewport" content="width=320">
         <title>Yacc and Lex Playground</title>
+        <script src="jquery-1.11.2.js"></script>
         <script src="jison.js"></script>
         <script>
+
+(function ($) {
+
 var mainparser;
 
 function generate() {
-  var txt = document.getElementById("grammar").value;
+  var txt = $("#grammar").val();
   var cfg = bnf.parse(txt);
   var gen = Jison.Generator(cfg, { type: "lalr" });
   var js = gen.generate();
@@ -17,10 +21,18 @@ function generate() {
 }
 
 function parse() {
-  var txt = document.getElementById("input").value;
+  var txt = $("#input").val();
   var res = mainparser.parse(txt);
-  document.getElementById("output").innerText = res;
+  $("#output").text(res);
 }
+
+$(document).ready(function () {
+    $("#generate").click(generate);
+    $("#parse").click(parse);
+});
+
+})(jQuery);
+
         </script>
     </head>
     <body>
@@ -89,7 +101,7 @@ e
     ;
             </textarea>
             <p>
-                <button onclick="generate()">Generate Parser</button>
+                <button id="generate">Generate Parser</button>
             </p>
         </div>
         <div>
@@ -97,7 +109,7 @@ e
 5+5^2
             </textarea>
             <p>
-                <button onclick="parse()">Parse</button>
+                <button id="parse">Parse</button>
             </p>
         </div>
         <div id = "output">
