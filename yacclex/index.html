@@ -32,12 +32,12 @@ textarea {
 exp : e EOF  { return process($1); }
     ;
 
-e   : e S r  { $$ = { type: 'e', children: [$1, $2, $3] }; }
-    | r      { $$ = { type: 'e', children: [$1] }; }
+e   : e '+' r  { $$ = { type: 'e', children: [$1, { type: '+' }, $3] }; }
+    | r        { $$ = { type: 'e', children: [$1] }; }
     ;
 
-r   : r M n   { $$ = { type: 'r', children: [$1, $2, $3] }; }
-    | n       { $$ = { type: 'r', children: [$1] }; }
+r   : r '*' n   { $$ = { type: 'r', children: [$1, { type: '*' }, $3] }; }
+    | n         { $$ = { type: 'r', children: [$1] }; }
     ;
 
 n   : n d  { $$ = { type: 'n', children: [$1, $2] }; }
@@ -45,12 +45,6 @@ n   : n d  { $$ = { type: 'n', children: [$1, $2] }; }
     ;
 
 d   : DIGIT  { $$ = { type: 'd', value: yytext }; }
-    ;
-
-S   : '+'  { $$ = { type: '+' }; }
-    ;
-
-M   : '*'  { $$ = { type: '*' }; }
     ;
 
 %%
@@ -79,8 +73,67 @@ function drawtree(node, ind) {
   return res;
 }
 
+function simplify(node) {
+  if (node.type == 'd') {
+    return Number(node.value);
+  } else if (node.type == 'n') {
+    if (node.children.length == 1) {
+      return simplify(node.children[0]);
+    }
+    var lhs = simplify(node.children[0]);
+    var rhs = simplify(node.children[1]);
+    return lhs * 10 + rhs;
+  } else if (node.type == 'e' || node.type == 'r') {
+    if (node.children.length == 1) {
+      return simplify(node.children[0]);
+    }
+    var lhs = simplify(node.children[0]);
+    var rhs = simplify(node.children[2]);
+    return {op: node.children[1].type, lhs: lhs, rhs: rhs};
+  }
+}
+
+function simplifiedDrawTree(node, ind) {
+  var ENDL = "\n";
+  var res = "";
+  if (typeof node == "number") {
+    res += indent(ind) + node + ENDL;
+  } else {
+    res += indent(ind) + node.op + ENDL;
+    res += simplifiedDrawTree(node.lhs, ind + 1);
+    res += simplifiedDrawTree(node.rhs, ind + 1);
+  }
+  return res;
+}
+
+function calculate(node) {
+  if (typeof node == "number") {
+    return node;
+  } else {
+    var lhs = calculate(node.lhs);
+    var rhs = calculate(node.rhs);
+    if (node.op == '+') {
+      return lhs + rhs;
+    } else if (node.op == '*') {
+      return lhs * rhs;
+    }
+  }
+}
+
 function process(node) {
-  return drawtree(node, 0);
+  var ENDL = "\n";
+  var newTree = simplify(node);
+  var res = "";
+  res += "Grammar Tree:" + ENDL;
+  res += ENDL;
+  res += drawtree(node, 0);
+  res += ENDL;
+  res += "Simplified Tree:" + ENDL;
+  res += simplifiedDrawTree(newTree, 0);
+  res += ENDL;
+  res += "Result:" + ENDL;
+  res += calculate(newTree);
+  return res;
 }
 
             </textarea>
