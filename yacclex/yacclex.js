@@ -45,15 +45,20 @@ function generate() {
     bnfSyntaxError(e);
     return;
   }
-  var gen = Jison.Generator(cfg, { type: "lalr" });
-  if (gen.conflicts) {
-    grammarConflicts(gen.conflicts);
+  try {
+    var gen = Jison.Generator(cfg, { type: "lalr" });
+    if (gen.conflicts) {
+      grammarConflicts(gen.conflicts);
+    }
+    var js = gen.generate();
+    eval(js);
+    mainparser = parser;
+    $("#generatorFeedback").text("Generated.");
+    $("#generatorFeedback").addClass("good");
+  } catch (e) {
+    bnfSyntaxError(e);
+    return;
   }
-  var js = gen.generate();
-  eval(js);
-  mainparser = parser;
-  $("#generatorFeedback").text("Generated.");
-  $("#generatorFeedback").addClass("good");
 }
 
 function parse() {
