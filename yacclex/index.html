@@ -57,7 +57,7 @@ n   : n d  { $$ = { type: 'n', children: [$1, $2] }; }
     | d    { $$ = { type: 'n', children: [$1] }; }
     ;
 
-d   : DIGIT  { $$ = { type: 'd', value: yytext }; }
+d   : DIGIT  { $$ = { type: 'd', value: $1 }; }
     ;
 
 %%
