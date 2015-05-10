@@ -75,7 +75,7 @@ piece : LABEL ':' { labels[$1] = code.length; }
       | command   { code.push($1); }
       ;
 
-command : WRITE arg      { $$ = function() { alert($2()); }; }
+command : WRITE arg      { $$ = function() { $output += $2() + "\n"; }; }
         | STORE NUMBER   { $$ = function() { regs[Number($2)] = regs[0]; }; }
         | LOAD  arg      { $$ = function() { regs[0] = $2(); }; }
         | ADD   arg      { $$ = function() { regs[0] = regs[0] + $2(); }; }
@@ -104,6 +104,7 @@ var code = [];
 var regs = [0];
 var codepointer = 0;
 var run = true;
+var $output = "";
 
 function process() {
   while (run) {
@@ -111,6 +112,7 @@ function process() {
     if (!cmd) break;
     cmd();
   }
+  return $output;
 }</textarea>
             <p>
                 <button id="generate">Generate Parser</button>
