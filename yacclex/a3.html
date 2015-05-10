@@ -42,9 +42,7 @@ read                  return 'READ';
 write                 return 'WRITE';
 
 [a-z][a-z0-9]*        return 'NAME';
-[0-9]+               {
-                      return 'NUMBER';
-}
+[0-9]+                return 'NUMBER';
 
 ":="                  return 'ASSIGN';
 "."                   return yytext;
