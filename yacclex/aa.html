@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=320">
+        <title>Yacc and Lex Playground</title>
+        <style>
+textarea {
+  font-family: monospace;
+}
+
+.error {
+  color: red;
+}
+
+.warning {
+  color: orange;
+}
+
+.good {
+  color: green;
+}
+        </style>
+        <script src="jquery-1.11.2.js"></script>
+        <script src="jison.js"></script>
+        <script src="yacclex.js"></script>
+    </head>
+    <body>
+        <h1>Yacc and Lex Playground</h1>
+        <p>Uses <a href="https://github.com/zaach/jison">Jison</a> parser generator.</p>
+        <div>
+            <textarea id="grammar" rows="20" cols="80">
+%lex
+%%
+
+\s+ ;
+
+var                   return 'VAR';
+begin                 return 'BEGIN';
+end                   return 'END';
+integer               return 'INTEGER';
+read                  return 'READ';
+write                 return 'WRITE';
+
+[a-z][a-z0-9]*        return 'NAME';
+[0-9]+                return 'NUMBER';
+
+":="                  return 'ASSIGN';
+"."                   return yytext;
+":"                   return yytext;
+";"                   return yytext;
+"+"                   return yytext;
+"-"                   return yytext;
+"*"                   return yytext;
+"/"                   return yytext;
+"("                   return yytext;
+")"                   return yytext;
+
+<<EOF>>               return 'EOF';
+.                     return 'INVALID';
+
+/lex
+
+%start full
+
+%%
+
+full : program EOF  { return process($1); }
+     ;
+
+program : block '.'              { $$ = { vars: [], prog: $1 }; }
+        | VAR vardecls block '.' { $$ = { vars: $2, prog: $3 }; }
+        ;
+
+vardecls : vardecls NAME ':' INTEGER ';' { $$ = $1.concat($2); }
+         | NAME ':' INTEGER ';'          { $$ = [$1]; }
+         ;
+
+block : BEGIN statements END { $$ = $2; }
+      ;
+
+statements : statements ';' statement { $$ = $1.concat($3); }
+           | statement { $$ = [$1]; }
+           ;
+
+statement :                    { $$ = { kind: 'skip' }; }
+          | READ '(' NAME ')'  { $$ = { kind: 'read', var: $3 }; }
+          | WRITE '(' expr ')' { $$ = { kind: 'write', expr: $3 }; }
+          | NAME ASSIGN expr   { $$ = { kind: 'assign', var: $1, expr: $3 }; }
+          ;
+
+expr : expr '+' fact { $$ = { kind: 'add', lhs: $1, rhs: $3 }; }
+     | expr '-' fact { $$ = { kind: 'sub', lhs: $1, rhs: $3 }; }
+     | fact          { $$ = $1; }
+     ;
+
+fact : fact '*' term { $$ = { kind: 'mul', lhs: $1, rhs: $3 }; }
+     | fact '/' term { $$ = { kind: 'div', lhs: $1, rhs: $3 }; }
+     | '(' expr ')'  { $$ = $2; }
+     | term          { $$ = $1; }
+     ;
+
+term : NUMBER { $$ = { kind: 'const', val: Number($1) }; }
+     | NAME   { $$ = { kind: 'var', val: $1 }; }
+     ;
+
+%%
+
+var regnum = [];
+var lastReg = 1;
+
+function registerWithName(name) {
+  if (regnum[name]) {
+    throw new Error("Duplicate var declaration.");
+  }
+  regnum[name] = lastReg++;
+}
+
+function getRegisterByName(name) {
+  if (regnum[name]) {
+    return regnum[name];
+  } else {
+    throw new Error("Undeclared variable.");
+  }
+}
+
+function termToReg(term) {
+  if (term.kind == 'const') {
+    return '=' + term.val;
+  } else if (term.kind == 'var') {
+    return getRegisterByName(term.val);
+  } else if (term.kind == 'reg') {
+    return term.val;
+  } else {
+    throw new Error("Unknown term.");
+  }
+}
+
+function translateExpr(expr) {
+  var ENDL = '\n';
+  var asm = "";
+  var term;
+  if (expr.kind == 'const' || expr.kind == 'var') {
+    term = expr;
+  } else {
+    term = {
+      kind: 'reg',
+      val: lastReg++
+    };
+    var lhs = translateExpr(expr.lhs);
+    var rhs = translateExpr(expr.rhs);
+    asm += lhs.asm;
+    asm += rhs.asm;
+    asm += "load " + termToReg(lhs.term) + ENDL;
+    var operation = expr.kind;
+    asm += operation + " " + termToReg(rhs.term) + ENDL;
+    asm += "store " + term.val + ENDL;
+  }
+  return {
+    asm: asm,
+    term: term
+  };
+}
+
+function process(full) {
+  var regnum = [];
+  for (var i in full.vars) {
+    var name = full.vars[i];
+    console.log(name);
+    registerWithName(name);
+  }
+  var ENDL = '\n';
+  var asm = "";
+  for (var i = 0; i < full.prog.length; i++) {
+    var st = full.prog[i];
+    if (st.kind == 'read') {
+      asm += "read " + getRegisterByName(st.var) + ENDL;
+    } else if (st.kind == 'write') {
+      var res = translateExpr(st.expr);
+      asm += res.asm;
+      asm += "write " + termToReg(res.term)  + ENDL;
+    } else if (st.kind == 'assign') {
+      var res = translateExpr(st.expr);
+      asm += res.asm;
+      asm += "load " + termToReg(res.term) + ENDL;
+      asm += "store " + getRegisterByName(st.var) + ENDL;
+    } else {
+      throw new Error("Unsupported statement.");
+    }
+  }
+  return asm;
+}</textarea>
+            <p>
+                <button id="generate">Generate Parser</button>
+            </p>
+            <pre id="generatorFeedback">
+            </pre>
+        </div>
+        <div>
+            <textarea id="input" rows="10" cols="40">
+var
+  a: integer;
+begin
+  write(3);
+  a := 2 + 2
+end.</textarea>
+            <p>
+                <button id="parse">Parse</button>
+            </p>
+        </div>
+        <pre id="output">
+        </pre>
+    </body>
+</html>
