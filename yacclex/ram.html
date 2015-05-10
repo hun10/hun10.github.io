@@ -76,6 +76,7 @@ piece : LABEL ':' { labels[$1] = code.length; }
       ;
 
 command : WRITE arg      { $$ = function() { $output += $2() + "\n"; }; }
+        | READ  NUMBER   { $$ = function() { regs[Number($2)] = readInput(); }; }
         | STORE NUMBER   { $$ = function() { regs[Number($2)] = regs[0]; }; }
         | LOAD  arg      { $$ = function() { regs[0] = $2(); }; }
         | ADD   arg      { $$ = function() { regs[0] = regs[0] + $2(); }; }
@@ -106,6 +107,17 @@ var codepointer = 0;
 var run = true;
 var $output = "";
 
+var $raminp = $("#ramInput").val().match(/(\d+)/g);
+
+function readInput() {
+  var v = $raminp.shift(1);
+  if (v) {
+    return v;
+  } else {
+    throw new Error("No number to read.");
+  }
+}
+
 function process() {
   while (run) {
     var cmd = code[codepointer++];
@@ -122,10 +134,10 @@ function process() {
         </div>
         <div>
             <textarea id="input" rows="10" cols="40">
-write =3
-load =2
-add =2
-store 1</textarea>
+read 1
+write 1</textarea>
+            <textarea id="ramInput" rows="10" cols="40">
+8</textarea>
             <p>
                 <button id="parse">Parse</button>
             </p>
