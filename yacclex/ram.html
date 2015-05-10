@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=320">
+        <title>Yacc and Lex Playground</title>
+        <style>
+textarea {
+  font-family: monospace;
+}
+
+.error {
+  color: red;
+}
+
+.warning {
+  color: orange;
+}
+
+.good {
+  color: green;
+}
+        </style>
+        <script src="jquery-1.11.2.js"></script>
+        <script src="jison.js"></script>
+        <script src="yacclex.js"></script>
+    </head>
+    <body>
+        <h1>Yacc and Lex Playground</h1>
+        <p>Uses <a href="https://github.com/zaach/jison">Jison</a> parser generator.</p>
+        <div>
+            <textarea id="grammar" rows="20" cols="80">%lex
+%%
+
+\s+ ;
+
+halt                  return 'HALT';
+
+read                  return 'READ';
+write                 return 'WRITE';
+store                 return 'STORE';
+load                  return 'LOAD';
+
+add                   return 'ADD';
+mul                   return 'MUL';
+sub                   return 'SUB';
+div                   return 'DIV';
+
+jmp                   return 'JMP';
+jz                    return 'JZ';
+jgtz                  return 'JGTZ';
+
+':'                   return ':';
+'='                   return '=';
+
+[a-z]+[0-9]*          return 'LABEL';
+0|([1-9][0-9]*)       return 'NUMBER';
+
+<<EOF>>               return 'EOF';
+.                     return 'INVALID';
+
+/lex
+
+%start exp
+
+%%
+
+exp : prog EOF  { return process(); }
+    ;
+
+prog : prog piece
+     | piece
+     ;
+
+piece : LABEL ':' { labels[$1] = code.length; }
+      | command   { code.push($1); }
+      ;
+
+command : WRITE arg      { $$ = function() { alert($2()); }; }
+        | STORE NUMBER   { $$ = function() { regs[Number($2)] = regs[0]; }; }
+        | LOAD  arg      { $$ = function() { regs[0] = $2(); }; }
+        | ADD   arg      { $$ = function() { regs[0] = regs[0] + $2(); }; }
+        | MUL   arg      { $$ = function() { regs[0] = regs[0] * $2(); }; }
+        | SUB   arg      { $$ = function() { regs[0] = regs[0] - $2(); }; }
+        | DIV   arg      { $$ = function() { regs[0] = regs[0] / $2(); }; }
+        | JMP   label    { $$ = function() { codepointer = $2; }; }
+        | JZ    label    { $$ = function() { if (regs[0] == 0) codepointer = $2; }; }
+        | JGTZ  label    { $$ = function() { if (regs[0] > 0) codepointer = $2; }; }
+        ;
+
+arg : nonconst   { $$ = $1; }
+    | '=' NUMBER { $$ = function() { return Number($2); }; }
+    ;
+
+nonconst : NUMBER { $$ = function() { return regs[Number($1)]; }; }
+         ;
+
+label : LABEL { $$ = labels[$1]; }
+      ;
+
+%%
+
+var labels = [];
+var code = [];
+var regs = [0];
+var codepointer = 0;
+var run = true;
+
+function process() {
+  while (run) {
+    var cmd = code[codepointer++];
+    if (!cmd) break;
+    cmd();
+  }
+}</textarea>
+            <p>
+                <button id="generate">Generate Parser</button>
+            </p>
+            <pre id="generatorFeedback">
+            </pre>
+        </div>
+        <div>
+            <textarea id="input">
+5+5*2</textarea>
+            <p>
+                <button id="parse">Parse</button>
+            </p>
+        </div>
+        <pre id="output">
+        </pre>
+    </body>
+</html>
