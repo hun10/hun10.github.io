@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=320">
+        <title>Yacc and Lex Playground</title>
+        <style>
+textarea {
+  font-family: monospace;
+}
+
+.error {
+  color: red;
+}
+
+.warning {
+  color: orange;
+}
+
+.good {
+  color: green;
+}
+        </style>
+        <script src="jquery-1.11.2.js"></script>
+        <script src="jison.js"></script>
+        <script src="yacclex.js"></script>
+    </head>
+    <body>
+        <h1>Yacc and Lex Playground</h1>
+        <p>Uses <a href="https://github.com/zaach/jison">Jison</a> parser generator.</p>
+        <div>
+            <textarea id="grammar" rows="20" cols="80">
+%lex
+%%
+
+\s+ ;
+
+var                   return 'VAR';
+begin                 return 'BEGIN';
+end                   return 'END';
+integer               return 'INTEGER';
+read                  return 'READ';
+write                 return 'WRITE';
+
+[a-z][a-z0-9]*        return 'NAME';
+[0-9]+               {
+                      return 'NUMBER';
+}
+
+":="                  return 'ASSIGN';
+"."                   return yytext;
+":"                   return yytext;
+";"                   return yytext;
+"+"                   return yytext;
+"-"                   return yytext;
+"*"                   return yytext;
+"/"                   return yytext;
+"("                   return yytext;
+")"                   return yytext;
+
+<<EOF>>               return 'EOF';
+.                     return 'INVALID';
+
+/lex
+
+%start full
+
+%%
+
+full : program EOF  { return process($1); }
+     ;
+
+program : block '.'
+        | VAR vardecls block '.'
+        ;
+
+vardecls : vardecls NAME ':' INTEGER ';'
+         | NAME ':' INTEGER ';'
+         ;
+
+block : BEGIN statements END
+      ;
+
+statements : statements ';' statement
+           | statement
+           ;
+
+statement :
+          | READ '(' NAME ')'
+          | WRITE '(' expr ')'
+          | NAME ASSIGN expr
+          ;
+
+expr : term '+' term
+     | term '-' term
+     | term '*' term
+     | term '/' term
+     | term
+     ;
+
+term : NUMBER
+     | NAME
+     ;
+
+%%
+
+function process() {
+}
+</textarea>
+            <p>
+                <button id="generate">Generate Parser</button>
+            </p>
+            <pre id="generatorFeedback">
+            </pre>
+        </div>
+        <div>
+            <textarea id="input">
+5+5*2</textarea>
+            <p>
+                <button id="parse">Parse</button>
+            </p>
+        </div>
+        <pre id="output">
+        </pre>
+    </body>
+</html>
