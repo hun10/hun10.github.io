@@ -77,15 +77,16 @@ piece : LABEL ':' { labels[$1] = code.length; }
 
 command : WRITE arg      { $$ = function() { $output += $2() + "\n"; }; }
         | READ  NUMBER   { $$ = function() { regs[Number($2)] = readInput(); }; }
+        | HALT           { $$ = function() { codepointer = -2; }; }
         | STORE NUMBER   { $$ = function() { regs[Number($2)] = regs[0]; }; }
         | LOAD  arg      { $$ = function() { regs[0] = $2(); }; }
         | ADD   arg      { $$ = function() { regs[0] = regs[0] + $2(); }; }
         | MUL   arg      { $$ = function() { regs[0] = regs[0] * $2(); }; }
         | SUB   arg      { $$ = function() { regs[0] = Math.max(0, regs[0] - $2()); }; }
         | DIV   arg      { $$ = function() { regs[0] = Math.floor(regs[0] / $2()); }; }
-        | JMP   label    { $$ = function() { codepointer = $2; }; }
-        | JZ    label    { $$ = function() { if (regs[0] == 0) codepointer = $2; }; }
-        | JGTZ  label    { $$ = function() { if (regs[0] > 0) codepointer = $2; }; }
+        | JMP   label    { $$ = function() { codepointer = $2(); }; }
+        | JZ    label    { $$ = function() { if (regs[0] == 0) codepointer = $2(); }; }
+        | JGTZ  label    { $$ = function() { if (regs[0] > 0) codepointer = $2(); }; }
         ;
 
 arg : nonconst   { $$ = $1; }
@@ -95,7 +96,7 @@ arg : nonconst   { $$ = $1; }
 nonconst : NUMBER { $$ = function() { return regs[Number($1)]; }; }
          ;
 
-label : LABEL { $$ = labels[$1]; }
+label : LABEL { $$ = function() { return labels[$1]; }; }
       ;
 
 %%
@@ -134,8 +135,28 @@ function process() {
         </div>
         <div>
             <textarea id="input" rows="10" cols="40">
+load =1
+store 2
+
 read 1
-write 1</textarea>
+
+loop:
+load 1
+jz exit
+
+load 2
+mul =2
+store 2
+
+load 1
+sub =1
+store 1
+
+jmp loop
+
+exit:
+write 2
+halt</textarea>
             <textarea id="ramInput" rows="10" cols="40">
 8</textarea>
             <p>
