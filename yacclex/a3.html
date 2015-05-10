@@ -84,9 +84,9 @@ statements : statements ';' statement { $$ = $1.concat($3); }
            | statement { $$ = [$1]; }
            ;
 
-statement :
+statement :                    { $$ = { kind: 'skip' }; }
           | READ '(' NAME ')'  { $$ = { kind: 'read', var: $3 }; }
-          | WRITE '(' expr ')' { $$ = { kind: 'write', expr: $3 }; }
+          | WRITE '(' term ')' { $$ = { kind: 'write', term: $3 }; }
           | NAME ASSIGN expr   { $$ = { kind: 'assign', var: $1, expr: $3 }; }
           ;
 
@@ -103,8 +103,66 @@ term : NUMBER { $$ = { kind: 'const', val: Number($1) }; }
 
 %%
 
+var regnum = [];
+var lastReg = 1;
+
+function registerWithName(name) {
+  if (regnum[name]) {
+    throw new Error("Duplicate var declaration.");
+  }
+  regnum[name] = lastReg++;
+}
+
+function getRegisterByName(name) {
+  if (regnum[name]) {
+    return regnum[name];
+  } else {
+    throw new Error("Undeclared variable.");
+  }
+}
+
+function termToReg(term) {
+  if (term.kind == 'const') {
+    return '=' + term.val;
+  } else if (term.kind == 'var') {
+    return getRegisterByName(term.val);
+  } else {
+    throw new Error("Unknown term.");
+  }
+}
+
+function exprToAccumAsm(expr) {
+  var ENDL = '\n';
+  var asm = "";
+  asm += "load " + termToReg(expr.lhs) + ENDL;
+  var operation = expr.kind;
+  asm += operation + " " + termToReg(expr.rhs) + ENDL;
+  return asm;
+}
+
 function process(full) {
-  console.log(full);
+  var regnum = [];
+  for (var i in full.vars) {
+    var name = full.vars[i];
+    console.log(name);
+    registerWithName(name);
+  }
+  var ENDL = '\n';
+  var asm = "";
+  for (var i = 0; i < full.prog.length; i++) {
+    var st = full.prog[i];
+    if (st.kind == 'read') {
+      asm += "read " + getRegisterByName(st.var)  + ENDL;
+    } else if (st.kind == 'write') {
+      asm += "write " + termToReg(st.term)  + ENDL;
+    } else if (st.kind == 'assign') {
+      asm += exprToAccumAsm(st.expr);
+      asm += "store " + getRegisterByName(st.var)  + ENDL;
+    } else {
+      throw new Error("Unsupported statement.");
+    }
+  }
+  return asm;
 }</textarea>
             <p>
                 <button id="generate">Generate Parser</button>
@@ -114,6 +172,8 @@ function process(full) {
         </div>
         <div>
             <textarea id="input">
+var
+  a: integer;
 begin
   write(3);
   a := 2 + 2
