@@ -132,17 +132,19 @@ function termToReg(term) {
 function exprToAccumAsm(expr) {
   var ENDL = '\n';
   var asm = "";
-  asm += "load " + termToReg(expr.lhs) + ENDL;
-  var operation = expr.kind;
-  asm += operation + " " + termToReg(expr.rhs) + ENDL;
+  if (expr.kind == 'const' || expr.kind == 'var') {
+    asm += "load " + termToReg(expr) + ENDL;
+  } else {
+    asm += "load " + termToReg(expr.lhs) + ENDL;
+    var operation = expr.kind;
+    asm += operation + " " + termToReg(expr.rhs) + ENDL;
+  }
   return asm;
 }
 
 function process(full) {
-  var regnum = [];
   for (var i in full.vars) {
     var name = full.vars[i];
-    console.log(name);
     registerWithName(name);
   }
   var ENDL = '\n';
@@ -156,6 +158,8 @@ function process(full) {
     } else if (st.kind == 'assign') {
       asm += exprToAccumAsm(st.expr);
       asm += "store " + getRegisterByName(st.var)  + ENDL;
+    } else if (st.kind == 'skip') {
+      // skip
     } else {
       throw new Error("Unsupported statement.");
     }
