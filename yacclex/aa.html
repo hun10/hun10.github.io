@@ -95,18 +95,19 @@ expr : expr '+' fact { $$ = { kind: 'add', lhs: $1, rhs: $3 }; }
 
 fact : fact '*' term { $$ = { kind: 'mul', lhs: $1, rhs: $3 }; }
      | fact '/' term { $$ = { kind: 'div', lhs: $1, rhs: $3 }; }
-     | '(' expr ')'  { $$ = $2; }
      | term          { $$ = $1; }
      ;
 
 term : NUMBER { $$ = { kind: 'const', val: Number($1) }; }
      | NAME   { $$ = { kind: 'var', val: $1 }; }
+     | '(' expr ')'  { $$ = $2; }
      ;
 
 %%
 
 var regnum = [];
 var lastReg = 1;
+var lastVar = 0;
 
 function registerWithName(name) {
   if (regnum[name]) {
@@ -123,6 +124,12 @@ function getRegisterByName(name) {
   }
 }
 
+function newVarName() {
+  var name = "_" + (lastVar++);
+  registerWithName(name);
+  return name;
+}
+
 function termToReg(term) {
   if (term.kind == 'const') {
     return '=' + term.val;
@@ -135,54 +142,94 @@ function termToReg(term) {
   }
 }
 
-function translateExpr(expr) {
-  var ENDL = '\n';
-  var asm = "";
+function unfoldExpr(expr) {
+  var prog = [];
   var term;
   if (expr.kind == 'const' || expr.kind == 'var') {
     term = expr;
   } else {
     term = {
-      kind: 'reg',
-      val: lastReg++
+      kind: 'var',
+      val: newVarName()
     };
-    var lhs = translateExpr(expr.lhs);
-    var rhs = translateExpr(expr.rhs);
-    asm += lhs.asm;
-    asm += rhs.asm;
-    asm += "load " + termToReg(lhs.term) + ENDL;
-    var operation = expr.kind;
-    asm += operation + " " + termToReg(rhs.term) + ENDL;
-    asm += "store " + term.val + ENDL;
+    var lhs = unfoldExpr(expr.lhs);
+    var rhs = unfoldExpr(expr.rhs);
+    Array.prototype.push.apply(prog, lhs.prog);
+    Array.prototype.push.apply(prog, rhs.prog);
+    prog.push({
+      kind: 'assign',
+      var: term.val,
+      expr: {
+        kind: expr.kind,
+        lhs: lhs.term,
+        rhs: rhs.term
+      }
+    });
   }
   return {
-    asm: asm,
+    prog: prog,
     term: term
   };
 }
 
+function translateToA3(inpProg) {
+  var prog = [];
+
+  for (var i = 0; i < inpProg.length; i++) {
+    var st = inpProg[i];
+    if (st.kind == 'assign') {
+      var computed = unfoldExpr(st.expr);
+      Array.prototype.push.apply(prog, computed.prog);
+      prog.push({
+        kind: st.kind,
+        var: st.var,
+        expr: computed.term
+      });
+    } else if (st.kind == 'write') {
+      var computed = unfoldExpr(st.expr);
+      Array.prototype.push.apply(prog, computed.prog);
+      prog.push({
+        kind: st.kind,
+        expr: computed.term
+      });
+    } else {
+      prog.push(st);
+    }
+  }
+
+  return prog;
+}
+
 function process(full) {
-  var regnum = [];
   for (var i in full.vars) {
     var name = full.vars[i];
-    console.log(name);
     registerWithName(name);
   }
+  var prog = translateToA3(full.prog);
+  return progProcess(prog);
+}
+
+function progProcess(prog) {
   var ENDL = '\n';
   var asm = "";
-  for (var i = 0; i < full.prog.length; i++) {
-    var st = full.prog[i];
+  for (var i = 0; i < prog.length; i++) {
+    var st = prog[i];
     if (st.kind == 'read') {
       asm += "read " + getRegisterByName(st.var) + ENDL;
     } else if (st.kind == 'write') {
-      var res = translateExpr(st.expr);
-      asm += res.asm;
-      asm += "write " + termToReg(res.term)  + ENDL;
+      asm += "write " + termToReg(st.expr)  + ENDL;
     } else if (st.kind == 'assign') {
-      var res = translateExpr(st.expr);
-      asm += res.asm;
-      asm += "load " + termToReg(res.term) + ENDL;
+      var expr = st.expr;
+      if (expr.kind == 'var' || expr.kind == 'const') {
+        asm += "load " + termToReg(expr) + ENDL;
+      } else {
+        asm += "load " + termToReg(expr.lhs) + ENDL;
+        var operation = expr.kind;
+        asm += operation + " " + termToReg(expr.rhs) + ENDL;
+      }
       asm += "store " + getRegisterByName(st.var) + ENDL;
+    } else if (st.kind == 'skip') {
+      // skip
     } else {
       throw new Error("Unsupported statement.");
     }
