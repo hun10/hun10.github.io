@@ -182,11 +182,13 @@ function interpretInstruction(ctx, st) {
   ctx = {
     skip: ctx.shouldSkip,
     shouldSkip: ctx.shouldSkip,
-    reg: ctx.reg.slice()
+    reg: ctx.reg.slice(),
+    previous: ctx.previous.slice()
   };
   function loadReg(num) {
     if (ctx.reg[num] == undefined) {
       ctx.reg[num] = newAbstractValue();
+      ctx.reg[num].num = num;
     }
     return ctx.reg[num];
   }
@@ -228,9 +230,10 @@ function interpretInstruction(ctx, st) {
     ctx.reg[0] = calc(st.kind, copy(loadReg(0)), copy(arg));
     ctx.reg[0].computedBy = st;
   } else if (st.kind == 'label') {
-    ctx.reg = [];
     ctx.skip = false;
     ctx.shouldSkip = false;
+    ctx.reg = [];
+    ctx.previous.push(ctx.reg);
   } else if (st.kind == 'jmp') {
     ctx.shouldSkip = true;
   } else if (st.kind == 'jz') {
@@ -258,7 +261,8 @@ function removeDeadCode(prog) {
   var ctx = {
     skip: false,
     shouldSkip: false,
-    reg: []
+    reg: [],
+    previous: []
   };
   var res = [];
   for (var i = 0; i < prog.length; i++) {
@@ -296,7 +300,8 @@ function pushConsts(prog) {
   var ctx = {
     skip: false,
     shouldSkip: false,
-    reg: []
+    reg: [],
+    previous: []
   };
   var res = [];
   for (var i = 0; i < prog.length; i++) {
@@ -322,24 +327,29 @@ function pushConsts(prog) {
 }
 
 function removeUnusedCalcs(prog) {
+  var ctx = {
+    skip: false,
+    shouldSkip: false,
+    reg: [],
+    previous: []
+  };
   function markUseful(r) {
     if (r.computedBy) r.computedBy.useful = true;
     if (r.lhs) markUseful(r.lhs);
     if (r.rhs) markUseful(r.rhs);
   }
-  var ctx = {
-    skip: false,
-    shouldSkip: false,
-    reg: []
-  };
+  var desired = [];
   for (var i = 0; i < prog.length; i++) {
     var st = prog[i];
     ctx = interpretInstruction(ctx, st);
     if (st.kind == 'jz' || st.kind == 'jgtz') {
-      markUseful(ctx.reg[0]);
+      desired.push(ctx.reg[0]);
     } else if (st.kind == 'write' && st.arg.kind == 'register') {
-      markUseful(ctx.reg[st.arg.num]);
+      desired.push(ctx.reg[st.arg.num]);
     }
+  }
+  for (var i = 0; i < desired.length; i++) {
+    markUseful(desired[i]);
   }
   var res = [];
   for (var i = 0; i < prog.length; i++) {
