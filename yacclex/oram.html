@@ -232,8 +232,8 @@ function interpretInstruction(ctx, st) {
   } else if (st.kind == 'label') {
     ctx.skip = false;
     ctx.shouldSkip = false;
-    ctx.reg = [];
     ctx.previous.push(ctx.reg);
+    ctx.reg = [];
   } else if (st.kind == 'jmp') {
     ctx.shouldSkip = true;
   } else if (st.kind == 'jz') {
@@ -334,9 +334,21 @@ function removeUnusedCalcs(prog) {
     previous: []
   };
   function markUseful(r) {
+    if (r.marked) {
+      return;
+    }
+    r.marked = true;
     if (r.computedBy) r.computedBy.useful = true;
     if (r.lhs) markUseful(r.lhs);
     if (r.rhs) markUseful(r.rhs);
+    if (r.kind == 'abstract') {
+      for (var i = 0; i < ctx.previous.length; i++) {
+        var x = ctx.previous[i];
+        if (x[r.num]) {
+          markUseful(x[r.num]);
+        }
+      }
+    }
   }
   var desired = [];
   for (var i = 0; i < prog.length; i++) {
