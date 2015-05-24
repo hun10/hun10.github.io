@@ -113,8 +113,32 @@ label : LABEL { $$ = { kind: 'label', val: $1 }; }
 
 var currentLabels = [];
 
+function gen(prog) {
+  var ENDL = '\n';
+  var res = "";
+  for (var i = 0; i < prog.length; i++) {
+    var st = prog[i];
+    for (var j = 0; j < st.labels.length; j++) {
+      res += st.labels[j].val + ":" + ENDL;
+    }
+    res += st.kind + " ";
+    if (st.arg) {
+      var arg = st.arg;
+      if (arg.kind == 'const') {
+        res += "=" + arg.val;
+      } else {
+        res += arg.num;
+      }
+    } else if (st.to) {
+      res += st.to.val;
+    }
+    res += ENDL;
+  }
+  return res;
+}
+
 function process(prog) {
-  console.log(prog);
+  return gen(prog);
 }</textarea>
             <p>
                 <button id="generate">Generate Parser</button>
