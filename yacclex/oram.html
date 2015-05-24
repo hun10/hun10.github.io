@@ -120,7 +120,31 @@ function gen(prog) {
   return res;
 }
 
+function countLabelCalls(prog, label) {
+  var cnt = 0;
+  for (var i = 0; i < prog.length; i++) {
+    var st = prog[i];
+    if (st.to) {
+      if (st.to == label) cnt++;
+    }
+  }
+  return cnt;
+}
+
+function removeUnusedLabels(prog) {
+  var res = [];
+  for (var i = 0; i < prog.length; i++) {
+    var st = prog[i];
+    if (st.kind == 'label') {
+      if (countLabelCalls(prog, st.name) == 0) continue;
+    }
+    res.push(st);
+  }
+  return res;
+}
+
 function process(prog) {
+  prog = removeUnusedLabels(prog);
   return gen(prog);
 }</textarea>
             <p>
