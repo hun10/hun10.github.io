@@ -296,10 +296,11 @@ function pushConsts(prog) {
         kind: 'load',
         arg: ctx.reg[0]
       });
-    } else if (st.kind == 'write' && ctx.reg[0] && ctx.reg[0].kind == 'const') {
+    } else if (st.kind == 'write' && st.arg.kind == 'register' &&
+               ctx.reg[st.arg.num] && ctx.reg[st.arg.num].kind == 'const') {
       res.push({
         kind: 'write',
-        arg: ctx.reg[0]
+        arg: ctx.reg[st.arg.num]
       });
     } else {
       res.push(st);
