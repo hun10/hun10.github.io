@@ -303,6 +303,37 @@ function pushConsts(prog) {
   return res;
 }
 
+function removeUnusedCalcs(prog) {
+  function markUseful(r) {
+    if (r.computedBy) r.computedBy.useful = true;
+    if (r.lhs) markUseful(r.lhs);
+    if (r.rhs) markUseful(r.rhs);
+  }
+  var ctx = {
+    skip: false,
+    shouldSkip: false,
+    reg: []
+  };
+  for (var i = 0; i < prog.length; i++) {
+    var st = prog[i];
+    ctx = interpretInstruction(ctx, st);
+    if (st.kind == 'jz' || st.kind == 'jgtz') {
+      markUseful(ctx.reg[0]);
+    } else if (st.kind == 'write' && st.arg.kind == 'register') {
+      markUseful(ctx.reg[st.arg.num]);
+    }
+  }
+  var res = [];
+  for (var i = 0; i < prog.length; i++) {
+    var st = prog[i];
+    if (st.useful || st.kind == 'write' || st.kind == 'read' || st.kind == 'halt' ||
+                     st.kind == 'jmp' || st.kind == 'jz' || st.kind == 'jgtz' || st.kind == 'label') {
+      res.push(st);
+    }
+  }
+  return res;
+}
+
 function consolidateLabels(prog) {
   var trans = [];
   var prev;
@@ -351,6 +382,7 @@ function process(prog) {
   prog = removeNopJmps(prog);
   prog = removeUnusedLabels(prog);
   prog = pushConsts(prog);
+  prog = removeUnusedCalcs(prog);
   return gen(prog);
 }</textarea>
             <p>
