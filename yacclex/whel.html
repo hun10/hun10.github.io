@@ -272,7 +272,7 @@ function progProcess(prog) {
       var theEnd = newLabel();
       asm += progProcess(st.expr.prog);
       asm += "load " + termToReg(st.expr.term) + ENDL;
-      asm += "jgtz " + otherLabel + ENDL;
+      asm += "jz " + otherLabel + ENDL;
       asm += progProcess(st.then);
       asm += "jmp " + theEnd + ENDL;
       asm += otherLabel + ":" + ENDL;
