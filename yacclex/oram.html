@@ -190,6 +190,13 @@ function interpretInstruction(ctx, st) {
     }
     return ctx.reg[num];
   }
+  function copy(obj) {
+    var res = {};
+    for (var i in obj) {
+      res[i] = obj[i];
+    }
+    return res;
+  }
   var arg;
   if (st.arg) {
     if (st.arg.kind == 'register') {
@@ -207,13 +214,18 @@ function interpretInstruction(ctx, st) {
   } else if (st.kind == 'halt') {
     ctx.shouldSkip = true;
   } else if (st.kind == 'store') {
-    ctx.reg[st.arg.num] = loadReg(0);
+    var r0 = loadReg(0);
+    ctx.reg[st.arg.num] = copy(r0);
     ctx.reg[st.arg.num].computedBy = st;
+    ctx.reg[st.arg.num].lhs = r0;
   } else if (st.kind == 'load') {
-    ctx.reg[0] = arg;
+    ctx.reg[0] = copy(arg);
     ctx.reg[0].computedBy = st;
+    if (arg.kind != 'const') {
+      ctx.reg[0].lhs = arg;
+    }
   } else if (st.kind == 'add' || st.kind == 'mul' || st.kind == 'div' || st.kind == 'sub') {
-    ctx.reg[0] = calc(st.kind, loadReg(0), arg);
+    ctx.reg[0] = calc(st.kind, copy(loadReg(0)), copy(arg));
     ctx.reg[0].computedBy = st;
   } else if (st.kind == 'label') {
     ctx.reg = [];
