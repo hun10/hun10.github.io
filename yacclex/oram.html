@@ -143,7 +143,162 @@ function removeUnusedLabels(prog) {
   return res;
 }
 
+function calc(op, lhs, rhs) {
+  if (lhs.kind == 'const' && rhs.kind == 'const') {
+    var res;
+    lhs = lhs.val;
+    rhs = rhs.val;
+    if (op == 'add') {
+      res = lhs + rhs;
+    } else if (op == 'sub') {
+      res = Math.max(0, lhs - rhs);
+    } else if (op == 'mul') {
+      res = lhs * rhs;
+    } else if (op == 'div') {
+      res = Math.floor(lhs / rhs);
+    }
+    return {
+      kind: 'const',
+      val: res
+    };
+  } else {
+    return {
+      kind: op,
+      lhs: lhs,
+      rhs: rhs
+    };
+  }
+}
+
+var nextAbsId = 0;
+function newAbstractValue() {
+  return {
+    kind: 'abstract',
+    id: nextAbsId++
+  };
+}
+
+function interpretInstruction(ctx, st) {
+  ctx = {
+    skip: ctx.shouldSkip,
+    shouldSkip: ctx.shouldSkip,
+    reg: ctx.reg.slice()
+  };
+  function loadReg(num) {
+    if (ctx.reg[num] == undefined) {
+      ctx.reg[num] = newAbstractValue();
+    }
+    return ctx.reg[num];
+  }
+  var arg;
+  if (st.arg) {
+    if (st.arg.kind == 'register') {
+      arg = ctx.reg[st.arg.num];
+    } else if (st.arg.kind == 'const') {
+      arg = st.arg;
+    } else {
+      throw new Error("Unsupported operand");
+    }
+  }
+  if (st.kind == 'write') {
+  } else if (st.kind == 'read') {
+    ctx.reg[st.arg.num] = undefined;
+  } else if (st.kind == 'halt') {
+    ctx.shouldSkip = true;
+  } else if (st.kind == 'store') {
+    ctx.reg[st.arg.num] = loadReg(0);
+  } else if (st.kind == 'load') {
+    ctx.reg[0] = arg;
+  } else if (st.kind == 'add' || st.kind == 'mul' || st.kind == 'div' || st.kind == 'sub') {
+    ctx.reg[0] = calc(st.kind, loadReg(0), arg);
+  } else if (st.kind == 'label') {
+    ctx.reg = [];
+    ctx.skip = false;
+    ctx.shouldSkip = false;
+  } else if (st.kind == 'jmp') {
+    ctx.shouldSkip = true;
+  } else if (st.kind == 'jz') {
+    var v = loadReg(0);
+    if (v.kind == 'const' && v.val == 0) {
+      ctx.shouldSkip = true;
+    }
+  } else if (st.kind == 'jgtz') {
+    var v = loadReg(0);
+    if (v.kind == 'const' && v.val > 0) {
+      ctx.shouldSkip = true;
+    } else {
+      ctx.reg[0] = {
+        kind: 'const',
+        val: 0
+      };
+    }
+  } else {
+    throw new Error("Unknown instruction");
+  }
+  return ctx;
+}
+
+function removeDeadCode(prog) {
+  var ctx = {
+    skip: false,
+    shouldSkip: false,
+    reg: []
+  };
+  var res = [];
+  for (var i = 0; i < prog.length; i++) {
+    var st = prog[i];
+    if (ctx.reg[0] && ctx.reg[0].kind == 'const') {
+      if (st.kind == 'jz') {
+        if (ctx.reg[0].val == 0) {
+          st = {
+            kind: 'jmp',
+            to: st.to
+          };
+        } else {
+          st = undefined;
+        }
+      } else if (st.kind == 'jgtz') {
+        if (ctx.reg[0].val > 0) {
+          st = {
+            kind: 'jmp',
+            to: st.to
+          };
+        } else {
+          st = undefined;
+        }
+      }
+    }
+    ctx = interpretInstruction(ctx, st);
+    if (!ctx.skip && st) {
+      res.push(st);
+    }
+  }
+  return res;
+}
+
+function removeNopJmps(prog) {
+  var res = [];
+  var jmp;
+  for (var i = 0; i < prog.length; i++) {
+    var st = prog[i];
+    if (st.to) {
+      if (jmp) { res.push(jmp); jmp = undefined; }
+      jmp = st;
+    } else if (st.kind == 'label') {
+      if (jmp) jmp = undefined;
+      res.push(st);
+    } else {
+      if (jmp) { res.push(jmp); jmp = undefined; }
+      res.push(st);
+    }
+  }
+  if (jmp) { res.push(jmp); jmp = undefined; }
+  return res;
+}
+
 function process(prog) {
+  prog = removeDeadCode(prog);
+  prog = removeNopJmps(prog);
   prog = removeUnusedLabels(prog);
   return gen(prog);
 }</textarea>
@@ -155,27 +310,11 @@ function process(prog) {
         </div>
         <div>
             <textarea id="input" rows="10" cols="40">
-load =1
-store 2
-
-read 1
-
-loop:
-load 1
-jz exit
-
-load 2
-mul =2
-store 2
-
-load 1
-sub =1
-store 1
-
-jmp loop
-
-exit:
-write 2
+load =3
+div =4
+jz ex
+mul =1
+ex:
 halt</textarea>
             <p>
                 <button id="parse">Parse</button>
