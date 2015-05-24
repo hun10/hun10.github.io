@@ -170,6 +170,19 @@ function calc(op, lhs, rhs) {
   }
 }
 
+function isEqual(a, b) {
+  if (a == undefined && b == undefined) return true;
+  if (a == undefined || b == undefined) return false;
+  if (a.kind != b.kind) return false;
+  if (a.kind == 'abstract') {
+    return a.id == b.id;
+  } else if (a.kind == 'const') {
+    return a.val == b.val;
+  } else {
+    return isEqual(a.lhs, b.lhs) && isEqual(a.rhs, b.rhs);
+  }
+}
+
 var nextAbsId = 0;
 function newAbstractValue() {
   return {
@@ -217,18 +230,25 @@ function interpretInstruction(ctx, st) {
     ctx.shouldSkip = true;
   } else if (st.kind == 'store') {
     var r0 = loadReg(0);
-    ctx.reg[st.arg.num] = copy(r0);
-    ctx.reg[st.arg.num].computedBy = st;
-    ctx.reg[st.arg.num].lhs = r0;
+    if (!isEqual(r0, ctx.reg[st.arg.num])) {
+      ctx.reg[st.arg.num] = copy(r0);
+      ctx.reg[st.arg.num].computedBy = st;
+      ctx.reg[st.arg.num].pre = r0;
+    }
   } else if (st.kind == 'load') {
-    ctx.reg[0] = copy(arg);
-    ctx.reg[0].computedBy = st;
-    if (arg.kind != 'const') {
-      ctx.reg[0].lhs = arg;
+    if (!isEqual(ctx.reg[0], arg)) {
+      ctx.reg[0] = copy(arg);
+      ctx.reg[0].computedBy = st;
+      if (arg.kind != 'const') {
+        ctx.reg[0].lhs = arg;
+      }
     }
   } else if (st.kind == 'add' || st.kind == 'mul' || st.kind == 'div' || st.kind == 'sub') {
-    ctx.reg[0] = calc(st.kind, copy(loadReg(0)), copy(arg));
-    ctx.reg[0].computedBy = st;
+    var r = calc(st.kind, copy(loadReg(0)), copy(arg));
+    if (!isEqual(r, ctx.reg[0])) {
+      ctx.reg[0] = r;
+      ctx.reg[0].computedBy = st;
+    }
   } else if (st.kind == 'label') {
     ctx.skip = false;
     ctx.shouldSkip = false;
@@ -341,6 +361,7 @@ function removeUnusedCalcs(prog) {
     if (r.computedBy) r.computedBy.useful = true;
     if (r.lhs) markUseful(r.lhs);
     if (r.rhs) markUseful(r.rhs);
+    if (r.pre) markUseful(r.pre);
     if (r.kind == 'abstract') {
       for (var i = 0; i < ctx.previous.length; i++) {
         var x = ctx.previous[i];
