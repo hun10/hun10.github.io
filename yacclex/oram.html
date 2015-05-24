@@ -296,6 +296,11 @@ function pushConsts(prog) {
         kind: 'load',
         arg: ctx.reg[0]
       });
+    } else if (st.kind == 'write' && ctx.reg[0] && ctx.reg[0].kind == 'const') {
+      res.push({
+        kind: 'write',
+        arg: ctx.reg[0]
+      });
     } else {
       res.push(st);
     }
