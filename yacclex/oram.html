@@ -276,6 +276,29 @@ function removeDeadCode(prog) {
   return res;
 }
 
+function pushConsts(prog) {
+  var ctx = {
+    skip: false,
+    shouldSkip: false,
+    reg: []
+  };
+  var res = [];
+  for (var i = 0; i < prog.length; i++) {
+    var st = prog[i];
+    ctx = interpretInstruction(ctx, st);
+    if (ctx.reg[0] && ctx.reg[0].kind == 'const' &&
+        (st.kind == 'add' || st.kind == 'mul' || st.kind == 'div' || st.kind == 'sub' || st.kind == 'load')) {
+      res.push({
+        kind: 'load',
+        arg: ctx.reg[0]
+      });
+    } else {
+      res.push(st);
+    }
+  }
+  return res;
+}
+
 function consolidateLabels(prog) {
   var trans = [];
   var prev;
@@ -323,6 +346,7 @@ function process(prog) {
   prog = removeDeadCode(prog);
   prog = removeNopJmps(prog);
   prog = removeUnusedLabels(prog);
+  prog = pushConsts(prog);
   return gen(prog);
 }</textarea>
             <p>
