@@ -268,7 +268,7 @@ function removeDeadCode(prog) {
         }
       }
     }
-    ctx = interpretInstruction(ctx, st);
+    if (st) ctx = interpretInstruction(ctx, st);
     if (!ctx.skip && st) {
       res.push(st);
     }
@@ -276,23 +276,46 @@ function removeDeadCode(prog) {
   return res;
 }
 
-function removeNopJmps(prog) {
-  var res = [];
-  var jmp;
+function consolidateLabels(prog) {
+  var trans = [];
+  var prev;
   for (var i = 0; i < prog.length; i++) {
     var st = prog[i];
-    if (st.to) {
-      if (jmp) { res.push(jmp); jmp = undefined; }
-      jmp = st;
-    } else if (st.kind == 'label') {
-      if (jmp) jmp = undefined;
-      res.push(st);
+    if (prev && prev.kind == 'label' && st.kind == 'label') {
+      trans[st.name] = prev.name;
+      continue;
+    }
+    prev = st;
+  }
+  prev = undefined;
+  var res = [];
+  for (var i = 0; i < prog.length; i++) {
+    var st = prog[i];
+    if (prev && prev.kind == 'label' && st.kind == 'label') {
+    } else if (st.to && trans[st.to]) {
+      res.push({
+        kind: st.kind,
+        to: trans[st.to]
+      });
     } else {
-      if (jmp) { res.push(jmp); jmp = undefined; }
       res.push(st);
     }
+    prev = st;
   }
-  if (jmp) { res.push(jmp); jmp = undefined; }
+  return res;
+}
+
+function removeNopJmps(prog) {
+  prog = consolidateLabels(prog);
+  var res = [];
+  for (var i = 0; i < prog.length; i++) {
+    var st1 = prog[i];
+    var st2 = prog[i + 1];
+    if (st2 && st1.to && st2.kind == 'label' && st1.to == st2.name) {
+    } else {
+      res.push(st1);
+    }
+  }
   return res;
 }
 
