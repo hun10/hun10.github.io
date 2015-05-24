@@ -64,26 +64,12 @@ jgtz                  return 'JGTZ';
 
 %%
 
-exp : prog EOF  { if (currentLabels.length > 0) {
-                    $1.push({
-                      kind: 'halt',
-                      labels: currentLabels
-                    });
-                    currentLabels = [];
-                  }
-                  return process($1); }
+exp : prog EOF  { return process($1); }
     ;
 
-prog : prog piece  { $$ = $2 != undefined ? $1.concat($2) : $1; }
-     | piece       { $$ = [$1];  }
+prog : prog command  { $$ = $1.concat($2); }
+     | command       { $$ = [$1];  }
      ;
-
-piece : label ':' { $$ = undefined; currentLabels.push($1); }
-      | command   { $$ = $1;
-                    $$.labels = currentLabels;
-                    currentLabels = [];
-                  }
-      ;
 
 command : WRITE arg      { $$ = { kind: 'write', arg: $2 }; }
         | READ  nonconst { $$ = { kind: 'read', arg: $2 }; }
@@ -94,9 +80,10 @@ command : WRITE arg      { $$ = { kind: 'write', arg: $2 }; }
         | MUL   arg      { $$ = { kind: 'mul', arg: $2 }; }
         | SUB   arg      { $$ = { kind: 'sub', arg: $2 }; }
         | DIV   arg      { $$ = { kind: 'div', arg: $2 }; }
-        | JMP   label    { $$ = { kind: 'jmp', to: $2 }; }
-        | JZ    label    { $$ = { kind: 'jz', to: $2 }; }
-        | JGTZ  label    { $$ = { kind: 'jgtz', to: $2 }; }
+        | JMP   LABEL    { $$ = { kind: 'jmp', to: $2 }; }
+        | JZ    LABEL    { $$ = { kind: 'jz', to: $2 }; }
+        | JGTZ  LABEL    { $$ = { kind: 'jgtz', to: $2 }; }
+        | LABEL ':'      { $$ = { kind: 'label', name: $1 }; }
         ;
 
 arg : nonconst   { $$ = $1; }
@@ -106,33 +93,29 @@ arg : nonconst   { $$ = $1; }
 nonconst : NUMBER { $$ = { kind: 'register', num: Number($1) }; }
          ;
 
-label : LABEL { $$ = { kind: 'label', val: $1 }; }
-      ;
-
 %%
-
-var currentLabels = [];
 
 function gen(prog) {
   var ENDL = '\n';
   var res = "";
   for (var i = 0; i < prog.length; i++) {
     var st = prog[i];
-    for (var j = 0; j < st.labels.length; j++) {
-      res += st.labels[j].val + ":" + ENDL;
-    }
-    res += st.kind + " ";
-    if (st.arg) {
-      var arg = st.arg;
-      if (arg.kind == 'const') {
-        res += "=" + arg.val;
-      } else {
-        res += arg.num;
+    if (st.kind == 'label') {
+      res += st.name + ":" + ENDL;
+    } else {
+      res += st.kind + " ";
+      if (st.arg) {
+        var arg = st.arg;
+        if (arg.kind == 'const') {
+          res += "=" + arg.val;
+        } else {
+          res += arg.num;
+        }
+      } else if (st.to) {
+        res += st.to;
       }
-    } else if (st.to) {
-      res += st.to.val;
+      res += ENDL;
     }
-    res += ENDL;
   }
   return res;
 }
