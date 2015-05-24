@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=320">
+        <title>Yacc and Lex Playground</title>
+        <style>
+textarea {
+  font-family: monospace;
+}
+
+.error {
+  color: red;
+}
+
+.warning {
+  color: orange;
+}
+
+.good {
+  color: green;
+}
+        </style>
+        <script src="jquery-1.11.2.js"></script>
+        <script src="jison.js"></script>
+        <script src="yacclex.js"></script>
+    </head>
+    <body>
+        <h1>Yacc and Lex Playground</h1>
+        <p>Uses <a href="https://github.com/zaach/jison">Jison</a> parser generator.</p>
+        <div>
+            <textarea id="grammar" rows="20" cols="80">%lex
+%%
+
+\s+ ;
+
+halt                  return 'HALT';
+
+read                  return 'READ';
+write                 return 'WRITE';
+store                 return 'STORE';
+load                  return 'LOAD';
+
+add                   return 'ADD';
+mul                   return 'MUL';
+sub                   return 'SUB';
+div                   return 'DIV';
+
+jmp                   return 'JMP';
+jz                    return 'JZ';
+jgtz                  return 'JGTZ';
+
+':'                   return ':';
+'='                   return '=';
+
+[a-z]+[0-9]*          return 'LABEL';
+0|([1-9][0-9]*)       return 'NUMBER';
+
+<<EOF>>               return 'EOF';
+.                     return 'INVALID';
+
+/lex
+
+%start exp
+
+%%
+
+exp : prog EOF  { return process($1); }
+    ;
+
+prog : prog piece  { $$ = $1.concat($2); }
+     | piece       { $$ = [$1];  }
+     ;
+
+piece : label ':' { $$ = $1; }
+      | command   { $$ = $1; }
+      ;
+
+command : WRITE arg      { $$ = { kind: 'write', arg: $2 }; }
+        | READ  nonconst { $$ = { kind: 'read', arg: $2 }; }
+        | HALT           { $$ = { kind: 'halt' }; }
+        | STORE nonconst { $$ = { kind: 'store', arg: $2 }; }
+        | LOAD  arg      { $$ = { kind: 'load', arg: $2 }; }
+        | ADD   arg      { $$ = { kind: 'add', arg: $2 }; }
+        | MUL   arg      { $$ = { kind: 'mul', arg: $2 }; }
+        | SUB   arg      { $$ = { kind: 'sub', arg: $2 }; }
+        | DIV   arg      { $$ = { kind: 'div', arg: $2 }; }
+        | JMP   label    { $$ = { kind: 'jmp', to: $2 }; }
+        | JZ    label    { $$ = { kind: 'jz', to: $2 }; }
+        | JGTZ  label    { $$ = { kind: 'jgtz', to: $2 }; }
+        ;
+
+arg : nonconst   { $$ = $1; }
+    | '=' NUMBER { $$ = { kind: 'const', val: Number($2) }; }
+    ;
+
+nonconst : NUMBER { $$ = { kind: 'register', num: Number($1) }; }
+         ;
+
+label : LABEL { $$ = { kind: 'label', val: $1 }; }
+      ;
+
+%%
+
+function process(prog) {
+  console.log(prog);
+}</textarea>
+            <p>
+                <button id="generate">Generate Parser</button>
+            </p>
+            <pre id="generatorFeedback">
+            </pre>
+        </div>
+        <div>
+            <textarea id="input" rows="10" cols="40">
+load =1
+store 2
+
+read 1
+
+loop:
+load 1
+jz exit
+
+load 2
+mul =2
+store 2
+
+load 1
+sub =1
+store 1
+
+jmp loop
+
+exit:
+write 2
+halt</textarea>
+            <p>
+                <button id="parse">Parse</button>
+            </p>
+        </div>
+        <pre id="output">
+        </pre>
+    </body>
+</html>
