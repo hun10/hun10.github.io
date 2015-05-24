@@ -64,15 +64,25 @@ jgtz                  return 'JGTZ';
 
 %%
 
-exp : prog EOF  { return process($1); }
+exp : prog EOF  { if (currentLabels.length > 0) {
+                    $1.push({
+                      kind: 'halt',
+                      labels: currentLabels
+                    });
+                    currentLabels = [];
+                  }
+                  return process($1); }
     ;
 
-prog : prog piece  { $$ = $1.concat($2); }
+prog : prog piece  { $$ = $2 != undefined ? $1.concat($2) : $1; }
      | piece       { $$ = [$1];  }
      ;
 
-piece : label ':' { $$ = $1; }
-      | command   { $$ = $1; }
+piece : label ':' { $$ = undefined; currentLabels.push($1); }
+      | command   { $$ = $1;
+                    $$.labels = currentLabels;
+                    currentLabels = [];
+                  }
       ;
 
 command : WRITE arg      { $$ = { kind: 'write', arg: $2 }; }
@@ -100,6 +110,8 @@ label : LABEL { $$ = { kind: 'label', val: $1 }; }
       ;
 
 %%
+
+var currentLabels = [];
 
 function process(prog) {
   console.log(prog);
