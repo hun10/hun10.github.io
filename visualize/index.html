@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=320">
+        <title>Algorithm Visualization</title>
+        <script>
+
+function isString(s) {
+  return typeof s == 'string' || s instanceof String;
+}
+
+function kindOf(kind) {
+  if (isString(kind)) {
+    return {
+      kind: kind,
+      content: []
+    };
+  } else {
+    return kind.kind;
+  }
+}
+
+function makeObj(args) {
+  var res = kindOf(args.callee.name);
+  for (var i = 0; i < args.length; i++) {
+    res.content.push(args[i]);
+  }
+  return res;
+}
+
+function EmptyText() { return makeObj(arguments); }
+
+function Text(q) { return makeObj(arguments); }
+
+function Char(q) { return makeObj(arguments); }
+
+function AddCharToText(q) { return makeObj(arguments); }
+
+function AddCharToSAM(q) { return makeObj(arguments); }
+
+function SAM(text) { return makeObj(arguments); }
+
+function get(obj, path) {
+  if (kindOf(obj) != arguments[1].name) {
+    return null;
+  }
+  for (var i = 2; i < arguments.length; i++) {
+    var arg = arguments[i];
+    var cnt = obj.content;
+    var found = false;
+    for (var j = 0; j < cnt.length; j++) {
+      var o = cnt[j];
+      if (Array.isArray(arg)) {
+        for (var k = 0; k < arg.length; k++) {
+          if (kindOf(o) == arg[k].name) {
+            found = true;
+            obj = o;
+            break;
+          }
+        }
+        if (found) break;
+      } else {
+        if (kindOf(o) == arg.name) {
+          found = true;
+          obj = o;
+          break;
+        }
+      }
+    }
+    if (!found) {
+      return null
+    }
+  }
+  return obj
+}
+
+function unwrap(obj) {
+  return obj.content[0];
+}
+
+function nextStep(state) {
+  if (get(state, AddCharToSAM) &&
+      get(state, AddCharToSAM, SAM, [Text, EmptyText]) &&
+      get(state, AddCharToSAM, Char)) {
+    var sam = get(state, AddCharToSAM, SAM);
+    var text = get(sam, SAM, [Text, EmptyText]);
+    var char = get(state, AddCharToSAM, Char);
+    return SAM(AddCharToText(text, char));
+  }
+
+  if (get(state, SAM, AddCharToText) &&
+      get(state, SAM, AddCharToText, Text) &&
+      get(state, SAM, AddCharToText, Char)) {
+    var text = get(state, SAM, AddCharToText, Text);
+    var char = get(state, SAM, AddCharToText, Char);
+    return SAM(Text(unwrap(text) + unwrap(char)));
+  }
+
+  if (get(state, SAM, AddCharToText) &&
+      get(state, SAM, AddCharToText, EmptyText) &&
+      get(state, SAM, AddCharToText, Char)) {
+    var char = get(state, SAM, AddCharToText, Char);
+    return SAM(Text(unwrap(char)));
+  }
+
+  return null
+}
+
+function simpleViz(state) {
+  if (isString(state)) {
+    return '"' + state + '"';
+  }
+
+  var inPar = "";
+  var cnt = state.content;
+  for (var i = 0; i < cnt.length; i++) {
+    if (i > 0) {
+      inPar += ", ";
+    }
+    inPar += simpleViz(cnt[i]);
+  }
+  return kindOf(state) + "(" + inPar + ")";
+}
+
+var stt = SAM(EmptyText());
+var str = "bananaaazna";
+
+for (var i = 0, j = 0; stt && i < 200; i++) {
+  if (j < str.length && get(stt, SAM, [Text, EmptyText])) {
+    stt = AddCharToSAM(stt, Char(str[j++]))
+  }
+  document.write(simpleViz(stt));
+  document.write("<br/>");
+  stt = nextStep(stt);
+}
+
+        </script>
+    </head>
+    <body>
+    </body>
+</html>

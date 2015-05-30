@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=320">
+        <title>Algorithm Visualization</title>
+        <style>
+        </style>
+        <script src="jquery-1.11.2.js"></script>
+        <script>
+
+function show(st) {
+  var $state = $("<div>", { style: "border: 1px black solid; margin: 1em; padding: 0.5em" });
+
+  var $mode = $("<p>");
+  if (st.mode == "begin") {
+    $mode.text("Starting to compute borders array.");
+    $state.append($mode);
+    var $str = $("<p>");
+    $str.text("s = " + st.s);
+    $state.append($str);
+  } else if (st.mode == "end") {
+    $mode.text("Finished.");
+    $state.append($mode);
+    var $str = $("<p>");
+    $str.text("b = " + st.b);
+    $state.append($str);
+  } else if (st.mode == "main") {
+    $mode.text("Checking the number of already computed borders " + st.b.length +  " against |s|.");
+    $state.append($mode);
+  } else if (st.mode == "p") {
+    if (st.empty) {
+      $mode.text("No border.");
+    } else {
+      $mode.text("Trying to extend border of size " + st.b[st.p - 1]);
+    }
+    $state.append($mode);
+  } else if (st.mode == "sc") {
+    if (st.extend) {
+      $mode.text("Characters are equal: " + st.p + " and " + (st.b.length + 1));
+    } else {
+      $mode.text("Characters are different: " + st.p + " not equal to " + (st.b.length + 1));
+    }
+    $state.append($mode);
+  } else if (st.mode == "blen") {
+    var tx = st.b.length + " < |s|";
+    if (!st.isLower) {
+      tx = st.b.length + " = |s|";
+    }
+    $mode.text(tx);
+    $state.append($mode);
+  } else if (st.mode == "find") {
+    $mode.text("Looking for prefix of size " + st.p);
+    $state.append($mode);
+  }
+
+  $("#container").append($state);
+}
+
+function step(st) {
+  var BEGIN = "begin";
+  var  MAIN = "main";
+  var  BLEN = "blen";
+  var     P = "p";
+  var    SC = "sc";
+  var  FIND = "find";
+  var   END = "end";
+
+  if (st.mode == BEGIN) {
+    return {
+      mode: MAIN,
+         s: st.s,
+         b: []
+    };
+  } else if (st.mode == MAIN) {
+    return {
+      mode: BLEN,
+         s: st.s,
+         b: st.b,
+   isLower: st.b.length < st.s.length
+    };
+  } else if (st.mode == BLEN) {
+    if (st.isLower) {
+      return {
+        mode: FIND,
+           s: st.s,
+           p: st.b.length,
+           b: st.b
+      };
+    } else {
+      return {
+        mode: END,
+           s: st.s,
+           b: st.b
+      };
+    }
+  } else if (st.mode == FIND) {
+    return {
+        mode: P,
+           s: st.s,
+           p: st.p,
+           b: st.b,
+       empty: st.p == 0
+    };
+  } else if (st.mode == P) {
+    if (st.empty) {
+      return {
+        mode: MAIN,
+           s: st.s,
+           b: st.b.concat(0)
+      };
+    } else {
+      return {
+        mode: SC,
+           s: st.s,
+           p: st.p,
+           b: st.b,
+      extend: st.s[st.b[st.p - 1]] == st.s[st.b.length]
+      };
+    }
+  } else if (st.mode == SC) {
+    if (st.extend) {
+      return {
+        mode: MAIN,
+           s: st.s,
+           b: st.b.concat(st.b[st.p - 1] + 1)
+      };
+    } else {
+      return {
+        mode: FIND,
+           s: st.s,
+           p: st.b[st.p - 1],
+           b: st.b
+      };
+    }
+  } else if (st.mode == END) {
+    return st;
+  }
+}
+
+$(function() {
+  s = {
+    mode: "begin",
+    s: "ABACABAB"
+  };
+  for (var i = 0; i < 500; i++) {
+    show(s);
+    if (s.mode == "end") break;
+    s = step(s);
+  }
+});
+
+        </script>
+    </head>
+    <body>
+        <div id="container"></div>
+    </body>
+</html>

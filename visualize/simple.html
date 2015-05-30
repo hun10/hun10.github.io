@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=320">
+        <title>Algorithm Visualization</title>
+        <style>
+
+.suffix {
+  text-align: center;
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin: 4px;
+  padding: 2px;
+  border-style: solid;
+  border-width: 1px;
+}
+
+.explicit {
+  background-color: gold;
+  border-width: 2px;
+  margin: 3px;
+}
+
+.postponed {
+  background-color: lightblue;
+}
+
+.implicit {
+  border-style: dashed;
+}
+
+.new {
+  border-radius: 1em;
+}
+
+.witness {
+  display: inline-block;
+  border-style: solid;
+  border-radius: 5px;
+  border-color: lightgreen;
+  border-width: 2px;
+  margin: -2px;
+}
+
+.string {
+  padding: 4px;
+}
+
+.comparing {
+  border-color: red;
+  border-width: 2px;
+  margin: 3px;
+}
+
+.selected {
+  background-color: orange;
+}
+
+        </style>
+        <script>
+
+var REPORT = "";
+
+function reportNoLn(text) {
+  REPORT += text;
+}
+
+function report(text) {
+  reportNoLn(text);
+  reportNoLn("\n");
+}
+
+function flushReport() {
+  document.write(REPORT);
+  REPORT = "";
+}
+
+function reportAddCmd(cmd) {
+  report("<h1>There is request to append " + cmd.add + " letter.</h1>");
+}
+
+var divId = 98901;
+
+function reportSuffix(char, state) {
+  var handler = "";
+  if (state.lastIndexOf("postponed", 0) === 0) {
+    handler = "onmouseover='showWitnesses(" + divId + ");'";
+  }
+  report("<div id='" + divId + "' class='suffix " + state + "' " + handler  + ">");
+  report(char);
+  report("</div>");
+  return divId++;
+}
+
+var witnesses = [];
+var cleaners = [];
+
+function showWitnesses(gdivId) {
+  var cc = cleaners[gdivId];
+  if (!cc) return;
+  for (var i = 0; i < cc.length; i++) {
+    var divId = cc[i];
+    document.getElementById(divId).className = document.getElementById(divId).className.replace( /(?:^|\s)selected(?!\S)/g , '' );
+  }
+  var hh = witnesses[gdivId];
+  if (!hh) return;
+  for (var i = 0; i < hh.length; i++) {
+    var divId = hh[i];
+    document.getElementById(divId).className += " selected";
+  }
+}
+
+function reportStruct(sam, c1, c2) {
+  var s = sam.s;
+  var n = sam.n;
+  var a = sam.a;
+  var b = sam.b;
+  if (a == null) {
+    a = {};
+  }
+  if (b == null) {
+    b = {};
+  }
+
+  var newSuffix = null;
+  if (s.length > n) {
+    newSuffix = s[n];
+  }
+
+  var sufIds = [];
+  report("<div class='string'>");
+  for (var i = 0; i < n; i++) {
+    if (sam.iLen > 0 && i == sam.iWit) {
+      report("<span class='witness'>");
+    }
+    var mod = "";
+    if (i == c1 || i == c2) {
+      mod = " comparing";
+    }
+    var sufId;
+    if (a[i] > 0) {
+      sufId = reportSuffix(s[i] + "<sub>" + a[i] + "</sub>", "postponed" + mod);
+      var res = [];
+      var io = b[i];
+      if (io) {
+        for (var w = 0; a[i + w] > 0; w++) {
+          res.push(sufIds[io + w]);
+        }
+        witnesses[sufId] = res;
+      }
+    } else if (i >= n - sam.iLen) {
+      sudId = reportSuffix(s[i], "implicit" + mod);
+    } else {
+      sufId = reportSuffix(s[i], "explicit" + mod);
+    }
+    sufIds.push(sufId);
+    cleaners[sufId] = sufIds;
+    if (sam.iLen > 0 && i == sam.iWit + sam.iLen - 1) {
+      report("</span>");
+    }
+  }
+  if (newSuffix) {
+    var mod = "";
+    if (n == c1 || n == c2) {
+      mod = " comparing";
+    }
+    reportSuffix(newSuffix, "new" + mod);
+  }
+  report("</div>");
+}
+
+function extractCurrentImplicit(sam) {
+  var s = sam.s;
+  var n = sam.n;
+  var L = sam.iLen;
+  var res = "";
+
+  for (var i = n - L; i < n; i++) {
+    res += s[i];
+  }
+
+  if (res.length == 0) {
+    res = "empty";
+  }
+  return res;
+}
+
+function reportTryExtend(sam) {
+  report("<p>");
+  report("We try to extend longest implicit suffix, which is currently " + extractCurrentImplicit(sam) + ".");
+  if (sam.iLen == 0) {
+    report("In this case we simply search for explicit suffix, which starts with letter " + sam.s[sam.n] + ".");
+    if (sam.a == null) {
+      report("Unfortunately, we have no explicit suffixes.");
+      report("So, we just mark this suffix as postponed.");
+      sam.a = {};
+      sam.b = {};
+      sam.a[sam.n] = 1;
+      sam.n++;
+    } else {
+      var found = false;
+      for (var i = 0; i < sam.n; i++) {
+        if (sam.a[i] == 0) {
+          if (sam.s[i] == sam.s[sam.n]) {
+            found = true;
+            sam.iWit = i;
+            sam.iLen = 1;
+            sam.n++;
+            break;
+          }
+        }
+      }
+      if (!found) {
+        report("There is no such a suffix, so we just mark this suffix as postponed.");
+        sam.a[sam.n] = 1;
+        sam.n++;
+      }
+    }
+  } else {
+    if (sam.s[sam.iWit + sam.iLen] == sam.s[sam.n]) {
+      sam.iLen++;
+      sam.n++;
+    } else {
+      report("And it fails.");
+      reportStruct(sam, sam.iWit + sam.iLen, sam.n);
+      report("So we search for another witness of current implicit.");
+      var found = false;
+      for (var i = 0; i < sam.n - sam.iLen; i++) {
+        if (sam.a[i] == 0) {
+          var same = true;
+          for (var j = 0; j <= sam.iLen; j++) {
+            if (sam.s[i + j] != sam.s[sam.n - sam.iLen + j]) {
+              same = false;
+            }
+          }
+          if (same) {
+            sam.iWit = i;
+            sam.n++;
+            sam.iLen++;
+            found = true;
+            break;
+          }
+        }
+      }
+      if (!found) {
+        report("But this failed either, so we truncate our implicit and repeat the process.");
+        sam.a[sam.n - sam.iLen] = sam.iLen + 1;
+        sam.b[sam.n - sam.iLen] = sam.iWit;
+        sam.iLen--;
+        for (var i = 0; i < sam.n - sam.iLen; i++) {
+          if (sam.a[i] == 0) {
+            var same = true;
+            for (var j = 0; j < sam.iLen; j++) {
+              if (sam.s[i + j] != sam.s[sam.n - sam.iLen + j]) {
+                same = false;
+              }
+            }
+            if (same) {
+              sam.iWit = i;
+              break;
+            }
+          }
+        }
+        reportStruct(sam);
+        report("</p>");
+        return true;
+      }
+    }
+  }
+  report("</p>");
+  return false;
+}
+
+function smallestThreshold(sam) {
+  var smallest = null;
+  var idx = null;
+  if (sam.a != null) {
+    for (var x = 0; x < sam.n; x++) {
+      var t = sam.a[x];
+      if (t > 0) {
+        if (smallest == null || t < smallest) {
+          smallest = t;
+          idx = x;
+        }
+      }
+    }
+  }
+  return {idx: idx, t: smallest};
+}
+
+function createAddCommands(text) {
+  var res = [];
+  for (var i = 0; i < text.length; i++) {
+    res.push({ add: text[i] });
+  }
+  return res;
+}
+
+var commands = createAddCommands("atternatternatternpnatternzpnatz");
+
+var structure = {
+  s: "",
+  a: null,
+  b: null,
+  n: 0,
+  iLen: 0,
+  iWit: 0
+};
+
+for (var cc = 0; cc < commands.length; cc++) {
+  var cmd = commands[cc];
+  if ("add" in cmd) {
+    reportAddCmd(cmd);
+    var sx = smallestThreshold(structure);
+    if (sx.t >= structure.iLen + 1) {
+      report("Before appending this letter, we need to make");
+      reportSuffix(structure.s[sx.idx] + "<sub>" + sx.t + "</sub>", "postponed");
+      report(" explicit.");
+      structure.a[sx.idx] = 0;
+    }
+    structure.s += cmd.add;
+    reportStruct(structure);
+    while(reportTryExtend(structure));
+    reportStruct(structure);
+    report("<p>Done.</p>");
+  }
+  flushReport();
+}
+
+        </script>
+    </head>
+    <body>
+    </body>
+</html>
