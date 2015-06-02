@@ -38,6 +38,7 @@ function makeRandomTable(size, colors) {
 
 var isMobile;
 var counterView;
+var squareSize = 5;
 
 function showTable(cells, colorsArray) {
   var table = $("<table>", { style: "border: 1px solid" });
@@ -83,9 +84,9 @@ function showHints(colorsArray, input, limit, checkAnswer) {
 
 function main() {
   isMobile = window.matchMedia("only screen and (max-width: 760px)");
-  var cells = makeRandomTable(3, 2);
+  var cells = makeRandomTable(squareSize, 2);
   var colors = ["lightblue", "white"];
-  var container = $("<center>");
+  var container = $("<center id='schulteTable'>");
   var table = showTable(cells, colors);
   container.append(table);
   var input = $("<input>");
@@ -154,4 +155,11 @@ function main() {
   input.keypress(function(e) { if (e.keyCode == 13) checkAnswer(); });
 }
 
-$(main);
+function init() {
+  $("#t3").click(function() { $("#schulteTable").remove(); squareSize = 3; main(); });
+  $("#t5").click(function() { $("#schulteTable").remove(); squareSize = 5; main(); });
+  $("#t7").click(function() { $("#schulteTable").remove(); squareSize = 7; main(); });
+  main();
+}
+
+$(init);
