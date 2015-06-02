@@ -73,14 +73,20 @@ function main() {
   container.append(input);
   container.append($("<p>", { text: "Use these numbers to enumerate the colors in order:" }));
   var hints = showHints(colors);
+  var startTime = performance.now();
   container.append(hints);
   $("body").append(container);
   input.focus();
   function wrongAnswer() {
-    alert("Wrong!");
+    input.replaceWith("Wrong!");
   }
   function rightAnswer() {
-    alert("Ok.");
+    var endTime = performance.now();
+    var time = endTime - startTime;
+    time /= 100;
+    time = Math.round(time);
+    time /= 10;
+    input.replaceWith("Ok. You spent " + time + " seconds.");
   }
   function checkAnswer() {
     var answer = input.val();
