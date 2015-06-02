@@ -92,7 +92,8 @@ function main() {
     time /= 100;
     time = Math.round(time);
     time /= 10;
-    result.append($("<p>", { text: "Ok. You spent " + time + " seconds." }));
+    var result = $("<div>");
+    result.append($("<p>", { text: "Ok. You've spent " + time + " seconds." }));
     result.append(again);
     input.replaceWith(result);
     again.focus();
