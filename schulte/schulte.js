@@ -64,7 +64,7 @@ function showHints(colorsArray, input, limit, checkAnswer) {
   var container = $("<div>", { style: "margin: 1.5em;"});
   for (var i = 0; i < colorsArray.length; i++) {
     var style = "background-color: " + colorsArray[i];
-    style += "; padding: 1em; display: inline; border: 1px solid; margin: 0.5em"
+    style += "; padding: 1em; display: inline; border: 1px solid; margin: 1.5em"
     var el = $("<div>", { text: i, style: style });
     el.click(makeClick(i));
     container.append(el);
