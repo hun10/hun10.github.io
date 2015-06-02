@@ -54,7 +54,8 @@ function showTable(cells, colorsArray) {
 function main() {
   var cells = makeRandomTable(5, 2);
   var colors = ["lightblue", "white"];
-  $("body").append(showTable(cells, colors));
+  var table = showTable(cells, colors)
+  $("body").append($("<center>").append(table));
 }
 
 $(main);
