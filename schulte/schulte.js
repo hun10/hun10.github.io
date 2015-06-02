@@ -36,6 +36,8 @@ function makeRandomTable(size, colors) {
   return table;
 }
 
+var isMobile;
+
 function showTable(cells, colorsArray) {
   var table = $("<table>", { style: "border: 1px solid" });
   for (var i = 0; i < cells.length; i++) {
@@ -65,7 +67,10 @@ function showHints(colorsArray, input, limit, checkAnswer) {
   for (var i = 0; i < colorsArray.length; i++) {
     var style = "background-color: " + colorsArray[i];
     style += "; padding: 1em; display: inline; border: 1px solid; margin: 1.5em"
-    var el = $("<div>", { text: i, style: style });
+    var el = $("<div>", { style: style });
+    if (!isMobile.matches) {
+      el.text(i);
+    }
     el.click(makeClick(i));
     container.append(el);
   }
@@ -73,6 +78,7 @@ function showHints(colorsArray, input, limit, checkAnswer) {
 }
 
 function main() {
+  isMobile = window.matchMedia("only screen and (max-width: 760px)");
   var cells = makeRandomTable(3, 2);
   var colors = ["lightblue", "white"];
   var container = $("<center>");
@@ -80,12 +86,16 @@ function main() {
   container.append(table);
   var input = $("<input>");
   container.append(input);
-  container.append($("<p>", { text: "Use these numbers to enumerate the colors in order:" }));
+  if (!isMobile.matches) {
+    container.append($("<p>", { text: "Use these numbers to enumerate the colors in order:" }));
+  }
   var hints = showHints(colors, input, cells.length * cells.length, checkAnswer);
   var startTime = performance.now();
   container.append(hints);
   $("body").append(container);
-  input.focus();
+  if (!isMobile.matches) {
+    input.focus();
+  }
   var again = $("<button>", { text: "Try Again" });
   again.click(function() { container.remove(); main(); });
   function wrongAnswer() {
