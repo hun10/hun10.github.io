@@ -52,12 +52,21 @@ function showTable(cells, colorsArray) {
 }
 
 
-function showHints(colorsArray) {
+function showHints(colorsArray, input, limit, checkAnswer) {
+  function makeClick(i) {
+    return function() {
+      input.val(input.val() + i);
+      if (input.val().length >= limit) {
+        checkAnswer();
+      }
+    }
+  }
   var container = $("<div>", { style: "margin: 1.5em;"});
   for (var i = 0; i < colorsArray.length; i++) {
     var style = "background-color: " + colorsArray[i];
     style += "; padding: 1em; display: inline; border: 1px solid; margin: 0.5em"
     var el = $("<div>", { text: i, style: style });
+    el.click(makeClick(i));
     container.append(el);
   }
   return container;
@@ -72,7 +81,7 @@ function main() {
   var input = $("<input>");
   container.append(input);
   container.append($("<p>", { text: "Use these numbers to enumerate the colors in order:" }));
-  var hints = showHints(colors);
+  var hints = showHints(colors, input, cells.length * cells.length, checkAnswer);
   var startTime = performance.now();
   container.append(hints);
   $("body").append(container);
