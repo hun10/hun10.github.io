@@ -37,6 +37,7 @@ function makeRandomTable(size, colors) {
 }
 
 var isMobile;
+var counterView;
 
 function showTable(cells, colorsArray) {
   var table = $("<table>", { style: "border: 1px solid" });
@@ -58,6 +59,9 @@ function showHints(colorsArray, input, limit, checkAnswer) {
   function makeClick(i) {
     return function() {
       input.val(input.val() + i);
+      if (counterView) {
+        counterView.text(input.val().length);
+      }
       if (input.val().length >= limit) {
         checkAnswer();
       }
@@ -85,6 +89,9 @@ function main() {
   var table = showTable(cells, colors);
   container.append(table);
   var input = $("<input>");
+  if (isMobile.matches) {
+    input.hide();
+  }
   container.append(input);
   if (!isMobile.matches) {
     container.append($("<p>", { text: "Use these numbers to enumerate the colors in order:" }));
@@ -95,6 +102,9 @@ function main() {
   $("body").append(container);
   if (!isMobile.matches) {
     input.focus();
+  } else {
+    counterView = $("<div>", { text: 0 });
+    container.append(counterView);
   }
   var again = $("<button>", { text: "Try Again" });
   again.click(function() { container.remove(); main(); });
