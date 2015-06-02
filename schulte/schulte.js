@@ -77,8 +77,14 @@ function main() {
   container.append(hints);
   $("body").append(container);
   input.focus();
+  var again = $("<button>", { text: "Try Again" });
+  again.click(function() { container.remove(); main(); });
   function wrongAnswer() {
-    input.replaceWith("Wrong!");
+    var result = $("<div>");
+    result.append($("<p>", { text: "Wrong!" }));
+    result.append(again);
+    input.replaceWith(result);
+    again.focus();
   }
   function rightAnswer() {
     var endTime = performance.now();
@@ -86,7 +92,10 @@ function main() {
     time /= 100;
     time = Math.round(time);
     time /= 10;
-    input.replaceWith("Ok. You spent " + time + " seconds.");
+    result.append($("<p>", { text: "Ok. You spent " + time + " seconds." }));
+    result.append(again);
+    input.replaceWith(result);
+    again.focus();
   }
   function checkAnswer() {
     var answer = input.val();
