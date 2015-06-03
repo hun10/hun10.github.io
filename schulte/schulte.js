@@ -68,7 +68,10 @@ function showHints(colorsArray, input, limit, checkAnswer) {
       }
     }
   }
-  var container = $("<div>", { style: "margin: 1.5em;"});
+  var container = $("<div id='hints'>", { style: "margin: 1.5em;"});
+  if (!isMobile.matches) {
+    container.append($("<p>", { text: "Use these numbers to enumerate the colors in order:" }));
+  }
   for (var i = 0; i < colorsArray.length; i++) {
     var style = "background-color: " + colorsArray[i];
     style += "; padding: 1em; display: inline; border: 1px solid; margin: 1.5em"
@@ -94,9 +97,6 @@ function main() {
     input.hide();
   }
   container.append(input);
-  if (!isMobile.matches) {
-    container.append($("<p>", { text: "Use these numbers to enumerate the colors in order:" }));
-  }
   var hints = showHints(colors, input, cells.length * cells.length, checkAnswer);
   var startTime = performance.now();
   container.append(hints);
@@ -114,6 +114,7 @@ function main() {
     result.append($("<p>", { text: "Wrong!" }));
     result.append(again);
     input.replaceWith(result);
+    $("#hints").remove();
     again.focus();
   }
   function rightAnswer() {
@@ -126,6 +127,7 @@ function main() {
     result.append($("<p>", { text: "Ok. You've spent " + time + " seconds." }));
     result.append(again);
     input.replaceWith(result);
+    $("#hints").remove();
     again.focus();
   }
   function checkAnswer() {
