@@ -71,6 +71,8 @@ function showHints(colorsArray, input, limit, checkAnswer) {
   var container = $("<div id='hints'>", { style: "margin: 1.5em;"});
   if (!isMobile.matches) {
     container.append($("<p>", { text: "Use these numbers to enumerate the colors in order:" }));
+  } else {
+    container.append($("<p>", { style: "padding: 1em" }));
   }
   for (var i = 0; i < colorsArray.length; i++) {
     var style = "background-color: " + colorsArray[i];
@@ -81,6 +83,10 @@ function showHints(colorsArray, input, limit, checkAnswer) {
     }
     el.click(makeClick(i));
     container.append(el);
+  }
+  if (isMobile.matches) {
+    counterView = $("<div>", { text: 0 });
+    container.append(counterView);
   }
   return container;
 }
@@ -103,9 +109,6 @@ function main() {
   $("body").append(container);
   if (!isMobile.matches) {
     input.focus();
-  } else {
-    counterView = $("<div>", { text: 0 });
-    container.append(counterView);
   }
   var again = $("<button>", { text: "Try Again" });
   again.click(function() { container.remove(); main(); });
