@@ -120,14 +120,32 @@ function main() {
     $("#hints").remove();
     again.focus();
   }
+  function formatTime(time) {
+    function fm(x) {
+      if (x == 1) return x + " minute";
+      return x + " minutes";
+    }
+    function fs(x) {
+      if (x == 1) return x + " second";
+      return x + " seconds";
+    }
+    time /= 100;
+    time = Math.round(time);
+    var seconds = time % 600;
+    seconds /= 10;
+    time = Math.floor(time / 600);
+    var minutes = time;
+    if (minutes > 0) {
+      return fm(minutes) + " and " + fs(seconds);
+    } else {
+      return fs(seconds);
+    }
+  }
   function rightAnswer() {
     var endTime = performance.now();
     var time = endTime - startTime;
-    time /= 100;
-    time = Math.round(time);
-    time /= 10;
     var result = $("<div>");
-    result.append($("<p>", { text: "Ok. You've spent " + time + " seconds." }));
+    result.append($("<p>", { text: "Ok. You've spent " + formatTime(time) + "." }));
     result.append(again);
     input.replaceWith(result);
     $("#hints").remove();
