@@ -79,9 +79,9 @@ function showHints(colorsArray, input, limit, checkAnswer) {
     style += "; padding: 1em; display: inline; border: 1px solid; margin: 1.5em"
     var el = $("<div>", { style: style });
     if (!isMobile.matches) {
-      el.text(i);
+      el.text(i + 1);
     }
-    el.click(makeClick(i));
+    el.click(makeClick(i + 1));
     container.append(el);
   }
   if (isMobile.matches) {
@@ -155,7 +155,7 @@ function main() {
     var answer = input.val();
     if (answer.length == cells.length * cells.length) {
       for (var k = 0; k < answer.length; k++) {
-        var c = Number(answer[k]);
+        var c = Number(answer[k]) - 1;
         var found = false;
         for (var i = 0; i < cells.length; i++) {
           for (var j = 0; j < cells[i].length; j++) {
