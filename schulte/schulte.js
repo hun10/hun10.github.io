@@ -76,7 +76,7 @@ function showHints(colorsArray, input, limit, checkAnswer) {
   }
   for (var i = 0; i < colorsArray.length; i++) {
     var style = "background-color: " + colorsArray[i];
-    style += "; padding: 1em; display: inline; border: 1px solid; margin: 1.5em"
+    style += "; padding: 1em; display: inline; border: 1px solid; margin: 3em"
     var el = $("<div>", { style: style });
     if (!isMobile.matches) {
       el.text(i + 1);
