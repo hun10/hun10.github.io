@@ -179,6 +179,7 @@ function main() {
 }
 
 function init() {
+  $(document).bind('touchmove', false);
   $("#t3").click(function() { $("#schulteTable").remove(); squareSize = 3; main(); });
   $("#t5").click(function() { $("#schulteTable").remove(); squareSize = 5; main(); });
   $("#t7").click(function() { $("#schulteTable").remove(); squareSize = 7; main(); });
