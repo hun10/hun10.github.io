@@ -1,4 +1,6 @@
 CACHE MANIFEST
-# version 0.4a
+# version 0.5
 
-*
+jquery-1.11.2.js
+schulte.js
+perf.js
