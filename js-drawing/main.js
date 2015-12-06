@@ -138,11 +138,11 @@ var _useless = function() {
     dx /= dr;
     dy /= dr;
     return {
-      shape: 'arrow',
-      x1: x1 + dx * c1.r,
-      y1: y1 + dy * c1.r,
-      x2: x2 - dx * c2.r,
-      y2: y2 - dy * c2.r
+      shape : 'arrow',
+      x1 : x1 + dx * c1.r,
+      y1 : y1 + dy * c1.r,
+      x2 : x2 - dx * c2.r,
+      y2 : y2 - dy * c2.r
     };
   }
 
@@ -280,18 +280,18 @@ var _useless = function() {
       var x = T.x;
       var y = T.y * 70;
       T.circ = {
-        shape: "circle",
-        x: x,
-        y: y,
-        r: 20
+        shape : "circle",
+        x : x,
+        y : y,
+        r : 20
       };
       collage.push(T.circ);
       collage.push({
         shape: "text",
-        x: x,
-        y: y,
-        size: 24,
-        text: T.label
+        x : x,
+        y : y,
+        size : 24,
+        text : T.label
       });
     }
     
@@ -323,7 +323,7 @@ var _useless = function() {
     inLabel.textContent = "In[ ]:";
 
     var area = add(inRow[2], "textarea");
-    area.cols = 80;
+    area.cols = 40;
     area.rows = 1;
     area.style.fontFamily = "monospace";
     area.style.fontSize = "larger";
@@ -357,6 +357,9 @@ var _useless = function() {
         if (result instanceof Drawing) {
           reply = add(replyContainer, "canvas");
           result.draw(reply);
+        } else if (result instanceof HTMLElement) {
+          reply = result;
+          replyContainer.appendChild(reply);
         } else {
           reply = add(replyContainer, "pre");
           reply.style.color = "";
