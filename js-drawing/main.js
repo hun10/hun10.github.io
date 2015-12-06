@@ -323,7 +323,7 @@ var _useless = function() {
     inLabel.textContent = "In[ ]:";
 
     var area = add(inRow[2], "textarea");
-    area.cols = 40;
+    area.cols = localStorage.getItem(""com.urbanowicz.jsinteractive._areaWidth") || 80;
     area.rows = 1;
     area.style.fontFamily = "monospace";
     area.style.fontSize = "larger";
