@@ -10521,6 +10521,9 @@ Elm.Flow.make = function (_elm) {
    var codeToAction = function (code) {    return Typed(function (_p2) {    return $String.trim($String.fromChar($Char.fromCode(_p2)));}(code));};
    var chars = A2($Signal.map,codeToAction,$Keyboard.presses);
    var actions = $Signal.mergeMany(_U.list([newParagraphs,spaceBars,chars,ticks]));
+   var SessionEnded = {ctor: "SessionEnded"};
+   var SessionInProgress = {ctor: "SessionInProgress"};
+   var WaitingForFirstStroke = {ctor: "WaitingForFirstStroke"};
    var viewTime = function (t) {
       var dd = function (_p3) {    return A3($String.padLeft,2,_U.chr("0"),$Basics.toString(_p3));};
       var minutes = $Basics.floor(t / $Time.minute);
@@ -10541,33 +10544,57 @@ Elm.Flow.make = function (_elm) {
       return A2($Html.div,_U.list([]),_U.list([viewTime(_p5.sessionTimeLeft),A2(viewText,_p5.model,_p5.timeToFade)]));
    };
    var update = F2(function (action,m) {
-      var timeToFade = m.timeToFade;
-      var model = m.model;
-      var reversed = $List.reverse(model);
-      if (_U.cmp(m.sessionTimeLeft,0) > 0) {
-            var _p6 = {ctor: "_Tuple2",_0: action,_1: reversed};
-            switch (_p6._0.ctor)
-            {case "Typed": if (_p6._1.ctor === "[]") {
-                       return _U.update(m,{model: _U.list([_p6._0._0]),timeToFade: defaultTimeToFade});
-                    } else {
-                       return _U.update(m,
-                       {model: $List.reverse(A2($List._op["::"],A2($Basics._op["++"],_p6._1._0,_p6._0._0),_p6._1._1)),timeToFade: defaultTimeToFade});
-                    }
-               case "NewParagraph": if (_p6._1.ctor === "[]") {
-                       return _U.update(m,{model: _U.list([]),timeToFade: defaultTimeToFade});
-                    } else {
-                       if (_p6._1._0 === "") {
-                             return m;
+      update: while (true) {
+         var timeToFade = m.timeToFade;
+         var model = m.model;
+         var reversed = $List.reverse(model);
+         var _p6 = {ctor: "_Tuple2",_0: m.state,_1: action};
+         _v1_2: do {
+            if (_p6.ctor === "_Tuple2") {
+                  switch (_p6._0.ctor)
+                  {case "WaitingForFirstStroke": if (_p6._1.ctor === "Typed") {
+                             var _v2 = action,_v3 = _U.update(m,{state: SessionInProgress});
+                             action = _v2;
+                             m = _v3;
+                             continue update;
                           } else {
-                             return _U.update(m,{model: A2($Basics._op["++"],model,_U.list([""])),timeToFade: defaultTimeToFade});
+                             break _v1_2;
                           }
-                    }
-               default: var _p7 = _p6._0._0;
-                 return _U.cmp(_p7,timeToFade) > 0 ? _U.update(m,{model: _U.list([]),timeToFade: 0,sessionTimeLeft: m.sessionTimeLeft - _p7}) : _U.update(m,
-                 {timeToFade: timeToFade - _p7,sessionTimeLeft: m.sessionTimeLeft - _p7});}
-         } else return _U.update(m,{timeToFade: defaultTimeToFade,sessionTimeLeft: 0});
+                     case "SessionInProgress": var _p7 = {ctor: "_Tuple2",_0: action,_1: reversed};
+                       switch (_p7._0.ctor)
+                       {case "Typed": if (_p7._1.ctor === "[]") {
+                                  return _U.update(m,{model: _U.list([_p7._0._0]),timeToFade: defaultTimeToFade});
+                               } else {
+                                  return _U.update(m,
+                                  {model: $List.reverse(A2($List._op["::"],A2($Basics._op["++"],_p7._1._0,_p7._0._0),_p7._1._1))
+                                  ,timeToFade: defaultTimeToFade});
+                               }
+                          case "NewParagraph": if (_p7._1.ctor === "[]") {
+                                  return _U.update(m,{model: _U.list([]),timeToFade: defaultTimeToFade});
+                               } else {
+                                  if (_p7._1._0 === "") {
+                                        return m;
+                                     } else {
+                                        return _U.update(m,{model: A2($Basics._op["++"],model,_U.list([""])),timeToFade: defaultTimeToFade});
+                                     }
+                               }
+                          default: var _p8 = _p7._0._0;
+                            return _U.cmp(m.sessionTimeLeft,_p8) > 0 ? _U.cmp(_p8,timeToFade) > 0 ? _U.update(m,
+                            {model: _U.list([]),timeToFade: 0,sessionTimeLeft: m.sessionTimeLeft - _p8}) : _U.update(m,
+                            {timeToFade: timeToFade - _p8,sessionTimeLeft: m.sessionTimeLeft - _p8}) : _U.update(m,
+                            {timeToFade: defaultTimeToFade,sessionTimeLeft: 0,state: SessionEnded});}
+                     default: break _v1_2;}
+               } else {
+                  break _v1_2;
+               }
+         } while (false);
+         return m;
+      }
    });
-   var state = A3($Signal.foldp,update,{model: _U.list([]),timeToFade: defaultTimeToFade,sessionTimeLeft: 5 * $Time.minute},actions);
+   var state = A3($Signal.foldp,
+   update,
+   {model: _U.list([]),timeToFade: defaultTimeToFade,sessionTimeLeft: 5 * $Time.minute,state: WaitingForFirstStroke},
+   actions);
    var main = A2($Signal.map,view,state);
    return _elm.Flow.values = {_op: _op
                              ,main: main
@@ -10577,6 +10604,9 @@ Elm.Flow.make = function (_elm) {
                              ,viewTime: viewTime
                              ,state: state
                              ,update: update
+                             ,WaitingForFirstStroke: WaitingForFirstStroke
+                             ,SessionInProgress: SessionInProgress
+                             ,SessionEnded: SessionEnded
                              ,Typed: Typed
                              ,NewParagraph: NewParagraph
                              ,TimeElapsed: TimeElapsed
