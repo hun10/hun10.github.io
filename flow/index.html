@@ -10493,6 +10493,71 @@ Elm.Html.Attributes.make = function (_elm) {
                                         ,manifest: manifest
                                         ,property: property
                                         ,attribute: attribute};
+};Elm.Html = Elm.Html || {};
+Elm.Html.Events = Elm.Html.Events || {};
+Elm.Html.Events.make = function (_elm) {
+   "use strict";
+   _elm.Html = _elm.Html || {};
+   _elm.Html.Events = _elm.Html.Events || {};
+   if (_elm.Html.Events.values) return _elm.Html.Events.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $Json$Decode = Elm.Json.Decode.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $VirtualDom = Elm.VirtualDom.make(_elm);
+   var _op = {};
+   var keyCode = A2($Json$Decode._op[":="],"keyCode",$Json$Decode.$int);
+   var targetChecked = A2($Json$Decode.at,_U.list(["target","checked"]),$Json$Decode.bool);
+   var targetValue = A2($Json$Decode.at,_U.list(["target","value"]),$Json$Decode.string);
+   var defaultOptions = $VirtualDom.defaultOptions;
+   var Options = F2(function (a,b) {    return {stopPropagation: a,preventDefault: b};});
+   var onWithOptions = $VirtualDom.onWithOptions;
+   var on = $VirtualDom.on;
+   var messageOn = F3(function (name,addr,msg) {    return A3(on,name,$Json$Decode.value,function (_p0) {    return A2($Signal.message,addr,msg);});});
+   var onClick = messageOn("click");
+   var onDoubleClick = messageOn("dblclick");
+   var onMouseMove = messageOn("mousemove");
+   var onMouseDown = messageOn("mousedown");
+   var onMouseUp = messageOn("mouseup");
+   var onMouseEnter = messageOn("mouseenter");
+   var onMouseLeave = messageOn("mouseleave");
+   var onMouseOver = messageOn("mouseover");
+   var onMouseOut = messageOn("mouseout");
+   var onBlur = messageOn("blur");
+   var onFocus = messageOn("focus");
+   var onSubmit = messageOn("submit");
+   var onKey = F3(function (name,addr,handler) {    return A3(on,name,keyCode,function (code) {    return A2($Signal.message,addr,handler(code));});});
+   var onKeyUp = onKey("keyup");
+   var onKeyDown = onKey("keydown");
+   var onKeyPress = onKey("keypress");
+   return _elm.Html.Events.values = {_op: _op
+                                    ,onBlur: onBlur
+                                    ,onFocus: onFocus
+                                    ,onSubmit: onSubmit
+                                    ,onKeyUp: onKeyUp
+                                    ,onKeyDown: onKeyDown
+                                    ,onKeyPress: onKeyPress
+                                    ,onClick: onClick
+                                    ,onDoubleClick: onDoubleClick
+                                    ,onMouseMove: onMouseMove
+                                    ,onMouseDown: onMouseDown
+                                    ,onMouseUp: onMouseUp
+                                    ,onMouseEnter: onMouseEnter
+                                    ,onMouseLeave: onMouseLeave
+                                    ,onMouseOver: onMouseOver
+                                    ,onMouseOut: onMouseOut
+                                    ,on: on
+                                    ,onWithOptions: onWithOptions
+                                    ,defaultOptions: defaultOptions
+                                    ,targetValue: targetValue
+                                    ,targetChecked: targetChecked
+                                    ,keyCode: keyCode
+                                    ,Options: Options};
 };Elm.Flow = Elm.Flow || {};
 Elm.Flow.make = function (_elm) {
    "use strict";
@@ -10504,6 +10569,7 @@ Elm.Flow.make = function (_elm) {
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
+   $Html$Events = Elm.Html.Events.make(_elm),
    $Keyboard = Elm.Keyboard.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
@@ -10512,6 +10578,8 @@ Elm.Flow.make = function (_elm) {
    $String = Elm.String.make(_elm),
    $Time = Elm.Time.make(_elm);
    var _op = {};
+   var newSessionTimes = $Signal.mailbox(0);
+   var SetSession = function (a) {    return {ctor: "SetSession",_0: a};};
    var TimeElapsed = function (a) {    return {ctor: "TimeElapsed",_0: a};};
    var ticks = A2($Signal.map,TimeElapsed,$Time.fps(5));
    var NewParagraph = {ctor: "NewParagraph"};
@@ -10520,9 +10588,10 @@ Elm.Flow.make = function (_elm) {
    var spaceBars = A2($Signal.map,function (_p1) {    return Typed(" ");},$Keyboard.space);
    var codeToAction = function (code) {    return Typed(function (_p2) {    return $String.trim($String.fromChar($Char.fromCode(_p2)));}(code));};
    var chars = A2($Signal.map,codeToAction,$Keyboard.presses);
-   var actions = $Signal.mergeMany(_U.list([newParagraphs,spaceBars,chars,ticks]));
+   var actions = $Signal.mergeMany(_U.list([newParagraphs,spaceBars,chars,ticks,A2($Signal.map,SetSession,newSessionTimes.signal)]));
    var SessionEnded = {ctor: "SessionEnded"};
    var SessionInProgress = {ctor: "SessionInProgress"};
+   var ChooseSessionTime = {ctor: "ChooseSessionTime"};
    var WaitingForFirstStroke = {ctor: "WaitingForFirstStroke"};
    var viewTime = function (t) {
       var dd = function (_p3) {    return A3($String.padLeft,2,_U.chr("0"),$Basics.toString(_p3));};
@@ -10530,6 +10599,9 @@ Elm.Flow.make = function (_elm) {
       var seconds = A2($Basics._op["%"],$Basics.floor(t / $Time.second),60);
       return $Html.text(A2($Basics._op["++"],dd(minutes),A2($Basics._op["++"],":",dd(seconds))));
    };
+   var buttonForSessionTime = F2(function (address,time) {
+      return A2($Html.button,_U.list([A2($Html$Events.onClick,address,time)]),_U.list([viewTime(time)]));
+   });
    var defaultTimeToFade = 5 * $Time.second;
    var viewText = F2(function (model,timeToFade) {
       return A2($Html.div,
@@ -10539,77 +10611,104 @@ Elm.Flow.make = function (_elm) {
                                               ,{ctor: "_Tuple2",_0: "opacity",_1: $Basics.toString(timeToFade / defaultTimeToFade)}]))]),
       A2($List.map,function (txt) {    return A2($Html.p,_U.list([]),_U.list([$Html.text(txt)]));},model));
    });
-   var view = function (_p4) {
+   var viewSession = function (_p4) {
       var _p5 = _p4;
       return A2($Html.div,_U.list([]),_U.list([viewTime(_p5.sessionTimeLeft),A2(viewText,_p5.model,_p5.timeToFade)]));
+   };
+   var view = function (m) {
+      var _p6 = m.state;
+      if (_p6.ctor === "ChooseSessionTime") {
+            return A2($Html.div,
+            _U.list([]),
+            A2($List.map,
+            buttonForSessionTime(newSessionTimes.address),
+            A2($List.map,function (x) {    return x * $Time.minute;},_U.list([5,10,15,20,25,30,45,60]))));
+         } else {
+            return viewSession(m);
+         }
    };
    var update = F2(function (action,m) {
       update: while (true) {
          var timeToFade = m.timeToFade;
          var model = m.model;
          var reversed = $List.reverse(model);
-         var _p6 = {ctor: "_Tuple2",_0: m.state,_1: action};
-         _v1_2: do {
-            if (_p6.ctor === "_Tuple2") {
-                  switch (_p6._0.ctor)
-                  {case "WaitingForFirstStroke": if (_p6._1.ctor === "Typed") {
-                             var _v2 = action,_v3 = _U.update(m,{state: SessionInProgress});
-                             action = _v2;
-                             m = _v3;
+         var _p7 = {ctor: "_Tuple2",_0: m.state,_1: action};
+         _v2_3: do {
+            if (_p7.ctor === "_Tuple2") {
+                  switch (_p7._0.ctor)
+                  {case "WaitingForFirstStroke": if (_p7._1.ctor === "Typed") {
+                             var _v3 = action,_v4 = _U.update(m,{state: SessionInProgress});
+                             action = _v3;
+                             m = _v4;
                              continue update;
                           } else {
-                             break _v1_2;
+                             break _v2_3;
                           }
-                     case "SessionInProgress": var _p7 = {ctor: "_Tuple2",_0: action,_1: reversed};
-                       switch (_p7._0.ctor)
-                       {case "Typed": if (_p7._1.ctor === "[]") {
-                                  return _U.update(m,{model: _U.list([_p7._0._0]),timeToFade: defaultTimeToFade});
-                               } else {
-                                  return _U.update(m,
-                                  {model: $List.reverse(A2($List._op["::"],A2($Basics._op["++"],_p7._1._0,_p7._0._0),_p7._1._1))
-                                  ,timeToFade: defaultTimeToFade});
-                               }
-                          case "NewParagraph": if (_p7._1.ctor === "[]") {
-                                  return _U.update(m,{model: _U.list([]),timeToFade: defaultTimeToFade});
-                               } else {
-                                  if (_p7._1._0 === "") {
-                                        return m;
-                                     } else {
-                                        return _U.update(m,{model: A2($Basics._op["++"],model,_U.list([""])),timeToFade: defaultTimeToFade});
-                                     }
-                               }
-                          default: var _p8 = _p7._0._0;
-                            return _U.cmp(m.sessionTimeLeft,_p8) > 0 ? _U.cmp(_p8,timeToFade) > 0 ? _U.update(m,
-                            {model: _U.list([]),timeToFade: 0,sessionTimeLeft: m.sessionTimeLeft - _p8}) : _U.update(m,
-                            {timeToFade: timeToFade - _p8,sessionTimeLeft: m.sessionTimeLeft - _p8}) : _U.update(m,
-                            {timeToFade: defaultTimeToFade,sessionTimeLeft: 0,state: SessionEnded});}
-                     default: break _v1_2;}
+                     case "SessionInProgress": var _p8 = {ctor: "_Tuple2",_0: action,_1: reversed};
+                       _v5_6: do {
+                          if (_p8.ctor === "_Tuple2") {
+                                switch (_p8._0.ctor)
+                                {case "Typed": if (_p8._1.ctor === "[]") {
+                                           return _U.update(m,{model: _U.list([_p8._0._0]),timeToFade: defaultTimeToFade});
+                                        } else {
+                                           return _U.update(m,
+                                           {model: $List.reverse(A2($List._op["::"],A2($Basics._op["++"],_p8._1._0,_p8._0._0),_p8._1._1))
+                                           ,timeToFade: defaultTimeToFade});
+                                        }
+                                   case "NewParagraph": if (_p8._1.ctor === "[]") {
+                                           return _U.update(m,{model: _U.list([]),timeToFade: defaultTimeToFade});
+                                        } else {
+                                           if (_p8._1._0 === "") {
+                                                 return m;
+                                              } else {
+                                                 return _U.update(m,{model: A2($Basics._op["++"],model,_U.list([""])),timeToFade: defaultTimeToFade});
+                                              }
+                                        }
+                                   case "TimeElapsed": var _p9 = _p8._0._0;
+                                     return _U.cmp(m.sessionTimeLeft,_p9) > 0 ? _U.cmp(_p9,timeToFade) > 0 ? _U.update(m,
+                                     {model: _U.list([]),timeToFade: 0,sessionTimeLeft: m.sessionTimeLeft - _p9}) : _U.update(m,
+                                     {timeToFade: timeToFade - _p9,sessionTimeLeft: m.sessionTimeLeft - _p9}) : _U.update(m,
+                                     {timeToFade: defaultTimeToFade,sessionTimeLeft: 0,state: SessionEnded});
+                                   default: break _v5_6;}
+                             } else {
+                                break _v5_6;
+                             }
+                       } while (false);
+                       return m;
+                     case "ChooseSessionTime": if (_p7._1.ctor === "SetSession") {
+                             return _U.update(m,{sessionTimeLeft: _p7._1._0,state: WaitingForFirstStroke});
+                          } else {
+                             break _v2_3;
+                          }
+                     default: break _v2_3;}
                } else {
-                  break _v1_2;
+                  break _v2_3;
                }
          } while (false);
          return m;
       }
    });
-   var state = A3($Signal.foldp,
-   update,
-   {model: _U.list([]),timeToFade: defaultTimeToFade,sessionTimeLeft: 5 * $Time.minute,state: WaitingForFirstStroke},
-   actions);
+   var state = A3($Signal.foldp,update,{model: _U.list([]),timeToFade: defaultTimeToFade,sessionTimeLeft: 0,state: ChooseSessionTime},actions);
    var main = A2($Signal.map,view,state);
    return _elm.Flow.values = {_op: _op
                              ,main: main
                              ,defaultTimeToFade: defaultTimeToFade
                              ,view: view
+                             ,buttonForSessionTime: buttonForSessionTime
+                             ,viewSession: viewSession
                              ,viewText: viewText
                              ,viewTime: viewTime
                              ,state: state
                              ,update: update
                              ,WaitingForFirstStroke: WaitingForFirstStroke
+                             ,ChooseSessionTime: ChooseSessionTime
                              ,SessionInProgress: SessionInProgress
                              ,SessionEnded: SessionEnded
                              ,Typed: Typed
                              ,NewParagraph: NewParagraph
                              ,TimeElapsed: TimeElapsed
+                             ,SetSession: SetSession
+                             ,newSessionTimes: newSessionTimes
                              ,actions: actions
                              ,ticks: ticks
                              ,spaceBars: spaceBars
