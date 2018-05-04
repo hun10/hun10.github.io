@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>
+Д. Урбанович — Своя обработка ошибок в Activiti
+</title>
+
+</head>
+<body>
+
+
+<h1>
+Своя обработка ошибок в Activiti
+</h1>
+
+<p>
+<a href="/log">Дмитрий Урбанович</a>
+</p>
+
+<p>
+Ижевск, 4 мая 2018
+</p>
+
+<hr/>
+
+<p>
+Activiti — это движок бизнес-процессов, который можно встроить в свое
+приложение. Бизнес-процессы задаются в стандарте BPMN 2.0 с некоторыми
+расширениями:
+</p>
+
+<pre><code>
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:activiti="http://activiti.org/bpmn"
+             targetNamespace=""
+&gt;
+    &lt;process id="sample"&gt;
+        &lt;startEvent id="startEvent"/&gt;
+
+        &lt;sequenceFlow id="flow1" sourceRef="startEvent" targetRef="serviceTask"/&gt;
+
+        &lt;serviceTask id="serviceTask"
+                     activiti:async="true"
+                     activiti:class="urbanowicz.activiti.delegates.SampleDelegate"
+        /&gt;
+
+        &lt;sequenceFlow id="flow2" sourceRef="serviceTask" targetRef="endEvent"/&gt;
+
+        &lt;endEvent id="endEvent"/&gt;
+    &lt;/process&gt;
+&lt;/definitions&gt;
+</code></pre>
+
+<p>
+Здесь <code>activiti:async="true"</code> означает, что движок сохранит в БД
+состояние процесса, а исполнение кода отложит в очередь.
+</p>
+
+<p>
+Проще всего встроить Activiti в Spring Boot приложение.
+Достаточно указать родительский проект в pom.xml:
+</p>
+
+<pre><code>
+&lt;parent&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-parent&lt;/artifactId&gt;
+    &lt;version&gt;2.0.1.RELEASE&lt;/version&gt;
+&lt;/parent&gt;
+</code></pre>
+
+<p>
+И добавить Activiti в зависимости:
+</p>
+
+<pre><code>
+&lt;dependency&gt;
+    &lt;groupId&gt;org.activiti&lt;/groupId&gt;
+    &lt;artifactId&gt;activiti-spring-boot-starter-basic&lt;/artifactId&gt;
+    &lt;version&gt;6.0.0&lt;/version&gt;
+&lt;/dependency&gt;
+
+&lt;dependency&gt;
+    &lt;groupId&gt;com.h2database&lt;/groupId&gt;
+    &lt;artifactId&gt;h2&lt;/artifactId&gt;
+    &lt;scope&gt;test&lt;/scope&gt;
+&lt;/dependency&gt;
+
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
+    &lt;scope&gt;test&lt;/scope&gt;
+&lt;/dependency&gt;
+</code></pre>
+
+<p>
+Последние две зависимости позволят запускать движок в юнит-тестах.
+</p>
+
+<p>
+По умолчанию, Activiti делает откат состояния и повторение шагов диаграммы еще
+два раза с интервалом в десять секунд, если в процессе исполнения происходит
+ошибка. К сожалению, если вставить выброс исключения в
+<code>urbanowicz.activiti.delegates.SampleDelegate</code> и написать тест, то
+никаких повторов наблюдаться не будет.
+</p>
+
+<pre><code>
+public class ModTest {
+    @Rule
+    public final ActivitiRule activitiRule = new ActivitiRule(
+            new StandaloneInMemProcessEngineConfiguration()
+                    .setAsyncExecutorActivate(true)
+                    .buildProcessEngine()
+    );
+
+    @Test
+    @Deployment(resources = "processes/sample.bpmn20.xml")
+    public void test() throws InterruptedException {
+        activitiRule.getRuntimeService()
+                .startProcessInstanceByKey("sample");
+
+        Thread.sleep(100000);
+    }
+}
+</code></pre>
+
+<p>
+Вероятно, это баг в <code>DefaultJobManager#executeMessageJob</code>: код
+сначала готовит план, а затем до начала его исполнения удаляет
+<code>JobEntity</code>. К моменту исполнения плана обработчики ошибок
+не могут поставить ту же <code>JobEntity</code> на повторное исполнение по
+причине ее отсутствия. В качестве быстрой заплатки, мы можем вставить это
+удаление в конец плана. Свой джоб-менеджер мы можем задать с помощью
+метода конфигурации <code>setJobManager(new ModJobManager())</code>.
+</p>
+
+<pre><code>
+public class ModJobManager extends DefaultJobManager {
+    @Override
+    protected void executeMessageJob(JobEntity jobEntity) {
+        executeJobHandler(jobEntity);
+        if (jobEntity.getId() != null) {
+            Context.getAgenda()
+                    .planOperation(() -> Context.getCommandContext().getJobEntityManager().delete(jobEntity));
+        }
+    }
+}
+</code></pre>
+
+<p>
+Обработка ошибок по умолчанию — не всегда то, чего мы хотим. Например, могут
+потребоваться разные интервалы в зависимости от номера попытки (1 минута,
+2 минута, 4 минуты и так далее). Или мы можем хотеть запретить повторы
+некоторых видов ошибок. Для этого мы используем свою фабрику команд повтора
+ошибочных запусков и регистрируем ее в конфигурации методом
+<code>setFailedJobCommandFactory(new ModFailedJobCommandFactory())</code>.
+</p>
+
+<pre><code>
+public class ModFailedJobCommandFactory implements FailedJobCommandFactory {
+    @Override
+    public Command&lt;Object&gt; getCommand(String jobId, Throwable exception) {
+        return new ModJobRetryCmd(jobId, exception);
+    }
+}
+</code></pre>
+
+<p>
+Для настройки поведения можно ввести интерфейс для стратегии, в котором три
+метода. Первый будет возвращать время задержки после данного запуска, второй —
+следует ли повторять еще, и третий — реакция на попадание операции в мертвую
+очередь. Если
+стратегия говорит, что повтор не требуется, то мы сбрасываем количество
+оставшихся попыток. Факт попадания операции в метрвую очередь мы проверяем
+прямым запросом (Activiti использует старый идентификатор операции).
+</p>
+
+<pre><code>
+public class ModJobRetryCmd extends JobRetryCmd {
+    ModJobRetryCmd(String jobId, Throwable exception) {
+        super(jobId, exception);
+    }
+
+    @Override
+    public Object execute(CommandContext commandContext) {
+        Optional.ofNullable(commandContext.getJobEntityManager().findById(jobId))
+                .filter(job -> retryStrategy.shouldStopRetry(job, exception))
+                .ifPresent(job -> job.setRetries(1));
+
+        Object result = super.execute(commandContext);
+
+        Optional.ofNullable(commandContext.getDeadLetterJobEntityManager().findById(jobId))
+                .ifPresent(job -> retryStrategy.movedToDeadLetter(job, exception));
+
+        return result;
+    }
+
+    @Override
+    protected Date calculateDueDate(CommandContext commandContext, int originalWaitTimeInSeconds, Date oldDate) {
+        return super.calculateDueDate(
+                commandContext,
+                Optional.ofNullable(commandContext.getJobEntityManager().findById(jobId))
+                        .flatMap(job -> retryStrategy.delayFor(job, exception))
+                        .map(Duration::getSeconds)
+                        .map(Long::intValue)
+                        .orElse(originalWaitTimeInSeconds),
+                oldDate
+        );
+    }
+}
+</code></pre>
+
+<p>
+Мертвая очередь доступна только через отдельное API. Если же мы хотим, чтобы
+она была представлена в списке обычных задач, можно сделать это с помощью
+нашей стратегии:
+</p>
+
+<pre><code>
+@Override
+public void movedToDeadLetter(DeadLetterJobEntity job, Throwable exception) {
+    Task task = activitiRule.getTaskService().newTask();
+    activitiRule.getTaskService().saveTask(task);
+    activitiRule.getTaskService().setVariable(task.getId(), "jobId", job.getId());
+}
+</code></pre>
+
+<p>
+Этот код создает пользовательскую задачу, которая не привязана к процессам.
+Для реакции на завершение таких задач понадобится регистрация слушателя.
+Его можно зарегистрировать глобально в конфигурации:
+</p>
+
+<pre><code>
+.setTypedEventListeners(Collections.singletonMap(
+        ActivitiEventType.TASK_COMPLETED.name(),
+        Collections.singletonList(new TaskEntityEventListener() {
+            @Override
+            protected void onTaskEntityEvent(TaskEntity taskEntity) {
+                String jobId = (String) taskEntity.getVariable("jobId");
+                activitiRule.getManagementService().moveDeadLetterJobToExecutableJob(jobId, 3);
+            }
+        })
+))
+</code></pre>
+
+<p>
+Разумеется, нужно добваить в него проверки на тип задачи, так как этот
+слушатель ловит все события завершения пользовательских задач.
+</p>
+
+<p>
+Полный код примера доступен на гитхабе:
+<a href="https://github.com/hun10/activiti-mod">
+https://github.com/hun10/activiti-mod</a>.
+</p>
+
+</body>
+</html>
