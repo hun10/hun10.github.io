@@ -1,4 +1,4 @@
-const main = () => withMonad(Parser)(pure => lazy => read => fail => {
+const main = source => withMonad(Parser)(pure => lazy => read => fail => {
   const cons = pure(a => b => [a].concat(b));
   const mid = pure(a => b => c => b);
 
@@ -29,7 +29,7 @@ const main = () => withMonad(Parser)(pure => lazy => read => fail => {
 
   const E = pure(a => b => c => ({lhs: a, rhs: c})) (A) (arrow) (lazy(() => E)) .or (A) .or (lmd);
 
-  return JSON.stringify(E.run("\\a a -> \\b a b -> b"));
+  return E.run(source);
 });
 
 const withMonad = Monad => body => {

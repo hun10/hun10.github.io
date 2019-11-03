@@ -10,7 +10,9 @@
   </body>
 
   <script>
-    const out = document.getElementById("out");
-    out.textContent = main();
+    fetch("sample.txt").then(r => r.text()).then(src => {
+      const out = document.getElementById("out");
+      out.textContent = JSON.stringify(main(src));
+    });
   </script>
 </html>
