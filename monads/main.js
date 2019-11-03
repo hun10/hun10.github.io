@@ -10,7 +10,7 @@ const main = () => withMonad(Parser)(pure => lazy => read => fail => {
   const rightP = read(/\)/u);
   const parenthesis = mid (leftP) (lazy(() => E)) (rightP);
 
-  const name = read(/^(?:.*?)(?=->|$|\s|\(|\))/u).flatMap(x => x.length > 0 ? pure(x) : fail);
+  const name = read(/^(?:.*?)(?=\\[^\s]+|->|$|\s|\(|\))/u).flatMap(x => x.length > 0 ? pure(x) : fail);
   const atom = mid (ws) (name) (ws) .or (parenthesis);
 
   function App(a, b) {
@@ -25,9 +25,11 @@ const main = () => withMonad(Parser)(pure => lazy => read => fail => {
 
   const arrow = mid (ws) (read(/^->/u)) (ws);
 
-  const E = pure(a => b => c => ({lhs: a, rhs: c})) (A) (arrow) (lazy(() => E)) .or (A);
+  const lmd = pure(s => a => b => ({name: a, body: b})) (read(/\\/u)) (read(/[^\s]+/u)) (lazy(() => E));
 
-  return JSON.stringify(E.run("- -> r -> r"));
+  const E = pure(a => b => c => ({lhs: a, rhs: c})) (A) (arrow) (lazy(() => E)) .or (A) .or (lmd);
+
+  return JSON.stringify(E.run("\\a a -> \\b a b -> b"));
 });
 
 const withMonad = Monad => body => {
