@@ -1,6 +1,6 @@
 const main = () => withMonad(Parser)(pure => lazy => read => {
   const E = pure(a => b => [a].concat(b))(read)(lazy(() => E)).orElse(pure([]));
-  return E.run("abcdef");
+  return JSON.stringify(E.run("abcdef"));
 });
 
 const withMonad = Monad => body => {
