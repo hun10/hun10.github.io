@@ -10,11 +10,19 @@ const main = () => withMonad(Parser)(pure => lazy => read => {
   const rightP = read(/\)/u);
   const parenthesis = mid (leftP) (lazy(() => E)) (rightP);
 
-  const atom = read(/[^\s()]+/u) .or (parenthesis);
+  const atom = mid (ws) (read(/[^\s()]+/u)) (ws) .or (parenthesis);
 
-  const E = many(pure(a => b => c => b) (ws) (atom) (ws));
+  function App(a, b) {
+    if (b.length > 0) {
+      return App({to: a, app: b[0]}, b.slice(1));
+    } else {
+      return a;
+    }
+  }
 
-  return JSON.stringify(E.run("Free (w i(l)()l) k."));
+  const E = pure(a => b => App(a, b)) (atom) (many(atom));
+
+  return JSON.stringify(E.run("(x y) z (r k) t"));
 });
 
 const withMonad = Monad => body => {
