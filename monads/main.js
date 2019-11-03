@@ -1,6 +1,20 @@
 const main = () => withMonad(Parser)(pure => lazy => read => {
-  const E = pure(a => b => [a].concat(b))(read)(lazy(() => E)).orElse(pure([]));
-  return JSON.stringify(E.run("abcdef"));
+  const cons = pure(a => b => [a].concat(b));
+  const mid = pure(a => b => c => b);
+
+  const many = m => cons (m) (lazy(() => many(m))) .or (pure([]));
+
+  const ws = read(/\s*/u);
+
+  const leftP = read(/\(/u);
+  const rightP = read(/\)/u);
+  const parenthesis = mid (leftP) (lazy(() => E)) (rightP);
+
+  const atom = read(/[^\s()]+/u) .or (parenthesis);
+
+  const E = many(pure(a => b => c => b) (ws) (atom) (ws));
+
+  return JSON.stringify(E.run("Free (w i(l)()l) k."));
 });
 
 const withMonad = Monad => body => {
@@ -13,14 +27,14 @@ const withMonad = Monad => body => {
     w.run = m;
     w.map = f => decorate(fmap(f)(m));
     w.flatMap = f => decorate(Monad.bind(m)(a => f(a).run));
-    w.orElse = w2 => decorate(Monad.either(m)(w2.run));
+    w.or = w2 => decorate(Monad.either(m)(w2.run));
 
     return w;
   };
 
   const pure = a => decorate(Monad.pure(a));
   const lazy = pure(null).flatMap;
-  const read = decorate(Monad.read);
+  const read = p => decorate(Monad.read(p));
 
   return body(pure)(lazy)(read);
 };
@@ -28,9 +42,9 @@ const withMonad = Monad => body => {
 const Parser = {
   pure: a => i => [a, i],
 
-  read: i => {
-    const m = i.match(/./u);
-    if (m) {
+  read: pattern => i => {
+    const m = i.match(pattern);
+    if (m && m.index === 0) {
       return [m[0], i.slice(m[0].length)];
     } else {
       return null;
