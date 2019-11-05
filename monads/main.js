@@ -13,7 +13,7 @@ const main = source => withMonad(Parser)(pure => lazy => read => fail => {
   const lmd = pure(s => a => b => ({name: a, body: b})) (read(/\\/u)) (read(/[^\s]+/u)) (lazy(() => E));
 
   const name = read(/^(?:.*?)(?=\\[^\s]+|->|$|\s|\(|\))/u).flatMap(x => x.length > 0 ? pure(x) : fail);
-  const atom = mid (ws) (name) (ws) .or (parenthesis) .or (lmd);
+  const atom = mid (ws) ((name) .or (parenthesis) .or (lmd)) (ws);
 
   function App(a, b) {
     if (b.length > 0) {
