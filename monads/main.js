@@ -1,35 +1,61 @@
 const main = source => withMonad(Parser)(pure => lazy => read => fail => {
-  const cons = pure(a => b => [a].concat(b));
+  const cons = pure(a => b => [a, b]);
+  const fst = pure(a => b => a);
+  const snd = pure(a => b => b);
   const mid = pure(a => b => c => b);
+  const many = m => cons (m) (lazy(() => many(m))) .or (pure(null));
 
-  const many = m => cons (m) (lazy(() => many(m))) .or (pure([]));
+  const readTest = test => read.flatMap(c => test(c) ? pure(c) : fail);
+  const readChar = c => readTest(x => x === c);
 
-  const ws = read(/^\s*/u);
+  const wsChar = readTest(c => /\s/u.test(c));
+  const ws = many(wsChar);
+  const leftP = readChar("(");
+  const rightP = readChar(")");
+  const slash = readChar("\\");
+  const arrow = readChar("-") .then (readChar(">"));
 
-  const leftP = read(/\(/u);
-  const rightP = read(/\)/u);
   const parenthesis = mid (leftP) (lazy(() => E)) (rightP);
 
-  const lmd = pure(s => a => b => ({name: a, body: b})) (read(/\\/u)) (read(/[^\s]+/u)) (lazy(() => E));
+  const blocker = wsChar.or(leftP).or(rightP).or(slash).or(arrow);
+  const letter = blocker.negativeAhead().then(read);
 
-  const name = read(/^(?:.*?)(?=\\[^\s]+|->|$|\s|\(|\))/u).flatMap(x => x.length > 0 ? pure(x) : fail);
-  const atom = mid (ws) ((name) .or (parenthesis) .or (lmd)) (ws);
+  function makeString(list) {
+    let s = "";
 
-  function App(a, b) {
-    if (b.length > 0) {
-      return App({to: a, app: b[0]}, b.slice(1));
-    } else {
-      return a;
+    while (list) {
+      s += list[0];
+      list = list[1];
     }
+
+    return s;
+  }
+
+  const name = cons (letter) (many(letter)) .map (makeString);
+
+  const lmd = pure(s => a => b => ({name: a, body: b})) (slash) (name) (lazy(() => E));
+
+  const atom = snd (ws) ((lmd) .or (parenthesis) .or (name));
+
+  function App(f, list) {
+    while (list) {
+      f = {
+        fun: f,
+        arg: list[0]
+      };
+      list = list[1];
+    }
+
+    return f;
   }
 
   const A = pure(a => b => App(a, b)) (atom) (many(atom));
 
-  const arrow = mid (ws) (read(/^->/u)) (ws);
+  const E = (pure(a => b => c => ({lhs: a, rhs: c})) (A) (arrow) (lazy(() => E)) .or (A));
 
-  const E = pure(a => b => c => ({lhs: a, rhs: c})) (A) (arrow) (lazy(() => E)) .or (A);
+  const S = fst (E) (ws)
 
-  return E.run(source);
+  return S.run(source);
 });
 
 const withMonad = Monad => body => {
@@ -42,14 +68,16 @@ const withMonad = Monad => body => {
     w.run = m;
     w.map = f => decorate(fmap(f)(m));
     w.flatMap = f => decorate(Monad.bind(m)(a => f(a).run));
+    w.then = b => decorate(Monad.bind(m)(a => b.run));
     w.or = w2 => decorate(Monad.either(m)(w2.run));
+    w.negativeAhead = () => decorate(Monad.negativeAhead(m));
 
     return w;
   };
 
   const pure = a => decorate(Monad.pure(a));
   const lazy = pure(null).flatMap;
-  const read = p => decorate(Monad.read(p));
+  const read = decorate(Monad.read);
   const fail = decorate(Monad.fail);
 
   return body(pure)(lazy)(read)(fail);
@@ -58,8 +86,8 @@ const withMonad = Monad => body => {
 const Parser = {
   pure: a => i => [a, i],
 
-  read: pattern => i => {
-    const m = i.match(pattern);
+  read: i => {
+    const m = i.match(/\s|./u);
     if (m && m.index === 0) {
       return [m[0], i.slice(m[0].length)];
     } else {
@@ -86,6 +114,16 @@ const Parser = {
       return r1;
     } else {
       return p2(i);
+    }
+  },
+
+  negativeAhead: p1 => i => {
+    const r1 = p1(i);
+
+    if (r1) {
+      return null;
+    } else {
+      return [null, i];
     }
   }
 };
