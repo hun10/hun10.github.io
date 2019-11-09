@@ -51,7 +51,7 @@ const main = source => withMonad(Parser)(pure => lazy => read => fail => {
 
   const A = pure(a => b => App(a, b)) (atom) (many(atom));
 
-  const E = (pure(a => b => c => ({lhs: a, rhs: c})) (A) (arrow) (lazy(() => E)) .or (A));
+  const E = (pure(a => w => b => c => ({lhs: a, rhs: c})) (A) (ws) (arrow) (lazy(() => E)) .or (A));
 
   const S = fst (E) (ws);
 
