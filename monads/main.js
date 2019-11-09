@@ -53,9 +53,9 @@ const main = source => withMonad(Parser)(pure => lazy => read => fail => {
 
   const E = (pure(a => b => c => ({lhs: a, rhs: c})) (A) (arrow) (lazy(() => E)) .or (A));
 
-  const S = fst (E) (ws)
+  const S = fst (E) (ws);
 
-  return S.run(source);
+  return Parser.run(S.run)(source);
 });
 
 const withMonad = Monad => body => {
@@ -84,46 +84,63 @@ const withMonad = Monad => body => {
 };
 
 const Parser = {
-  pure: a => i => [a, i],
+  run: p => i => {
+    let e = {
+      i: i
+    };
 
-  read: i => {
-    const m = i.match(/^.|^\s/u);
+    let cont = [p, null];
+
+    while (cont) {
+      const modE = cont[0](e);
+      cont = cont[1];
+
+      e = {
+        a: modE.a,
+        i: modE.i,
+        error: modE.error
+      };
+
+      if (modE.cont) {
+        cont = modE.cont(cont);
+      }
+    }
+
+    return e.error ? null : [e.a, e.i];
+  },
+
+  pure: a => e => ({a: a, i: e.i}),
+
+  read: e => {
+    const m = e.i.match(/^.|^\s/u);
+
     if (m && m.index === 0) {
-      return [m[0], i.slice(m[0].length)];
+      return {a: m[0], i: e.i.slice(m[0].length)};
     } else {
-      return null;
+      return {error: true};
     }
   },
 
-  fail: i => null,
+  fail: e => ({error: true}),
 
-  bind: p1 => f => i => {
-    const r1 = p1(i);
+  bind: p1 => f => e1 => ({
+    cont: tail => [
+      e => p1(e1),
+      [e2 => e2.error ? {error: true} : f(e2.a)(e2), tail]
+    ]
+  }),
 
-    if (r1) {
-      return f(r1[0])(r1[1]);
-    } else {
-      return null;
-    }
-  },
+  either: p1 => p2 => e1 => ({
+    cont: tail => [
+      e => p1(e1),
+      [e2 => e2.error ? p2(e1) : e2, tail]
+    ]
+  }),
 
-  either: p1 => p2 => i => {
-    const r1 = p1(i);
-
-    if (r1) {
-      return r1;
-    } else {
-      return p2(i);
-    }
-  },
-
-  negativeAhead: p1 => i => {
-    const r1 = p1(i);
-
-    if (r1) {
-      return null;
-    } else {
-      return [null, i];
-    }
-  }
+  negativeAhead: p1 => e1 => ({
+    cont: tail => [
+      e => p1(e1),
+      [e2 => e2.error ? e1 : {error: true}, tail]
+    ]
+  })
 };
