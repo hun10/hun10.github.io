@@ -17,13 +17,25 @@ id id -> 🍒 -> 😽 -> id (id id)
 
   <script>
     let src = document.getElementById("source").textContent;
-    const tail = document.getElementById("tail").textContent;
+    const rem = document.getElementById("tail").textContent;
 
     for (let i = 0; i < 2692; i++) {
-      src += tail;
+      src += rem;
+    }
+
+    let head = null;
+    let tail = null;
+
+    for (const c of src) {
+      if (tail) {
+        tail[1] = [c, null];
+        tail = tail[1];
+      } else {
+        head = tail = [c, null];
+      }
     }
 
     const out = document.getElementById("out");
-    out.textContent = JSON.stringify(main(src));
+    out.textContent = JSON.stringify(main(head));
   </script>
 </html>

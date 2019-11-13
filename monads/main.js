@@ -112,10 +112,8 @@ const Parser = {
   pure: a => e => ({a: a, i: e.i}),
 
   read: e => {
-    const m = e.i.match(/^.|^\s/u);
-
-    if (m && m.index === 0) {
-      return {a: m[0], i: e.i.slice(m[0].length)};
+    if (e.i) {
+      return {a: e.i[0], i: e.i[1]};
     } else {
       return {error: true};
     }
