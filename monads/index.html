@@ -3,12 +3,6 @@
   <head>
     <title>Monads</title>
     <script src="main.js"></script>
-    <script id="source" type="text">
-(\f \x x f) (\x x) \id
-    </script>
-    <script id="tail" type="text">
-id id -> 🍒 -> 😽 -> id (id id)
-    </script>
   </head>
 
   <body>
@@ -16,8 +10,12 @@ id id -> 🍒 -> 😽 -> id (id id)
   </body>
 
   <script>
-    let src = document.getElementById("source").textContent;
-    const rem = document.getElementById("tail").textContent;
+    let src = String.raw`
+(\f \x x f) (\x x) \id
+    `;
+    const rem = String.raw`
+id id -> 🍒 -> 😽 -> id (id id)
+    `;
 
     for (let i = 0; i < 2692; i++) {
       src += rem;
