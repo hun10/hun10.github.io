@@ -3,6 +3,7 @@
   <head>
     <title>Monads</title>
     <script src="main.js"></script>
+    <script src="compiler.js"></script>
   </head>
 
   <body>
@@ -28,6 +29,6 @@ id
     }
 
     const out = document.getElementById("out");
-    out.textContent = JSON.stringify(main(head));
+    out.textContent = compile(main(head)[0]);
   </script>
 </html>
