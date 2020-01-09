@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Monads</title>
+    <script src="main.js"></script>
+  </head>
+
+  <body>
+    <div id="out" />
+  </body>
+
+  <script>
+    let src = String.raw`
+(\f \x x f) (\x x) \id
+id
+    `;
+
+    let head = null;
+    let tail = null;
+
+    for (const c of src) {
+      if (tail) {
+        tail[1] = [c, null];
+        tail = tail[1];
+      } else {
+        head = tail = [c, null];
+      }
+    }
+
+    const out = document.getElementById("out");
+    out.textContent = JSON.stringify(main(head));
+  </script>
+</html>
