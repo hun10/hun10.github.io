@@ -1,14 +1,15 @@
 function compile(source) {
-  return translate(Expander.run(expand(source)(x => undefined))(1)[0]);
+  const ex = expand(source)(x => undefined);
+  return translate(Expander.run( ex.run )(1)[0]);
 }
 
 function translate(source) {
   if (source.t === "fun") {
-    return `${source.name} => ${compile(source.body)}`;
+    return `${source.name} => ${translate(source.body)}`;
   } else if (source.t === "app") {
-    return `(${compile(source.fun)}) (${compile(source.arg)})`;
+    return `(${translate(source.fun)}) (${translate(source.arg)})`;
   } else if (source.t === "imp") {
-    return `_imp (${compile(source.lhs)}) (${compile(source.rhs)})`;
+    return `_imp (${translate(source.lhs)}) (${translate(source.rhs)})`;
   } else {
     return source;
   }
@@ -16,9 +17,9 @@ function translate(source) {
 
 const expand = source => ctx => withMonad2(Expander)(pure => lazy => newId => {
   if (source.t === "fun") {
-    return newId.flatMap(id => expand(source.body)(x => x === source.name ? 'v' + id : ctx(x)).flatMap(bdy => pure({
+    return newId.flatMap(id => expand(source.body)(x => x === source.name ? 'v' + id : ctx(x)).map(bdy => ({
       t: "fun",
-      name: id,
+      name: 'v' + id,
       body: bdy,
     })));
   } else if (source.t === "app") {
