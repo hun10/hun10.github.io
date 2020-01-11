@@ -1,4 +1,4 @@
-const main = source => withMonad(Parser)(pure => lazy => read => fail => {
+const parse = source => withMonad(Parser)(pure => lazy => read => fail => {
   const many = cons => zero => m => {
     const pCons = pure(cons);
     const pZero = pure(zero);
@@ -52,7 +52,19 @@ const main = source => withMonad(Parser)(pure => lazy => read => fail => {
 
   const S = E .followedBy (ws);
 
-  return Parser.run(S.run)(source);
+  let head = null;
+  let tail = null;
+
+  for (const c of source) {
+    if (tail) {
+      tail[1] = [c, null];
+      tail = tail[1];
+    } else {
+      head = tail = [c, null];
+    }
+  }
+
+  return Parser.run(S.run)(head);
 });
 
 const withMonad = Monad => body => {

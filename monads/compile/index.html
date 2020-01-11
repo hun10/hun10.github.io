@@ -2,7 +2,7 @@
 <html>
   <head>
     <title>Monads</title>
-    <script src="main.js"></script>
+    <script src="parser.js"></script>
     <script src="compiler.js"></script>
   </head>
 
@@ -11,24 +11,30 @@
   </body>
 
   <script>
-    let src = String.raw`
-(\f \x x f) (\x x) \id
-id
-    `;
-
-    let head = null;
-    let tail = null;
-
-    for (const c of src) {
-      if (tail) {
-        tail[1] = [c, null];
-        tail = tail[1];
-      } else {
-        head = tail = [c, null];
-      }
+    function lang(t, ...r) {
+      return compile(parse(String.raw(t, ...r))[0]);
     }
 
+    const src = lang`
+(\f \x x f) (\f \x x f) \let
+
+let (\a \j \n j a) \pure
+let (\j \n n) \none
+let (\m \f m (\a f a) none) \bind
+
+let (pure 9) \a
+let (none) \b
+
+(
+bind a \x
+bind a \y
+pure y)
+
+(\x x) false
+
+    `;
+
     const out = document.getElementById("out");
-    out.textContent = compile(main(head)[0]);
+    out.textContent = src;
   </script>
 </html>
