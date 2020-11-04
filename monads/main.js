@@ -80,62 +80,66 @@ const withMonad = Monad => body => {
   return body(pure)(lazy)(read)(fail);
 };
 
-const Parser = {
-  run: p => i => {
-    let e = {
-      i: i
-    };
+const Trampoline = {
+  pure: a => ({
+    just: a
+  }),
 
-    let cont = [p, null];
-
-    while (cont) {
-      const modE = cont[0](e);
-      cont = cont[1];
-
-      e = {
-        a: modE.a,
-        i: modE.i,
-        error: modE.error
-      };
-
-      if (modE.cont) {
-        cont = modE.cont(cont);
+  bind: ta => fab => ({
+    more: () => {
+      if (ta.more) {
+        return Trampoline.bind(ta.more())(fab);
+      } else {
+        return fab(ta.just);
       }
     }
+  }),
 
-    return e.error ? null : [e.a, e.i];
-  },
+  run: t => {
+    while (t.more) {
+      t = t.more();
+    }
 
-  pure: a => e => ({a: a, i: e.i}),
+    return t.just;
+  }
+};
+
+const Parser = {
+  run: p => i => Trampoline.run(p(i)),
+
+  pure: a => e => Trampoline.pure([a, e]),
 
   read: e => {
-    if (e.i) {
-      return {a: e.i[0], i: e.i[1]};
+    if (e) {
+      return Trampoline.pure([e[0], e[1]]);
     } else {
-      return {error: true};
+      return Trampoline.pure(null);
     }
   },
 
-  fail: e => ({error: true}),
+  fail: e => Trampoline.pure(null),
 
-  bind: p1 => f => e1 => ({
-    cont: tail => [
-      e => p1(e1),
-      [e2 => e2.error ? {error: true} : f(e2.a)(e2), tail]
-    ]
+  bind: p1 => f => e1 => Trampoline.bind(p1(e1))(r1 => {
+    if (r1) {
+      return f(r1[0])(r1[1]);
+    } else {
+      return Trampoline.pure(null);
+    }
   }),
 
-  either: p1 => p2 => e1 => ({
-    cont: tail => [
-      e => p1(e1),
-      [e2 => e2.error ? p2(e1) : e2, tail]
-    ]
+  either: p1 => p2 => e1 => Trampoline.bind(p1(e1))(r1 => {
+    if (r1) {
+      return Trampoline.pure(r1);
+    } else {
+      return p2(e1);
+    }
   }),
 
-  negativeAhead: p1 => e1 => ({
-    cont: tail => [
-      e => p1(e1),
-      [e2 => e2.error ? e1 : {error: true}, tail]
-    ]
+  negativeAhead: p1 => e1 => Trampoline.bind(p1(e1))(r1 => {
+    if (r1) {
+      return Trampoline.pure(null);
+    } else {
+      return Trampoline.pure([null, e1]);
+    }
   })
 };
