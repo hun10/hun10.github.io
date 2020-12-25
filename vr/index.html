@@ -276,8 +276,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
           document.body.appendChild(gl.canvas);
 
           function onResize() {
-            gl.canvas.width = gl.canvas.clientWidth * window.devicePixelRatio;
-            gl.canvas.height = gl.canvas.clientHeight * window.devicePixelRatio;
+            gl.canvas.width = gl.canvas.clientWidth;// * window.devicePixelRatio;
+            gl.canvas.height = gl.canvas.clientHeight;// * window.devicePixelRatio;
           }
           window.addEventListener('resize', onResize);
           onResize();
