@@ -470,6 +470,11 @@ export class WebXRButton {
    * @private
    */
   __onXRButtonClick() {
+
+    if (DeviceMotionEvent && DeviceMotionEvent.requestPermission) {
+      DeviceMotionEvent.requestPermission();
+    }
+
     if (this.session) {
       this.options.onEndSession(this.session);
     } else if (this._enabled) {
