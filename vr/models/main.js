@@ -53,8 +53,8 @@ let mixer;
 
 loader.setPath('./m2/').load( 'scene.gltf', function ( gltf ) {
     const md = gltf.scene;
-    md.scale.set(0.5, 0.5, 0.5)
-    md.translateZ(-50);
+    md.scale.set(0.1, 0.1, 0.1)
+    md.translateZ(50);
     
     if (gltf.animations[ 0 ]) {
         mixer = new THREE.AnimationMixer( md );
