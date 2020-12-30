@@ -22,21 +22,10 @@ document.body.appendChild( VRButton.createButton( renderer ) );
 const pmremGenerator = new THREE.PMREMGenerator( renderer );
 pmremGenerator.compileEquirectangularShader();
 
-//renderer.toneMapping = THREE.ACESFilmicToneMapping;
-//renderer.toneMappingExposure = 1;
-//renderer.outputEncoding = THREE.sRGBEncoding;
-
 divRender.appendChild( renderer.domElement );
 
 const scene = new THREE.Scene();
 
-
-//scene.background = new THREE.Color( 0xdeebed );
-//const ambientLight = new THREE.AmbientLight( 0xdeebed, 0.4 );
-//scene.add( ambientLight );
-//const directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
-//directionalLight.position.set( - 1000, 1200, 1500 );
-//scene.add( directionalLight );
 
 const clock = new THREE.Clock();
 
@@ -64,7 +53,7 @@ let mixer;
 
 loader.setPath('./m2/').load( 'scene.gltf', function ( gltf ) {
     const md = gltf.scene;
-    md.scale.set(0.1, 0.1, 0.1)
+    md.scale.set(0.5, 0.5, 0.5)
     
     if (gltf.animations[ 0 ]) {
         mixer = new THREE.AnimationMixer( md );
