@@ -4,6 +4,9 @@ import { RGBELoader } from './jsm/loaders/RGBELoader.js';
 import { OrbitControls } from './jsm/controls/OrbitControls.js';
 import { VRButton } from './jsm/webxr/VRButton.js';
 
+      import WebXRPolyfill from '../js/third-party/webxr-polyfill/build/webxr-polyfill.module.js';
+        let polyfill = new WebXRPolyfill();
+
 const WIDTH = 300;
 
 const divRender = document.getElementById('render')
