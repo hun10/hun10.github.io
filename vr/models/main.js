@@ -15,7 +15,7 @@ renderer.setPixelRatio( window.devicePixelRatio );
 renderer.setSize( WIDTH, WIDTH );
 renderer.toneMapping = THREE.ReinhardToneMapping;
 renderer.outputEncoding = THREE.sRGBEncoding;
-renderer.vr.enabled = true;
+renderer.xr.enabled = true;
 
 document.body.appendChild( VRButton.createButton( renderer ) );
 
