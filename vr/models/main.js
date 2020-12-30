@@ -1,3 +1,6 @@
+import WebXRPolyfill from 'webxr-polyfill';
+const polyfill = new WebXRPolyfill();
+
 import * as THREE from '../build/three.module.js';
 import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
 import { RGBELoader } from './jsm/loaders/RGBELoader.js';
