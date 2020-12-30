@@ -1,4 +1,4 @@
-import WebXRPolyfill from './webxr-polyfill.js';
+import { WebXRPolyfill } from './webxr-polyfill.js';
 const polyfill = new WebXRPolyfill();
 
 import * as THREE from '../build/three.module.js';
