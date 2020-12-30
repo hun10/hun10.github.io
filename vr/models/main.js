@@ -51,7 +51,7 @@ new RGBELoader()
 
 let mixer;
 
-loader.setPath('./m2/').load( 'scene.gltf', function ( gltf ) {
+loader.setPath('./m3/').load( 'scene.gltf', function ( gltf ) {
     const md = gltf.scene;
     md.scale.set(0.1, 0.1, 0.1)
     md.translateZ(50);
