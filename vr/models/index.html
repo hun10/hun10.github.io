@@ -4,11 +4,14 @@
         <title>All the models</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <script src='webxr-polyfill.js'></script>
     </head>
     <body>
         <div style="width: 600px; margin: 0 auto" id="render">
         </div>
         <script type="module">
+            var polyfill = new WebXRPolyfill();
+
             import * as Main from './main.js';
         </script>
     </body>
