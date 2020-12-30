@@ -4,7 +4,7 @@ import { RGBELoader } from './jsm/loaders/RGBELoader.js';
 import { OrbitControls } from './jsm/controls/OrbitControls.js';
 import { VRButton } from './jsm/webxr/VRButton.js';
 
-const WIDTH = 600;
+const WIDTH = 300;
 
 const divRender = document.getElementById('render')
 const renderer = new THREE.WebGLRenderer( { antialias: true } );
