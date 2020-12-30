@@ -87,7 +87,7 @@ function render() {
     
     const delta = clock.getDelta();
     
-    mixer.update( delta );
+    if (mixer) mixer.update( delta );
     
     renderer.render(scene, camera);
 }
