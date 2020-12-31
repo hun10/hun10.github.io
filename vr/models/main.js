@@ -5,7 +5,7 @@ import { OrbitControls } from './jsm/controls/OrbitControls.js';
 import { VRButton } from './jsm/webxr/VRButton.js';
 
 const renderer = new THREE.WebGLRenderer( { antialias: true } );
-renderer.setPixelRatio( window.innerWidth / window.innerHeight );
+renderer.setPixelRatio( window.devicePixelRatio );
 renderer.setSize( window.innerWidth, window.innerHeight );
 renderer.toneMapping = THREE.ReinhardToneMapping;
 renderer.outputEncoding = THREE.sRGBEncoding;
@@ -23,7 +23,7 @@ const scene = new THREE.Scene();
 
 const clock = new THREE.Clock();
 
-const camera = new THREE.PerspectiveCamera( 40, 1, 1, 200 );
+const camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 1, 200 );
 camera.position.set( 0, 0, 100 );
 camera.lookAt( 0, 0, 0 );
 
