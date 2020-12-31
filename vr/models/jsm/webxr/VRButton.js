@@ -58,9 +58,6 @@ class VRButton {
 			};
 
 			button.onclick = function () {
-if (DeviceMotionEvent && DeviceMotionEvent.requestPermission) {
-      DeviceMotionEvent.requestPermission();
-    }
 				if ( currentSession === null ) {
 
 					// WebXR's requestReferenceSpace only works if the corresponding feature

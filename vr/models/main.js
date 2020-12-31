@@ -7,12 +7,9 @@ import { VRButton } from './jsm/webxr/VRButton.js';
       import WebXRPolyfill from '../js/third-party/webxr-polyfill/build/webxr-polyfill.module.js';
         let polyfill = new WebXRPolyfill();
 
-const WIDTH = 300;
-
-const divRender = document.getElementById('render')
 const renderer = new THREE.WebGLRenderer( { antialias: true } );
 renderer.setPixelRatio( window.devicePixelRatio );
-renderer.setSize( WIDTH, WIDTH );
+renderer.setSize( window.innerWidth, window.innerHeight );
 renderer.toneMapping = THREE.ReinhardToneMapping;
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.xr.enabled = true;
@@ -22,7 +19,7 @@ document.body.appendChild( VRButton.createButton( renderer ) );
 const pmremGenerator = new THREE.PMREMGenerator( renderer );
 pmremGenerator.compileEquirectangularShader();
 
-divRender.appendChild( renderer.domElement );
+document.body.appendChild( renderer.domElement );
 
 const scene = new THREE.Scene();
 
