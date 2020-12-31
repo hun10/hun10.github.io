@@ -1,3 +1,4 @@
+import { div } from './div.js';
 import * as THREE from '../build/three.module.js';
 import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
 import { RGBELoader } from './jsm/loaders/RGBELoader.js';
@@ -23,7 +24,7 @@ const scene = new THREE.Scene();
 
 const clock = new THREE.Clock();
 
-const camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 200 );
+const camera = new THREE.PerspectiveCamera( 40, div(window.innerWidth, window.innerHeight), 1, 200 );
 camera.position.set( 0, 0, 100 );
 camera.lookAt( 0, 0, 0 );
 
@@ -71,4 +72,15 @@ function render() {
     if (mixer) mixer.update( delta );
     
     renderer.render(scene, camera);
+}
+
+window.addEventListener( 'resize', onWindowResize, false );
+
+function onWindowResize() {
+    
+    camera.aspect = div(window.innerWidth, window.innerHeight);
+    camera.updateProjectionMatrix();
+    
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    
 }
