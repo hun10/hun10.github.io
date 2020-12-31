@@ -23,7 +23,7 @@ const scene = new THREE.Scene();
 
 const clock = new THREE.Clock();
 
-const camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 1, 200 );
+const camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 200 );
 camera.position.set( 0, 0, 100 );
 camera.lookAt( 0, 0, 0 );
 
