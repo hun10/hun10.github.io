@@ -4,11 +4,8 @@ import { RGBELoader } from './jsm/loaders/RGBELoader.js';
 import { OrbitControls } from './jsm/controls/OrbitControls.js';
 import { VRButton } from './jsm/webxr/VRButton.js';
 
-      import WebXRPolyfill from '../js/third-party/webxr-polyfill/build/webxr-polyfill.module.js';
-        let polyfill = new WebXRPolyfill();
-
 const renderer = new THREE.WebGLRenderer( { antialias: true } );
-renderer.setPixelRatio( window.devicePixelRatio );
+renderer.setPixelRatio( window.innerWidth / window.innerHeight );
 renderer.setSize( window.innerWidth, window.innerHeight );
 renderer.toneMapping = THREE.ReinhardToneMapping;
 renderer.outputEncoding = THREE.sRGBEncoding;
@@ -59,7 +56,6 @@ loader.setPath('./m3/').load( 'scene.gltf', function ( gltf ) {
     }
     
     scene.add( md );
-    //render();
     
 }, undefined, function ( error ) {
     
@@ -70,8 +66,6 @@ loader.setPath('./m3/').load( 'scene.gltf', function ( gltf ) {
 renderer.setAnimationLoop(render);
 
 function render() {
-    //requestAnimationFrame(render);
-    
     const delta = clock.getDelta();
     
     if (mixer) mixer.update( delta );
