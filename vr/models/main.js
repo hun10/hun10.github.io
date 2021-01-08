@@ -1,6 +1,7 @@
 import { div } from './div.js';
 import * as THREE from '../build/three.module.js';
 import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
+import { OBJLoader } from './jsm/loaders/OBJLoader.js';
 import { RGBELoader } from './jsm/loaders/RGBELoader.js';
 import { OrbitControls } from './jsm/controls/OrbitControls.js';
 import { VRButton } from './jsm/webxr/VRButton.js';
@@ -30,7 +31,6 @@ camera.lookAt( 0, 0, 0 );
 
 new OrbitControls( camera, renderer.domElement );
 
-const loader = new GLTFLoader();
 new RGBELoader()
 .setDataType( THREE.UnsignedByteType )
 .load( 'quarry_01_1k.hdr', function ( texture ) {
@@ -46,12 +46,13 @@ new RGBELoader()
 
 let mixer;
 
-loader.setPath('./m3/').load( 'scene.gltf', function ( gltf ) {
-    const md = gltf.scene;
-    md.scale.set(0.1, 0.1, 0.1)
+const loader = new OBJLoader();
+loader.load( './ms1/source/MM01.obj', function ( gltf ) {
+    const md = gltf;
+    //md.scale.set(0.1, 0.1, 0.1)
     md.translateZ(50);
     
-    if (gltf.animations[ 0 ]) {
+    if (gltf.animations && gltf.animations[ 0 ]) {
         mixer = new THREE.AnimationMixer( md );
         mixer.clipAction( gltf.animations[ 0 ] ).play();
     }
