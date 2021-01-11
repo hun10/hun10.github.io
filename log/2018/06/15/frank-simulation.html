@@ -1,17 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script type="text/x-mathjax-config">
-MathJax.Hub.Config({
-  tex2jax: {inlineMath: [['$','$']]},
-  TeX: {
-    Macros: {
-      Oh: ["\\mathcal{O}(#1)", 1]
-    }
-  }
-});
-</script>
-<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
 
 <title>
 Д. Урбанович — Алгоритм Франка
@@ -32,6 +21,10 @@ MathJax.Hub.Config({
 Ижевск, 15—16 июня 2018
 </p>
 
+<p>
+Обновлено 9 января 2021 (MathML)
+</p>
+
 <hr/>
 
 <p>
@@ -42,18 +35,49 @@ MathJax.Hub.Config({
 </p>
 
 <p>
-Пусть нам дано $t$ унитарных преобразований $U_1, U_2, \ldots, U_t$
-и начальное состояние $n$ кубитов в виде вектора $\psi_0$ размерности $2^n$.
-Тогда определим состояние кубитов после применения $U_i$ рекуррентно:
-$$\psi_i = U_i \cdot \psi_{i-1}$$
+Пусть нам дано <math><mi> t </mi></math> унитарных преобразований
+<math><msub><mi> U </mi><mn> 1 </mn></msub></math>,
+<math><msub><mi> U </mi><mn> 2 </mn></msub></math>, ...,
+<math><msub><mi> U </mi><mi> t </mi></msub></math>
+и начальное состояние <math><mi> t </mi></math> кубитов в виде вектора
+<math><msub><mi> &psi; </mi><mn> 0 </mn></msub></math> размерности
+<math><msup><mn> 2 </mn><mi> n </mi></msup></math>.
+Тогда определим состояние кубитов после применения <math><msub><mi> U </mi><mi> i </mi></msub></math> рекуррентно:
+
+<math display="block">
+  <mrow>
+    <msub><mi> &psi; </mi><mi> i </mi></msub>
+    <mo> = </mo>
+    <mrow>
+      <msub><mi> U </mi><mi> i </mi></msub>
+      <msub><mi> &psi; </mi><mrow> <mi>i</mi> <mo>&minus;</mo> <mn>1</mn> </mrow></msub>
+    </mrow>
+  </mrow>
+</math>
 </p>
 
 <p>
 Первый способ промоделировать поведение квантового компьютера заключается в
 том, чтобы использовать генератор псевдослучайных чисел по распределению
-$\psi_t \circ \psi_t^*$ (покомпонентное произведение вектора с его комплексным
-сопряжением). Недостаток способа в том, что вектор $\psi_t$ имеет $2^n$
-компонентов: для $n=40$ получится $10^{12}$ чисел, которые вряд ли влезут в
+<math>
+  <mrow>
+    <msub><mi> &psi; </mi><mi> t </mi></msub>
+    <mo>&CircleDot;</mo>
+    <msubsup>
+      <mi> &psi; </mi>
+      <mi> t </mi>
+      <mo>*</mo>
+    </msup>
+  </mrow>
+</math>
+(покомпонентное произведение вектора с его комплексным
+сопряжением). Недостаток способа в том, что вектор
+<math><msub><mi> &psi; </mi><mi> t </mi></msub></math> имеет
+<math><msup><mn> 2 </mn><mi> n </mi></msup></math>
+компонентов: для <math><mrow><mi> n </mi><mo> = </mo><mn> 40 </mn></mrow></math>
+получится
+<math><msup><mn> 10 </mn><mn> 12 </mn></msup></math>
+чисел, которые вряд ли влезут в
 оперативную память вашего компьютера.
 </p>
 

@@ -1,17 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script type="text/x-mathjax-config">
-MathJax.Hub.Config({
-  tex2jax: {inlineMath: [['$','$']]},
-  TeX: {
-    Macros: {
-      Oh: ["\\mathcal{O}(#1)", 1]
-    }
-  }
-});
-</script>
-<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
 
 <title>
 Д. Урбанович — Важные сведения о квантовом компьютере
@@ -33,6 +22,10 @@ MathJax.Hub.Config({
 Ижевск, 7—8 мая 2018
 </p>
 
+<p>
+Обновлено 8 января 2021 (MathML)
+</p>
+
 <hr/>
 
 <p>
@@ -46,7 +39,8 @@ MathJax.Hub.Config({
 
 <p>
 <li>
-Квантовый $n$-кубитный компьютер — это генератор случайных $n$-битных чисел.
+Квантовый <math><mi> n </mi></math>-кубитный компьютер — это генератор
+случайных <math><mi> n </mi></math>-битных чисел.
 </li>
 </p>
 
@@ -80,12 +74,32 @@ MathJax.Hub.Config({
 </p>
 <p>
 — Можешь, да не любые. Например, Питер Шор в 1994 году придумал, как при
-помощи $\Oh{\log^3 n}$ квантовых операций с большой вероятностью получать
-числа, кратные периоду последовательности $x$, $x^2$, $x^3$... по модулю $n$.
+помощи
+
+<math>
+  <mrow>
+    <mi> O </mi>
+    <mo> ( </mo>
+    <mrow>
+      <msup>
+        <mi> log </mi>
+        <mn> 3 </mn>
+      </msup>
+      <mi> n </mi>
+    </mrow>
+    <mo> ) </mo>
+  </mrow>
+</math>
+
+квантовых операций с большой вероятностью получать
+числа, кратные периоду последовательности <math><mi> x </mi></math>,
+<math><msup><mi> x </mi><mn> 2 </mn></msup></math>,
+<math><msup><mi> x </mi><mn> 3 </mn></msup></math>... по модулю <math><mi> n </mi></math>.
 Как воспроизвести за разумное время такое же распределение на обычных
-компьютерах при $n$ порядка $2^{2048}$ — никто не знает.
+компьютерах при <math><mi> n </mi></math> порядка <math><msup><mn> 2 </mn><mn> 2048 </mn></msup></math>
+— никто не знает.
 А для квантового компьютера это
-не сложнее, чем умножение матриц размера $2048 \times 2048$.
+не сложнее, чем умножение матриц размера <math><mrow><mn> 2048 </mn><mo> &times; </mo><mn> 2048 </mn></mrow></math>.
 </p>
 </li>
 </p>

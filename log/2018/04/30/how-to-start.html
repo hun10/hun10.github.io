@@ -1,17 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script type="text/x-mathjax-config">
-MathJax.Hub.Config({
-  tex2jax: {inlineMath: [['$','$']]},
-  TeX: {
-    Macros: {
-      Oh: ["\\mathcal{O}(#1)", 1]
-    }
-  }
-});
-</script>
-<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
 
 <title>
 Д. Урбанович — Как начать бложить
@@ -31,6 +20,10 @@ MathJax.Hub.Config({
 
 <p>
 Ижевск, 30 апреля 2018
+</p>
+
+<p>
+Обновлено 26 ноября 2020 (MathML)
 </p>
 
 <hr/>
@@ -63,38 +56,23 @@ MathJax.Hub.Config({
 </p>
 
 <p>
-В тех заметках, где требуется LaTeX, я подключаю MathJax.
-По умолчанию, он автоматически обрабатывает все, что оказывается между <code>
-\(</code> и <code>\)</code> как строчные формулы.
-Я планирую копировать код из заметок в статьи, поэтому изменил обозначение
-строчных формул на классическое:
+А формулы я пишу через MathML:
 </p>
 
-<pre><code>
-&lt;head&gt;
-&lt;script type="text/x-mathjax-config"&gt;
-MathJax.Hub.Config({
-  tex2jax: {inlineMath: [['$','$']]},
-  TeX: {
-    Macros: {
-      Oh: ["\\mathcal{O}(#1)", 1]
-    }
-  }
-});
-&lt;/script&gt;
-&lt;script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML' async&gt;&lt;/script&gt;
-</code></pre>
-
-<p>
-Конфигурация еще содержит определение-макрос для
-популярного в наших кругах обозначения верхних границ:
-</p>
-
-$$\Oh{n \log n}$$
-
-<p>
-Такие отдельно стоящие формулы обозначаются как обычно — двойным долларом.
-</p>
+<math display="block">
+  <mrow>
+    <mi> O </mi>
+    <mo> ( </mo>
+    <mrow>
+      <mi> n </mi>
+      <mrow>
+        <mi> log </mi>
+        <mi> n </mi>
+      </mrow>
+    </mrow>
+    <mo> ) </mo>
+  </mrow>
+</math>
 
 </body>
 </html>
