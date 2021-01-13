@@ -50,6 +50,7 @@
     <mo> = </mo>
     <mrow>
       <msub><mi> U </mi><mi> i </mi></msub>
+      <mo>&sdot;</mo>
       <msub><mi> &psi; </mi><mrow> <mi>i</mi> <mo>&minus;</mo> <mn>1</mn> </mrow></msub>
     </mrow>
   </mrow>
@@ -60,14 +61,17 @@
 Первый способ промоделировать поведение квантового компьютера заключается в
 том, чтобы использовать генератор псевдослучайных чисел по распределению
 <math>
-  <mrow>
-    <msub><mi> &psi; </mi><mi> t </mi></msub>
-    <mo>&CircleDot;</mo>
-    <msubsup>
-      <mi> &psi; </mi>
-      <mi> t </mi>
-      <mo>*</mo>
-    </msup>
+    <mrow>
+      <msub>
+        <mi>&psi;</mi>
+        <mi>t</mi>
+      </msub>
+      <mo>&#x2218;</mo>
+      <msubsup>
+        <mi>&psi;</mi>
+        <mi>t</mi>
+        <mo>&lowast;</mo>
+      </msubsup>
   </mrow>
 </math>
 (покомпонентное произведение вектора с его комплексным
@@ -82,16 +86,92 @@
 </p>
 
 <p>
-К счастью, существует теорема $\mathtt{BQP} \subseteq \mathtt{PSPACE}$. Ее
+К счастью, существует теорема
+<math>
+<mrow>
+<mi>BQP</mi>
+<mo>&sube;</mo>
+<mi>PSPACE</mi>
+</mrow>
+</math>. Ее
 доказательство заключается в том, чтобы вычислять одну компоненту вектора
-$\psi_{t,k}$ рекурсивно и без сохранения промежуточных результатов.
+<math>
+<msub>
+<mi>&psi;</mi>
+<mrow>
+<mi>t</mi>
+<mo>,</mo>
+<mi>k</mi>
+</mrow>
+</msub>
+</math>
+рекурсивно и без сохранения промежуточных результатов.
 
-$$\psi_{t,k} = \sum_{i=0}^{2^n - 1} U_{t,k,i} \cdot \psi_{t-1,i}$$
+<math display="block">
+
+<mrow>
+    <msub>
+    <mi>&psi;</mi>
+    <mrow>
+    <mi>t</mi>
+    <mo>,</mo>
+    <mi>k</mi>
+    </mrow>
+    </msub>
+
+    <mo> = </mo>
+    
+    <mrow>
+        <munderover>
+            <mo>&sum;</mo>
+            <mrow> <mi> i </mi> <mo> = </mo> <mn> 0 </mn> </mrow>
+            <mrow> <msup> <mn> 2 </mn> <mi> n </mi> </msup> <mo> &minus; </mo> <mn> 1 </mn> </mrow>
+        </munderover>
+        <mrow>
+            <msub>
+            <mi>U</mi>
+            <mrow>
+            <mi>t</mi>
+            <mo>,</mo>
+            <mi>k</mi>
+            <mo>,</mo>
+            <mi>i</mi>
+            </mrow>
+            </msub>
+            <mo>&sdot;</mo>
+            <msub>
+            <mi>&psi;</mi>
+            <mrow>
+                <mrow>
+                    <mi>t</mi>
+                    <mo> &minus; </mo>
+                    <mn> 1 </mn>
+                </mrow>
+            <mo>,</mo>
+            <mi>k</mi>
+            </mrow>
+            </msub>
+        </mrow>
+        
+    </mrow>
+</mrow>
+</math>
 
 В реальности большинство из слагаемых этой суммы равны нулю. Например, для
-Тоффоли, $\mathtt{cNOT}$ и других «классических» вентилей количество ненулевых
+Тоффоли, <math><mi>cNOT</mi></math> и других «классических» вентилей количество ненулевых
 слагаемых равно одному, а для вентиля Адамара — двум.
-Таким образом, каждый компонент $\psi_t$ вычисляется за $\Oh{2^t}$.
+Таким образом, каждый компонент <math><msub>
+    <mi>&psi;</mi>
+    <mi>t</mi>
+  </msub>
+</math> вычисляется за <math><mi>O</mi>
+    <mo>(</mo>
+    <msup>
+      <mn>2</mn>
+      <mi>t</mi>
+    </msup>
+    <mo>)</mo>
+  </math>.
 </p>
 
 <p>
@@ -105,55 +185,528 @@ $$\psi_{t,k} = \sum_{i=0}^{2^n - 1} U_{t,k,i} \cdot \psi_{t-1,i}$$
 находится в одном определенном базисном состоянии в каждый момент времени.
 Если очередное преобразование относится к классическим вентилям, то просто
 выполняется детерминированный переход. Если же это, к примеру, вентиль
-Адамара, то делается случайный выбор из двух возможных состояний $k_1$ и
-$k_2$. Первое состояние будет выбрано с такой вероятностью:
+Адамара, то делается случайный выбор из двух возможных состояний <math>
+    <msub>
+      <mi>k</mi>
+      <mn>1</mn>
+    </msub>
+  </math> и
+<math>
+  <msub>
+    <mi>k</mi>
+    <mn>2</mn>
+  </msub>
+</math>. Первое состояние будет выбрано с такой вероятностью:
 
-$$p_{i,k_1} = \frac{|\psi_{i,k_1}|^2}{|\psi_{i,k_1}|^2 + |\psi_{i,k_2}|^2}$$
+<math display="block">
+  <msub>
+    <mi>p</mi>
+    <mrow>
+      <mi>i</mi>
+      <mo>,</mo>
+      <msub>
+        <mi>k</mi>
+        <mn>1</mn>
+      </msub>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <msup>
+      <mrow>
+        <mo>|</mo>
+        <msub>
+          <mi>&psi;</mi>
+          <mrow>
+            <mi>i</mi>
+            <mo>,</mo>
+            <msub>
+              <mi>k</mi>
+              <mn>1</mn>
+            </msub>
+          </mrow>
+        </msub>
+        <mo>|</mo>
+      </mrow>
+      <mn>2</mn>
+    </msup>
+    <mrow>
+      <msup>
+        <mrow>
+          <mo>|</mo>
+          <msub>
+            <mi>&psi;</mi>
+            <mrow>
+              <mi>i</mi>
+              <mo>,</mo>
+              <msub>
+                <mi>k</mi>
+                <mn>1</mn>
+              </msub>
+            </mrow>
+          </msub>
+          <mo>|</mo>
+        </mrow>
+        <mn>2</mn>
+      </msup>
+      <mo>+</mo>
+      <msup>
+        <mrow>
+          <mo>|</mo>
+          <msub>
+            <mi>&psi;</mi>
+            <mrow>
+              <mi>i</mi>
+              <mo>,</mo>
+              <msub>
+                <mi>k</mi>
+                <mn>2</mn>
+              </msub>
+            </mrow>
+          </msub>
+          <mo>|</mo>
+        </mrow>
+        <mn>2</mn>
+      </msup>
+    </mrow>
+  </mfrac>
+</math>
+
 </p>
 
 <p>
-Алгоритм выполняет всю квантовую цепь за $\Oh{2^t}$, так как верно следующее
+Алгоритм выполняет всю квантовую цепь за <math>
+    <mi>O</mi>
+    <mo>(</mo>
+    <msup>
+      <mn>2</mn>
+      <mi>t</mi>
+    </msup>
+    <mo>)</mo>
+  </math>, так как верно следующее
 равенство:
 
-$$\sum_{i=0}^{t-1}{2^i}=2^t - 1$$
+<math display="block">
+    <mrow>
+      <mrow>
+          <munderover>
+            <mo>&sum;</mo>
+            <mrow>
+              <mi>i</mi>
+              <mo>=</mo>
+              <mn>0</mn>
+            </mrow>
+            <mrow>
+              <mi>t</mi>
+              <mo>&minus;</mo>
+              <mn>1</mn>
+            </mrow>
+          </munderover>
+          <mrow>
+            <msup>
+              <mn>2</mn>
+              <mi>i</mi>
+            </msup>
+          </mrow>
+      </mrow>
+      <mo>=</mo>
+      <mrow>
+          <msup>
+            <mn>2</mn>
+            <mi>t</mi>
+          </msup>
+          <mo>&minus;</mo>
+          <mn>1</mn>
+      </mrow>
+  </mrow>
+</math>
+
 </p>
 
 <p>
 Алгоритм выдает конечные состояния в соответствии с распределением
-$\psi_t \circ \psi_t^*$. Это доказывается по индукции: предположим, что на
-шаге $t-1$ любое состояние $k_i$ выбирается с корректной вероятностью
-$|\psi_{t-1,k_i}|^2$. Тогда:
+<math>
+    <mrow>
+      <msub>
+        <mi>&psi;</mi>
+        <mi>t</mi>
+      </msub>
+      <mo>&#x2218;</mo>
+      <msubsup>
+        <mi>&psi;</mi>
+        <mi>t</mi>
+        <mo>&lowast;</mo>
+      </msubsup>
+  </mrow>
+</math>. Это доказывается по индукции: предположим, что на
+шаге <math><mrow><mi>t</mi><mo>&minus;</mo><mn>1</mn></mrow></math> любое состояние
+<math><msub><mi>k</mi><mi>i</mi></msub></math> выбирается с корректной вероятностью
+<math>
+  <msup>
+    <mrow>
+      <mo>|</mo>
+      <msub>
+        <mi>&#x3C8;</mi>
+        <mrow>
+          <mrow>
+            <mi>t</mi>
+            <mo>&#x2212;</mo>
+            <mn>1</mn>
+          </mrow>
+          <mo>,</mo>
+          <msub>
+            <mi>k</mi>
+            <mi>i</mi>
+          </msub>
+        </mrow>
+      </msub>
+      <mo>|</mo>
+    </mrow>
+    <mn>2</mn>
+  </msup>
+</math>. Тогда:
 
 <ol>
 <li>
-Если $U_t$ — «классический вентиль», то новое состояние будет выбранно также с
+Если <math><msub><mi>U</mi><mi>t</mi></msub></math> — «классический вентиль», то новое состояние будет выбранно также с
 корректной вероятностью. Это следует из того, что такие преобразования всего
 лишь делают перестановку амплитуд.
 </li>
 
 <li>
-Если $U_t$ — вентиль Адамара, то все состояния делятся на пары
-$k_1$ и $k_2$ для преобразования. Заметим, что для любой такой пары верно
+Если <math><msub><mi>U</mi><mi>t</mi></msub></math> — вентиль Адамара, то все состояния делятся на пары
+<math>
+    <msub>
+      <mi>k</mi>
+      <mn>1</mn>
+    </msub>
+  </math> и
+<math>
+  <msub>
+    <mi>k</mi>
+    <mn>2</mn>
+  </msub>
+</math> для преобразования. Заметим, что для любой такой пары верно
 равенство:
 
-$$|\psi_{t-1,k_1}|^2 + |\psi_{t-1,k_2}|^2
-= |\psi_{t,k_1}|^2 + |\psi_{t,k_2}|^2$$
+<math display="block">
+  <mrow>
+    <mrow>
+      <msup>
+        <mrow>
+          <mo>|</mo>
+          <msub>
+            <mi>&#x3C8;</mi>
+            <mrow>
+              <mrow>
+                <mi>t</mi>
+                <mo>&#x2212;</mo>
+                <mn>1</mn>
+              </mrow>
+              <mo>,</mo>
+              <msub>
+                <mi>k</mi>
+                <mn>1</mn>
+              </msub>
+            </mrow>
+          </msub>
+          <mo>|</mo>
+        </mrow>
+        <mn>2</mn>
+      </msup>
+      <mo>+</mo>
+      <msup>
+        <mrow>
+          <mo>|</mo>
+          <msub>
+            <mi>&#x3C8;</mi>
+            <mrow>
+              <mrow>
+                <mi>t</mi>
+                <mo>&#x2212;</mo>
+                <mn>1</mn>
+              </mrow>
+              <mo>,</mo>
+              <msub>
+                <mi>k</mi>
+                <mn>2</mn>
+              </msub>
+            </mrow>
+          </msub>
+          <mo>|</mo>
+        </mrow>
+        <mn>2</mn>
+      </msup>
+    </mrow>
+    <mo>=</mo>
+    <mrow>
+      <msup>
+        <mrow>
+          <mo>|</mo>
+          <msub>
+            <mi>&#x3C8;</mi>
+            <mrow>
+              <mi>t</mi>
+              <mo>,</mo>
+              <msub>
+                <mi>k</mi>
+                <mn>1</mn>
+              </msub>
+            </mrow>
+          </msub>
+          <mo>|</mo>
+        </mrow>
+        <mn>2</mn>
+      </msup>
+      <mo>+</mo>
+      <msup>
+        <mrow>
+          <mo>|</mo>
+          <msub>
+            <mi>&#x3C8;</mi>
+            <mrow>
+              <mi>t</mi>
+              <mo>,</mo>
+              <msub>
+                <mi>k</mi>
+                <mn>2</mn>
+              </msub>
+            </mrow>
+          </msub>
+          <mo>|</mo>
+        </mrow>
+        <mn>2</mn>
+      </msup>
+    </mrow>
+  </mrow>
+</math>
 
-Тогда $k_1$ будет выбран при переходе либо из $k_1$, либо из $k_2$ с такой
+Тогда <math>
+    <msub>
+      <mi>k</mi>
+      <mn>1</mn>
+    </msub>
+  </math> будет выбран при переходе либо из <math>
+      <msub>
+        <mi>k</mi>
+        <mn>1</mn>
+      </msub>
+    </math>, либо из <math>
+        <msub>
+          <mi>k</mi>
+          <mn>2</mn>
+        </msub>
+      </math> с такой
 вероятностью:
 
-$$|\psi_{t-1,k_1}|^2 \cdot
-  p_{t,k_1}
-+ |\psi_{t-1,k_2}|^2 \cdot
-  p_{t,k_1}
-=
-|\psi_{t,k_1}|^2
-\cdot
-\frac{|\psi_{t-1,k_1}|^2 + |\psi_{t-1,k_2}|^2}
-{|\psi_{t,k_1}|^2 + |\psi_{t,k_2}|^2}
-=
-|\psi_{t,k_1}|^2
-$$
+<math display="block">
+  <mrow>
+    <mrow>
+      <mrow>
+        <msup>
+          <mrow>
+            <mo>|</mo>
+            <msub>
+              <mi>&#x3C8;</mi>
+              <mrow>
+                <mrow>
+                  <mi>t</mi>
+                  <mo>&#x2212;</mo>
+                  <mn>1</mn>
+                </mrow>
+                <mo>,</mo>
+                <msub>
+                  <mi>k</mi>
+                  <mn>1</mn>
+                </msub>
+              </mrow>
+            </msub>
+            <mo>|</mo>
+          </mrow>
+          <mn>2</mn>
+        </msup>
+        <mo>&sdot;</mo>
+        <msub>
+          <mi>p</mi>
+          <mrow>
+            <mi>t</mi>
+            <mo>,</mo>
+            <msub>
+              <mi>k</mi>
+              <mn>1</mn>
+            </msub>
+          </mrow>
+        </msub>
+      </mrow>
+      <mo>+</mo>
+      <mrow>
+        <msup>
+          <mrow>
+            <mo>|</mo>
+            <msub>
+              <mi>&#x3C8;</mi>
+              <mrow>
+                <mrow>
+                  <mi>t</mi>
+                  <mo>&#x2212;</mo>
+                  <mn>1</mn>
+                </mrow>
+                <mo>,</mo>
+                <msub>
+                  <mi>k</mi>
+                  <mn>2</mn>
+                </msub>
+              </mrow>
+            </msub>
+            <mo>|</mo>
+          </mrow>
+          <mn>2</mn>
+        </msup>
+        <mo>&#x22C5;</mo>
+        <msub>
+          <mi>p</mi>
+          <mrow>
+            <mi>t</mi>
+            <mo>,</mo>
+            <msub>
+              <mi>k</mi>
+              <mn>1</mn>
+            </msub>
+          </mrow>
+        </msub>
+      </mrow>
+    </mrow>
+    <mo>=</mo>
+    <mrow>
+      <msup>
+        <mrow>
+          <mo>|</mo>
+          <msub>
+            <mi>&#x3C8;</mi>
+            <mrow>
+              <mi>t</mi>
+              <mo>,</mo>
+              <msub>
+                <mi>k</mi>
+                <mn>1</mn>
+              </msub>
+            </mrow>
+          </msub>
+          <mo>|</mo>
+        </mrow>
+        <mn>2</mn>
+      </msup>
+      <mo>&#x22C5;</mo>
+      <mfrac>
+        <mrow>
+          <msup>
+            <mrow>
+              <mo>|</mo>
+              <msub>
+                <mi>&#x3C8;</mi>
+                <mrow>
+                  <mrow>
+                    <mi>t</mi>
+                    <mo>&#x2212;</mo>
+                    <mn>1</mn>
+                  </mrow>
+                  <mo>,</mo>
+                  <msub>
+                    <mi>k</mi>
+                    <mn>1</mn>
+                  </msub>
+                </mrow>
+              </msub>
+              <mo>|</mo>
+            </mrow>
+            <mn>2</mn>
+          </msup>
+          <mo>+</mo>
+          <msup>
+            <mrow>
+              <mo>|</mo>
+              <msub>
+                <mi>&#x3C8;</mi>
+                <mrow>
+                  <mrow>
+                    <mi>t</mi>
+                    <mo>&#x2212;</mo>
+                    <mn>1</mn>
+                  </mrow>
+                  <mo>,</mo>
+                  <msub>
+                    <mi>k</mi>
+                    <mn>2</mn>
+                  </msub>
+                </mrow>
+              </msub>
+              <mo>|</mo>
+            </mrow>
+            <mn>2</mn>
+          </msup>
+        </mrow>
+        <mrow>
+          <msup>
+            <mrow>
+              <mo>|</mo>
+              <msub>
+                <mi>&#x3C8;</mi>
+                <mrow>
+                  <mi>t</mi>
+                  <mo>,</mo>
+                  <msub>
+                    <mi>k</mi>
+                    <mn>1</mn>
+                  </msub>
+                </mrow>
+              </msub>
+              <mo>|</mo>
+            </mrow>
+            <mn>2</mn>
+          </msup>
+          <mo>+</mo>
+          <msup>
+            <mrow>
+              <mo>|</mo>
+              <msub>
+                <mi>&#x3C8;</mi>
+                <mrow>
+                  <mi>t</mi>
+                  <mo>,</mo>
+                  <msub>
+                    <mi>k</mi>
+                    <mn>2</mn>
+                  </msub>
+                </mrow>
+              </msub>
+              <mo>|</mo>
+            </mrow>
+            <mn>2</mn>
+          </msup>
+        </mrow>
+      </mfrac>
+    </mrow>
+    <mo>=</mo>
+    <msup>
+      <mrow>
+        <mo>|</mo>
+        <msub>
+          <mi>&#x3C8;</mi>
+          <mrow>
+            <mi>t</mi>
+            <mo>,</mo>
+            <msub>
+              <mi>k</mi>
+              <mn>1</mn>
+            </msub>
+          </mrow>
+        </msub>
+        <mo>|</mo>
+      </mrow>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+</math>
 
 </li>
 </ol>
