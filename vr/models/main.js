@@ -69,7 +69,7 @@ train.add( camera );
 let mixer;
 
 const loader = new GLTFLoader();
-loader.load( './m3/scene.gltf', function ( gltf ) {
+loader.load( './m2/scene.gltf', function ( gltf ) {
     const md = gltf.scene;
     md.scale.divideScalar(50);
 
@@ -94,19 +94,24 @@ loader.load( './m3/scene.gltf', function ( gltf ) {
 renderer.setAnimationLoop(render);
 
 let dr = new THREE.Vector3();
+let up = new THREE.Vector3(0, 1, 0);
 
 function render() {
     const delta = clock.getDelta();
     
     if (mixer) mixer.update( delta );
     
-    train.translateX(delta * sidewaysMove);
-    train.translateZ(delta * forwardMove);
     
     if (renderer.xr.isPresenting) {
         let xrCamera = renderer.xr.getCamera(camera);
         xrCamera.getWorldDirection(dr);
-        //console.log(dr);
+
+        dr.setY(0);
+
+        train.translateOnAxis(dr, -delta * forwardMove);
+
+        dr.applyAxisAngle(up, Math.PI / 2);
+        train.translateOnAxis(dr, -delta * sidewaysMove);
     }
 
     renderer.render(scene, camera);
