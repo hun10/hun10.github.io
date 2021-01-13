@@ -36,7 +36,7 @@ const renderer = new THREE.WebGLRenderer( { antialias: true } );
 renderer.setPixelRatio( window.devicePixelRatio );
 renderer.setSize( window.innerWidth, window.innerHeight );
 renderer.toneMapping = THREE.ReinhardToneMapping;
-renderer.outputEncoding = THREE.sRGBEncoding;
+//renderer.outputEncoding = THREE.sRGBEncoding;
 //renderer.physicallyCorrectLights = true;
 renderer.xr.enabled = true;
 
@@ -74,7 +74,7 @@ train.add( camera );
 let mixer;
 
 const loader = new GLTFLoader();
-loader.load( './m1/scene.gltf', function ( gltf ) {
+loader.load( './ira-low/scene.gltf', function ( gltf ) {
     const md = gltf.scene;
     md.scale.divideScalar(10);
 
