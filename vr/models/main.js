@@ -72,7 +72,7 @@ train.add( camera );
 let mixer;
 
 const loader = new GLTFLoader();
-loader.load( './m2/scene.gltf', function ( gltf ) {
+loader.load( './m3/scene.gltf', function ( gltf ) {
     const md = gltf.scene;
     md.scale.divideScalar(50);
 
@@ -108,14 +108,16 @@ function render() {
     if (renderer.xr.isPresenting) {
         let xrCamera = renderer.xr.getCamera(camera);
         xrCamera.getWorldDirection(dr);
-
-        dr.setY(0);
-
-        train.translateOnAxis(dr, -delta * forwardMove);
-
-        dr.applyAxisAngle(up, Math.PI / 2);
-        train.translateOnAxis(dr, -delta * sidewaysMove);
+    } else {
+        camera.getWorldDirection(dr);
     }
+
+    dr.setY(0);
+
+    train.translateOnAxis(dr, -delta * forwardMove);
+
+    dr.applyAxisAngle(up, Math.PI / 2);
+    train.translateOnAxis(dr, -delta * sidewaysMove);
 
     renderer.render(scene, camera);
 }
