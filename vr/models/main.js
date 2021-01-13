@@ -36,6 +36,8 @@ const renderer = new THREE.WebGLRenderer( { antialias: true } );
 renderer.setPixelRatio( window.devicePixelRatio );
 renderer.setSize( window.innerWidth, window.innerHeight );
 renderer.toneMapping = THREE.ReinhardToneMapping;
+renderer.outputEncoding = THREE.sRGBEncoding;
+//renderer.physicallyCorrectLights = true;
 renderer.xr.enabled = true;
 
 document.body.appendChild( VRButton.createButton( renderer ) );
@@ -72,9 +74,9 @@ train.add( camera );
 let mixer;
 
 const loader = new GLTFLoader();
-loader.load( './m3/scene.gltf', function ( gltf ) {
+loader.load( './m1/scene.gltf', function ( gltf ) {
     const md = gltf.scene;
-    md.scale.divideScalar(50);
+    md.scale.divideScalar(10);
 
     const bbox = new THREE.Box3().setFromObject(md);
 
