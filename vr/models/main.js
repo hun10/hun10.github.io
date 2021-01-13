@@ -50,7 +50,7 @@ scene.add(new THREE.AmbientLight(color, intensity));
 
 scene.add(new THREE.DirectionalLight( 0xffffff, 5 ));
 
-const floorGeometry = new THREE.PlaneBufferGeometry( 4, 4 );
+const floorGeometry = new THREE.PlaneBufferGeometry( 2000, 2000 );
 const floorMaterial = new THREE.MeshStandardMaterial( { color: 0x222222 } );
 const floor = new THREE.Mesh( floorGeometry, floorMaterial );
 floor.rotation.x = - Math.PI / 2;
@@ -72,8 +72,11 @@ const loader = new GLTFLoader();
 loader.load( './m3/scene.gltf', function ( gltf ) {
     const md = gltf.scene;
     md.scale.divideScalar(50);
+
+    const bbox = new THREE.Box3().setFromObject(md);
+
     md.translateZ(-10);
-    md.translateY(-1);
+    md.translateY(-bbox.min.y);
     
     if (gltf.animations && gltf.animations[ 0 ]) {
         mixer = new THREE.AnimationMixer( md );
@@ -90,6 +93,8 @@ loader.load( './m3/scene.gltf', function ( gltf ) {
 
 renderer.setAnimationLoop(render);
 
+let dr = new THREE.Vector3();
+
 function render() {
     const delta = clock.getDelta();
     
@@ -97,6 +102,12 @@ function render() {
     
     train.translateX(delta * sidewaysMove);
     train.translateZ(delta * forwardMove);
+    
+    if (renderer.xr.isPresenting) {
+        let xrCamera = renderer.xr.getCamera(camera);
+        xrCamera.getWorldDirection(dr);
+        //console.log(dr);
+    }
 
     renderer.render(scene, camera);
 }
