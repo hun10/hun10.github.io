@@ -55,7 +55,10 @@ const floorMaterial = new THREE.MeshStandardMaterial( { color: 0x222222 } );
 const floor = new THREE.Mesh( floorGeometry, floorMaterial );
 floor.rotation.x = - Math.PI / 2;
 scene.add( floor );
-				
+
+const grid = new THREE.GridHelper( 200, 20, 0x111111, 0x111111 );
+// grid.material.depthTest = false; // avoid z-fighting
+scene.add( grid );				
 
 const clock = new THREE.Clock();
 
