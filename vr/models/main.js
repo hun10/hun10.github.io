@@ -49,6 +49,7 @@ camera.position.set(0, 1.6, 0);
 train.add( camera );
 
 let mixer;
+let animation;
 
 const loader = new GLTFLoader();
 
@@ -67,12 +68,7 @@ function loadModel(name, height, process) {
         
         md.translateY(-bbox.min.y);
         
-        process(md);
-        
-        if (gltf.animations && gltf.animations[ 0 ]) {
-            mixer = new THREE.AnimationMixer( md );
-            mixer.clipAction( gltf.animations[ 0 ] ).play();
-        }
+        process(md, gltf.animations);
         
         scene.add( md );
         
@@ -104,10 +100,19 @@ loadModel("lathe-lowtex", 2, md => {
     .rotateY(-angles[1]);
 });
 
-loadModel("ira-low", 4, md => {
+loadModel("ira-low", 4, (md, animations) => {
     md
     .translateOnAxis(positions[2], 8)
     .rotateY(angles[2]);
+    
+    
+    if (animations && animations[ 0 ]) {
+        mixer = new THREE.AnimationMixer( md );
+        animation = mixer.clipAction( animations[ 0 ] );
+        animation.timeScale = 0;
+        animation.play();
+    }
+    
 });
 
 renderer.setAnimationLoop(render);
@@ -135,12 +140,12 @@ function render() {
     train.translateOnAxis(dr, -delta * sidewaysMove);
     
     camera.rotateY(-turnMove * delta);
-
+    
     const curY = train.position.y;
     const tarY = -duckMove * 0.6;
-
+    
     train.position.setY(curY + (tarY - curY) * delta);
-
+    
     renderer.render(scene, camera);
 }
 
@@ -184,6 +189,18 @@ window.addEventListener( 'keydown', function ( event ) {
             // C
         case 67:
             duckMove = 1;
+            break;
+            // R
+        case 82:
+            if (animation) {
+                console.log(animation);
+                if (animation.isRunning()) {
+                    animation.halt(1);
+                } else {
+                    animation.timeScale = 1;
+                    animation.paused = false;
+                }
+            };
             break;
     }
 }, false );
