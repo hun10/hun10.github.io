@@ -5,72 +5,6 @@ let sidewaysMove = 0;
 let turnMove = 0;
 let duckMove = 0;
 
-window.addEventListener( 'keydown', function ( event ) {
-    switch ( event.keyCode ) {
-            // W
-        case 87:
-            forwardMove = -2;
-            break;
-            // S
-        case 83:
-            forwardMove = 2;
-            break;
-            // A
-        case 65:
-            sidewaysMove = -2;
-            break;
-            // D
-        case 68:
-            sidewaysMove = 2;
-            break;
-            // Q
-        case 81:
-            turnMove = div(-Math.PI, 2);
-            break;
-            // E
-        case 69:
-            turnMove = div(Math.PI, 2);
-            break;
-            // C
-        case 67:
-            duckMove = 1;
-            break;
-    }
-}, false );
-
-window.addEventListener( 'keyup', function ( event ) {
-    switch ( event.keyCode ) {
-            // W
-        case 87:
-            forwardMove = 0;
-            break;
-            // S
-        case 83:
-            forwardMove = 0;
-            break;
-            // A
-        case 65:
-            sidewaysMove = 0;
-            break;
-            // D
-        case 68:
-            sidewaysMove = 0;
-            break;
-            // Q
-        case 81:
-            turnMove = 0;
-            break;
-            // E
-        case 69:
-            turnMove = 0;
-            break;
-            // C
-        case 67:
-            duckMove = 0;
-            break;
-    }
-}, false );
-
 import * as THREE from '../build/three.module.js';
 import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
 import { VRButton } from './jsm/webxr/VRButton.js';
@@ -172,7 +106,7 @@ loadModel("lathe-lowtex", 2, md => {
 
 loadModel("ira-low", 4, md => {
     md
-    .translateOnAxis(positions[2], 4)
+    .translateOnAxis(positions[2], 8)
     .rotateY(angles[2]);
 });
 
@@ -202,7 +136,10 @@ function render() {
     
     camera.rotateY(-turnMove * delta);
 
-    train.position.setY(-duckMove * 0.6);
+    const curY = train.position.y;
+    const tarY = -duckMove * 0.6;
+
+    train.position.setY(curY + (tarY - curY) * delta);
 
     renderer.render(scene, camera);
 }
@@ -217,3 +154,69 @@ function onWindowResize() {
     renderer.setSize( window.innerWidth , window.innerHeight );
     
 }
+
+window.addEventListener( 'keydown', function ( event ) {
+    switch ( event.keyCode ) {
+            // W
+        case 87:
+            forwardMove = -2;
+            break;
+            // S
+        case 83:
+            forwardMove = 2;
+            break;
+            // A
+        case 65:
+            sidewaysMove = -2;
+            break;
+            // D
+        case 68:
+            sidewaysMove = 2;
+            break;
+            // Q
+        case 81:
+            turnMove = div(-Math.PI, 2);
+            break;
+            // E
+        case 69:
+            turnMove = div(Math.PI, 2);
+            break;
+            // C
+        case 67:
+            duckMove = 1;
+            break;
+    }
+}, false );
+
+window.addEventListener( 'keyup', function ( event ) {
+    switch ( event.keyCode ) {
+            // W
+        case 87:
+            forwardMove = 0;
+            break;
+            // S
+        case 83:
+            forwardMove = 0;
+            break;
+            // A
+        case 65:
+            sidewaysMove = 0;
+            break;
+            // D
+        case 68:
+            sidewaysMove = 0;
+            break;
+            // Q
+        case 81:
+            turnMove = 0;
+            break;
+            // E
+        case 69:
+            turnMove = 0;
+            break;
+            // C
+        case 67:
+            duckMove = 0;
+            break;
+    }
+}, false );
