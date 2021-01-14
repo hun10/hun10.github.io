@@ -122,10 +122,22 @@ loadModel("play_button", 0.1, md => {
     md
     .translateOnAxis(positions[0], 4)
     .rotateY(angles[0]);
-    
+
     playButton = md;
-    
+
     dirLight.target = md;
+});
+
+let playButtonOverlay;
+
+loadModel("play_button", 0.1, md => {
+    md
+    .translateOnAxis(positions[0], 4)
+    .rotateY(angles[0]);
+    
+    md.scale.setY(md.scale.y * 1.5);
+
+    playButtonOverlay = md;
 });
 
 renderer.setAnimationLoop(render);
@@ -150,10 +162,12 @@ function render() {
         raycaster.setFromCamera( sightCenter, camera );
     }
     
-    if (playButton) {
+    if (playButton && playButtonOverlay) {
         const intersects = raycaster.intersectObject(playButton, true);
         canPress = intersects.length > 0;
         
+        playButton.visible = !canPress;
+        playButtonOverlay.visible = canPress;
     }
     
     dr.setY(0);
