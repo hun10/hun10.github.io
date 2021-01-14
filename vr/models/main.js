@@ -1,33 +1,44 @@
+import { div } from './div.js';
+
 let forwardMove = 0;
 let sidewaysMove = 0;
+let turnMove = 0;
 
 window.addEventListener( 'keydown', function ( event ) {
-  switch ( event.keyCode ) {
-    // W
-    case 87:
-      forwardMove = -1;
-      break;
-    // S
-    case 83:
-      forwardMove = 1;
-      break;
-    // A
-    case 65:
-      sidewaysMove = -1;
-      break;
-    // D
-    case 68:
-      sidewaysMove = 1;
-      break;
-  }
+    switch ( event.keyCode ) {
+            // W
+        case 87:
+            forwardMove = -2;
+            break;
+            // S
+        case 83:
+            forwardMove = 2;
+            break;
+            // A
+        case 65:
+            sidewaysMove = -2;
+            break;
+            // D
+        case 68:
+            sidewaysMove = 2;
+            break;
+            // Q
+        case 81:
+            turnMove = div(-Math.PI, 2);
+            break;
+            // E
+        case 69:
+            turnMove = div(Math.PI, 2);
+            break;
+    }
 }, false );
 
 window.addEventListener( 'keyup', function () {
-  forwardMove = 0;
-  sidewaysMove = 0;
+    forwardMove = 0;
+    sidewaysMove = 0;
+    turnMove = 0;
 }, false );
 
-import { div } from './div.js';
 import * as THREE from '../build/three.module.js';
 import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
 import { VRButton } from './jsm/webxr/VRButton.js';
@@ -65,41 +76,77 @@ scene.add( grid );
 const clock = new THREE.Clock();
 
 const train = new THREE.Object3D();
-train.position.set(0, 1.6, 0);
 scene.add( train );
 
-const camera = new THREE.PerspectiveCamera( 40, div(window.innerWidth, window.innerHeight), 1, 2000 );
+const camera = new THREE.PerspectiveCamera( 40, div(window.innerWidth, window.innerHeight), 0.1, 100 );
+camera.position.set(0, 1.6, 0);
 train.add( camera );
 
 let mixer;
 
 const loader = new GLTFLoader();
-loader.load( './ira-low/scene.gltf', function ( gltf ) {
-    const md = gltf.scene;
-    md.scale.divideScalar(10);
 
-    const bbox = new THREE.Box3().setFromObject(md);
+function loadModel(name, height, process) {
+    loader.load( `./${name}/scene.gltf`, function ( gltf ) {
+        const bbox = new THREE.Box3();
+        
+        const md = gltf.scene;
+        
+        bbox.setFromObject(md);
+        
+        md.scale.divideScalar(bbox.max.y - bbox.min.y);
+        md.scale.multiplyScalar(height);
+        
+        bbox.setFromObject(md);
+        
+        md.translateY(-bbox.min.y);
+        
+        process(md);
+        
+        if (gltf.animations && gltf.animations[ 0 ]) {
+            mixer = new THREE.AnimationMixer( md );
+            mixer.clipAction( gltf.animations[ 0 ] ).play();
+        }
+        
+        scene.add( md );
+        
+    }, undefined, function ( error ) {
+        
+        console.error( error );
+        
+    } );
+}
 
-    md.translateZ(-10);
-    md.translateY(-bbox.min.y);
-    
-    if (gltf.animations && gltf.animations[ 0 ]) {
-        mixer = new THREE.AnimationMixer( md );
-        mixer.clipAction( gltf.animations[ 0 ] ).play();
-    }
-    
-    scene.add( md );
-    
-}, undefined, function ( error ) {
-    
-    console.error( error );
-    
-} );
+let up = new THREE.Vector3(0, 1, 0);
+
+const positions = [];
+const angles = [];
+for (let i = 0; i < 3; i++) {
+    angles[i] = div(2 * Math.PI, 3) * i;
+    positions[i] = new THREE.Vector3(0, 0, -1).applyAxisAngle(up, angles[i]);
+}
+
+loadModel("robotic-arm-lowtex", 4, md => {
+    md
+    .translateOnAxis(positions[0], 4)
+    .rotateY(angles[0]);
+});
+
+loadModel("lathe-lowtex", 2, md => {
+    md
+    .translateOnAxis(positions[1], 4)
+    .rotateY(-angles[1]);
+});
+
+loadModel("ira-low", 4, md => {
+    md
+    .translateOnAxis(positions[2], 4)
+    .rotateY(angles[2]);
+});
 
 renderer.setAnimationLoop(render);
 
 let dr = new THREE.Vector3();
-let up = new THREE.Vector3(0, 1, 0);
 
 function render() {
     const delta = clock.getDelta();
@@ -113,13 +160,15 @@ function render() {
     } else {
         camera.getWorldDirection(dr);
     }
-
+    
     dr.setY(0);
-
+    
     train.translateOnAxis(dr, -delta * forwardMove);
-
-    dr.applyAxisAngle(up, Math.PI / 2);
+    
+    dr.applyAxisAngle(up, div(Math.PI, 2));
     train.translateOnAxis(dr, -delta * sidewaysMove);
+    
+    camera.rotateY(-turnMove * delta);
 
     renderer.render(scene, camera);
 }
