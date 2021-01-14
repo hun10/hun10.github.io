@@ -4,6 +4,7 @@ let forwardMove = 0;
 let sidewaysMove = 0;
 let turnMove = 0;
 let duckMove = 0;
+let canPress = false;
 
 import * as THREE from '../build/three.module.js';
 import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
@@ -27,7 +28,9 @@ const color = 0xFFFFFF;
 const intensity = 10;
 scene.add(new THREE.AmbientLight(color, intensity));
 
-scene.add(new THREE.DirectionalLight( 0xffffff, 5 ));
+const dirLight = new THREE.DirectionalLight( 0xffffff, 5 );
+dirLight.position.set(0, 1, -8);
+scene.add(dirLight);
 
 const floorGeometry = new THREE.PlaneBufferGeometry( 2000, 2000 );
 const floorMaterial = new THREE.MeshStandardMaterial( { color: 0x222222 } );
@@ -36,7 +39,6 @@ floor.rotation.x = - Math.PI / 2;
 scene.add( floor );
 
 const grid = new THREE.GridHelper( 200, 20, 0x111111, 0x111111 );
-// grid.material.depthTest = false; // avoid z-fighting
 scene.add( grid );				
 
 const clock = new THREE.Clock();
@@ -68,9 +70,9 @@ function loadModel(name, height, process) {
         
         md.translateY(-bbox.min.y);
         
-        process(md, gltf.animations);
-        
         scene.add( md );
+        
+        process(md, gltf.animations);
         
     }, undefined, function ( error ) {
         
@@ -90,8 +92,8 @@ for (let i = 0; i < 3; i++) {
 
 loadModel("robotic-arm-lowtex", 4, md => {
     md
-    .translateOnAxis(positions[0], 4)
-    .rotateY(angles[0]);
+    .translateOnAxis(positions[2], 4)
+    .rotateY(angles[2]);
 });
 
 loadModel("lathe-lowtex", 2, md => {
@@ -102,9 +104,8 @@ loadModel("lathe-lowtex", 2, md => {
 
 loadModel("ira-low", 4, (md, animations) => {
     md
-    .translateOnAxis(positions[2], 8)
-    .rotateY(angles[2]);
-    
+    .translateOnAxis(positions[0], 8)
+    .rotateY(angles[0]);
     
     if (animations && animations[ 0 ]) {
         mixer = new THREE.AnimationMixer( md );
@@ -115,9 +116,24 @@ loadModel("ira-low", 4, (md, animations) => {
     
 });
 
+let playButton;
+
+loadModel("play_button", 0.1, md => {
+    md
+    .translateOnAxis(positions[0], 4)
+    .rotateY(angles[0]);
+    
+    playButton = md;
+    
+    dirLight.target = md;
+});
+
 renderer.setAnimationLoop(render);
 
 let dr = new THREE.Vector3();
+
+const raycaster = new THREE.Raycaster();
+const sightCenter = new THREE.Vector2(0, 0);
 
 function render() {
     const delta = clock.getDelta();
@@ -128,8 +144,16 @@ function render() {
     if (renderer.xr.isPresenting) {
         let xrCamera = renderer.xr.getCamera(camera);
         xrCamera.getWorldDirection(dr);
+        raycaster.setFromCamera( sightCenter, xrCamera );
     } else {
         camera.getWorldDirection(dr);
+        raycaster.setFromCamera( sightCenter, camera );
+    }
+    
+    if (playButton) {
+        const intersects = raycaster.intersectObject(playButton, true);
+        canPress = intersects.length > 0;
+        
     }
     
     dr.setY(0);
@@ -192,8 +216,7 @@ window.addEventListener( 'keydown', function ( event ) {
             break;
             // R
         case 82:
-            if (animation) {
-                console.log(animation);
+            if (animation && canPress) {
                 if (animation.isRunning()) {
                     animation.halt(1);
                 } else {
