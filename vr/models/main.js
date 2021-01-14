@@ -3,6 +3,7 @@ import { div } from './div.js';
 let forwardMove = 0;
 let sidewaysMove = 0;
 let turnMove = 0;
+let duckMove = 0;
 
 window.addEventListener( 'keydown', function ( event ) {
     switch ( event.keyCode ) {
@@ -30,13 +31,44 @@ window.addEventListener( 'keydown', function ( event ) {
         case 69:
             turnMove = div(Math.PI, 2);
             break;
+            // C
+        case 67:
+            duckMove = 1;
+            break;
     }
 }, false );
 
-window.addEventListener( 'keyup', function () {
-    forwardMove = 0;
-    sidewaysMove = 0;
-    turnMove = 0;
+window.addEventListener( 'keyup', function ( event ) {
+    switch ( event.keyCode ) {
+            // W
+        case 87:
+            forwardMove = 0;
+            break;
+            // S
+        case 83:
+            forwardMove = 0;
+            break;
+            // A
+        case 65:
+            sidewaysMove = 0;
+            break;
+            // D
+        case 68:
+            sidewaysMove = 0;
+            break;
+            // Q
+        case 81:
+            turnMove = 0;
+            break;
+            // E
+        case 69:
+            turnMove = 0;
+            break;
+            // C
+        case 67:
+            duckMove = 0;
+            break;
+    }
 }, false );
 
 import * as THREE from '../build/three.module.js';
@@ -169,6 +201,8 @@ function render() {
     train.translateOnAxis(dr, -delta * sidewaysMove);
     
     camera.rotateY(-turnMove * delta);
+
+    train.position.setY(-duckMove * 0.6);
 
     renderer.render(scene, camera);
 }
