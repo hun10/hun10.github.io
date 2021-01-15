@@ -6,6 +6,7 @@ let turnMove = 0;
 let turnDownMove = 0;
 let duckMove = 0;
 let canPress = false;
+let glow = 0;
 
 import * as THREE from '../build/three.module.js';
 import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
@@ -146,7 +147,6 @@ loadModel("play_button", 0.1, md => {
     .translateY(0.5)
     .rotateY(angles[0]);
     buttonSprite.visible = false;
-    buttonSprite.material.color.multiplyScalar(10);
     scene.add(buttonSprite);
 
     playButton = md;
@@ -186,6 +186,9 @@ function render() {
             } else {
                 buttonSprite.material.map = runImg;
             }
+            glow += delta;
+            glow %= 2 * Math.PI;
+            buttonSprite.material.color.setRGB(1,1,1).multiplyScalar(20 * (1.5 + Math.sin(glow * 6)));
         }
         buttonSprite.visible = canPress;
     }
