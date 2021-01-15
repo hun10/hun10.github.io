@@ -16,7 +16,7 @@ const renderer = new THREE.WebGLRenderer( { antialias: true } );
 renderer.setPixelRatio( window.devicePixelRatio );
 renderer.setSize( window.innerWidth, window.innerHeight );
 renderer.toneMapping = THREE.ReinhardToneMapping;
-//renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.outputEncoding = THREE.sRGBEncoding;
 //renderer.physicallyCorrectLights = true;
 renderer.xr.enabled = true;
 
@@ -26,10 +26,9 @@ document.body.appendChild( renderer.domElement );
 
 const scene = new THREE.Scene();
 
-scene.add(new THREE.AmbientLight(0xFFFFFF, 1));
 scene.add( new THREE.HemisphereLight( 0x808080, 0x606060 ) );
 
-const dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
+const dirLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
 dirLight.position.set(0, 6, -8);
 scene.add(dirLight);
 
@@ -103,7 +102,7 @@ for (let i = 0; i < 3; i++) {
     angles[i] = div(2 * Math.PI, 3) * i;
     positions[i] = new THREE.Vector3(0, 0, -1).applyAxisAngle(up, angles[i]);
 
-    lights[i] = new THREE.DirectionalLight( 0xffffff, 1 );
+    lights[i] = new THREE.DirectionalLight( 0xffffff, 0.5 );
     lights[i].position.set(0, 3, 0);
     scene.add(lights[i]);
 }
