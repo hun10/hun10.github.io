@@ -52,12 +52,12 @@ const camera = new THREE.PerspectiveCamera( 40, div(window.innerWidth, window.in
 camera.position.set(0, 1.6, 0);
 
 const dotGeometry = new THREE.Geometry();
-dotGeometry.vertices.push(new THREE.Vector3( 0, 0, -0.11));
+dotGeometry.vertices.push(new THREE.Vector3());
 const dot = new THREE.Points(dotGeometry);
 dot.material.sizeAttenuation = false;
 dot.material.size = 4;
 dot.material.color.setRGB ( 30, 0, 0 );
-camera.add( dot );
+scene.add( dot );
 
 train.add( camera );
 
@@ -166,15 +166,15 @@ function render() {
 
     if (mixer) mixer.update( delta );
 
-
+    let xrCamera;
     if (renderer.xr.isPresenting) {
-        let xrCamera = renderer.xr.getCamera(camera);
-        xrCamera.getWorldDirection(dr);
-        raycaster.setFromCamera( sightCenter, xrCamera );
+        xrCamera = renderer.xr.getCamera(camera);
     } else {
-        camera.getWorldDirection(dr);
-        raycaster.setFromCamera( sightCenter, camera );
+        xrCamera = camera;
     }
+
+    xrCamera.getWorldDirection(dr);
+    raycaster.setFromCamera( sightCenter, xrCamera );
 
     if (playButton) {
         const intersects = raycaster.intersectObject(playButton, true);
@@ -209,6 +209,11 @@ function render() {
 
     train.position.setY(curY + (tarY - curY) * delta);
 
+    scene.updateMatrixWorld();
+    if ( xrCamera.parent === null ) xrCamera.updateMatrixWorld();
+
+    dot.position.set(0, 0, -0.11);
+    dot.position.unproject(xrCamera);
     renderer.render(scene, camera);
 }
 
