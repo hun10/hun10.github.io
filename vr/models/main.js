@@ -17,7 +17,6 @@ renderer.setPixelRatio( window.devicePixelRatio );
 renderer.setSize( window.innerWidth, window.innerHeight );
 renderer.toneMapping = THREE.ReinhardToneMapping;
 renderer.outputEncoding = THREE.sRGBEncoding;
-//renderer.physicallyCorrectLights = true;
 renderer.xr.enabled = true;
 
 document.body.appendChild( VRButton.createButton( renderer ) );
@@ -29,7 +28,7 @@ const scene = new THREE.Scene();
 scene.add( new THREE.HemisphereLight( 0x808080, 0x606060 ) );
 
 const dirLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
-dirLight.position.set(0, 6, -8);
+dirLight.position.set(0, 2, -8);
 scene.add(dirLight);
 
 const texLoader = new THREE.TextureLoader();
@@ -41,13 +40,22 @@ floorTex.wrapT = THREE.RepeatWrapping;
 floorTex.repeat.set( 2000, 2000 );
 const floorMaterial = new THREE.MeshStandardMaterial( { map: floorTex } );
 const floor = new THREE.Mesh( floorGeometry, floorMaterial );
-floor.rotation.x = - Math.PI / 2;
+floor.rotation.x = - div(Math.PI, 2);
 scene.add( floor );
 
+const tempMatrix = new THREE.Matrix4();
 const clock = new THREE.Clock();
 
 const train = new THREE.Object3D();
 scene.add( train );
+
+const controller1 = renderer.xr.getController( 0 );
+controller1.addEventListener( 'selectstart', tryToPlay );
+train.add( controller1 );
+
+const line = new THREE.Line( new THREE.BufferGeometry().setFromPoints( [ new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, - 1 ) ] ) );
+line.material.color.setRGB(30, 0, 0);
+controller1.add(line);
 
 const camera = new THREE.PerspectiveCamera( 40, div(window.innerWidth, window.innerHeight), 0.1, 100 );
 camera.position.set(0, 1.6, 0);
@@ -185,7 +193,15 @@ function render() {
     }
 
     xrCamera.getWorldDirection(dr);
-    raycaster.setFromCamera( sightCenter, xrCamera );
+
+    dot.visible = !controller1.visible;
+    if (dot.visible) {
+        raycaster.setFromCamera( sightCenter, xrCamera );
+    } else {
+        tempMatrix.identity().extractRotation( controller1.matrixWorld );
+        raycaster.ray.origin.setFromMatrixPosition( controller1.matrixWorld );
+        raycaster.ray.direction.set( 0, 0, - 1 ).applyMatrix4( tempMatrix );
+    }
 
     if (playButton) {
         const intersects = raycaster.intersectObject(playButton, true);
@@ -200,6 +216,10 @@ function render() {
             glow += delta;
             glow %= 2 * Math.PI;
             buttonSprite.material.color.setRGB(1,1,1).multiplyScalar(20 * (1.5 + Math.sin(glow * 6)));
+
+            line.scale.z = intersects[0].distance;
+        } else {
+            line.scale.z = 5;
         }
         buttonSprite.visible = canPress;
     }
@@ -275,14 +295,7 @@ window.addEventListener( 'keydown', function ( event ) {
             break;
             // R
         case 82:
-            if (animation && canPress) {
-                if (animation.isRunning()) {
-                    animation.halt(1);
-                } else {
-                    animation.timeScale = 1;
-                    animation.paused = false;
-                }
-            };
+            tryToPlay();
             break;
             // G
         case 71:
@@ -294,6 +307,17 @@ window.addEventListener( 'keydown', function ( event ) {
             break;
     }
 }, false );
+
+function tryToPlay() {
+    if (animation && canPress) {
+        if (animation.isRunning()) {
+            animation.halt(1);
+        } else {
+            animation.timeScale = 1;
+            animation.paused = false;
+        }
+    };
+}
 
 window.addEventListener( 'keyup', function ( event ) {
     switch ( event.keyCode ) {
