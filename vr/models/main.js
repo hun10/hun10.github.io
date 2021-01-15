@@ -212,6 +212,10 @@ function render() {
     scene.updateMatrixWorld();
     if ( xrCamera.parent === null ) xrCamera.updateMatrixWorld();
 
+    if (renderer.xr.isPresenting) {
+        xrCamera = renderer.xr.getCamera(camera);
+    }
+
     dot.position.set(0, 0, -0.11);
     dot.position.unproject(xrCamera);
     renderer.render(scene, camera);
