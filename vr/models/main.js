@@ -26,22 +26,24 @@ document.body.appendChild( renderer.domElement );
 
 const scene = new THREE.Scene();
 
-const color = 0xFFFFFF;
-const intensity = 10;
-scene.add(new THREE.AmbientLight(color, intensity));
+scene.add(new THREE.AmbientLight(0xFFFFFF, 1));
+scene.add( new THREE.HemisphereLight( 0x808080, 0x606060 ) );
 
-const dirLight = new THREE.DirectionalLight( 0xffffff, 5 );
-dirLight.position.set(0, 1, -8);
+const dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
+dirLight.position.set(0, 6, -8);
 scene.add(dirLight);
 
-const floorGeometry = new THREE.PlaneBufferGeometry( 2000, 2000 );
-const floorMaterial = new THREE.MeshStandardMaterial( { color: 0x222222 } );
+const texLoader = new THREE.TextureLoader();
+
+const floorGeometry = new THREE.PlaneGeometry( 2000, 2000 );
+const floorTex = texLoader.load("floor.jpg");
+floorTex.wrapS = THREE.RepeatWrapping;
+floorTex.wrapT = THREE.RepeatWrapping;
+floorTex.repeat.set( 2000, 2000 );
+const floorMaterial = new THREE.MeshStandardMaterial( { map: floorTex } );
 const floor = new THREE.Mesh( floorGeometry, floorMaterial );
 floor.rotation.x = - Math.PI / 2;
 scene.add( floor );
-
-const grid = new THREE.GridHelper( 200, 20, 0x111111, 0x111111 );
-scene.add( grid );				
 
 const clock = new THREE.Clock();
 
@@ -96,27 +98,38 @@ let up = new THREE.Vector3(0, 1, 0);
 
 const positions = [];
 const angles = [];
+const lights = [];
 for (let i = 0; i < 3; i++) {
     angles[i] = div(2 * Math.PI, 3) * i;
     positions[i] = new THREE.Vector3(0, 0, -1).applyAxisAngle(up, angles[i]);
+
+    lights[i] = new THREE.DirectionalLight( 0xffffff, 1 );
+    lights[i].position.set(0, 3, 0);
+    scene.add(lights[i]);
 }
 
 loadModel("robotic-arm-lowtex", 4, md => {
     md
     .translateOnAxis(positions[2], 4)
     .rotateY(angles[2]);
+
+    lights[2].target = md;
 });
 
 loadModel("lathe-lowtex", 2, md => {
     md
     .translateOnAxis(positions[1], 4)
     .rotateY(-angles[1]);
+
+    lights[1].target = md;
 });
 
 loadModel("ira-low", 4, (md, animations) => {
     md
     .translateOnAxis(positions[0], 8)
     .rotateY(angles[0]);
+
+    lights[0].target = md;
 
     if (animations && animations[ 0 ]) {
         mixer = new THREE.AnimationMixer( md );
@@ -127,7 +140,6 @@ loadModel("ira-low", 4, (md, animations) => {
 
 });
 
-const texLoader = new THREE.TextureLoader();
 const runImg = texLoader.load("run.png");
 const stopImg = texLoader.load("stop.png");
 
