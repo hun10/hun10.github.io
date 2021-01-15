@@ -3,6 +3,7 @@ import { div } from './div.js';
 let forwardMove = 0;
 let sidewaysMove = 0;
 let turnMove = 0;
+let turnDownMove = 0;
 let duckMove = 0;
 let canPress = false;
 
@@ -178,6 +179,7 @@ function render() {
     train.translateOnAxis(dr, -delta * sidewaysMove);
     
     camera.rotateY(-turnMove * delta);
+    camera.rotateX(turnDownMove * delta);
     
     const curY = train.position.y;
     const tarY = -duckMove * 0.6;
@@ -239,6 +241,14 @@ window.addEventListener( 'keydown', function ( event ) {
                 }
             };
             break;
+            // G
+        case 71:
+            turnDownMove = div(-Math.PI, 4);
+            break;
+            // T
+        case 84:
+            turnDownMove = div(Math.PI, 4);
+            break;
     }
 }, false );
 
@@ -271,6 +281,14 @@ window.addEventListener( 'keyup', function ( event ) {
             // C
         case 67:
             duckMove = 0;
+            break;
+            // G
+        case 71:
+            turnDownMove = 0;
+            break;
+            // T
+        case 84:
+            turnDownMove = 0;
             break;
     }
 }, false );
