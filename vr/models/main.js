@@ -117,28 +117,31 @@ loadModel("ira-low", 4, (md, animations) => {
 
 });
 
+const texLoader = new THREE.TextureLoader();
+const runImg = texLoader.load("run.png");
+const stopImg = texLoader.load("stop.png");
+
 let playButton;
+let buttonSprite;
 
 loadModel("play_button", 0.1, md => {
     md
     .translateOnAxis(positions[0], 4)
     .rotateY(angles[0]);
+
+    const material = new THREE.SpriteMaterial( { map: runImg } );
+    buttonSprite = new THREE.Sprite( material );
+    buttonSprite.scale.setY(0.5);
+    buttonSprite
+    .translateOnAxis(positions[0], 4)
+    .translateY(0.5)
+    .rotateY(angles[0]);
+    buttonSprite.visible = false;
+    scene.add(buttonSprite);
 
     playButton = md;
 
     dirLight.target = md;
-});
-
-let playButtonOverlay;
-
-loadModel("play_button", 0.1, md => {
-    md
-    .translateOnAxis(positions[0], 4)
-    .rotateY(angles[0]);
-
-    md.scale.setY(md.scale.y * 1.5);
-
-    playButtonOverlay = md;
 });
 
 renderer.setAnimationLoop(render);
@@ -163,12 +166,18 @@ function render() {
         raycaster.setFromCamera( sightCenter, camera );
     }
 
-    if (playButton && playButtonOverlay) {
+    if (playButton) {
         const intersects = raycaster.intersectObject(playButton, true);
         canPress = intersects.length > 0;
 
-        playButton.visible = !canPress;
-        playButtonOverlay.visible = canPress;
+        if (canPress) {
+            if (animation.isRunning()) {
+                buttonSprite.material.map = stopImg;
+            } else {
+                buttonSprite.material.map = runImg;
+            }
+        }
+        buttonSprite.visible = canPress;
     }
 
     dr.setY(0);
