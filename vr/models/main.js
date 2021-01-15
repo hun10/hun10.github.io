@@ -49,6 +49,15 @@ scene.add( train );
 
 const camera = new THREE.PerspectiveCamera( 40, div(window.innerWidth, window.innerHeight), 0.1, 100 );
 camera.position.set(0, 1.6, 0);
+
+const dotGeometry = new THREE.Geometry();
+dotGeometry.vertices.push(new THREE.Vector3( 0, 0, -0.11));
+const dot = new THREE.Points(dotGeometry);
+dot.material.sizeAttenuation = false;
+dot.material.size = 4;
+dot.material.color.setRGB ( 30, 0, 0 );
+camera.add( dot );
+
 train.add( camera );
 
 let mixer;
@@ -137,6 +146,7 @@ loadModel("play_button", 0.1, md => {
     .translateY(0.5)
     .rotateY(angles[0]);
     buttonSprite.visible = false;
+    buttonSprite.material.color.multiplyScalar(10);
     scene.add(buttonSprite);
 
     playButton = md;
@@ -181,13 +191,14 @@ function render() {
     }
 
     dr.setY(0);
+    dr.normalize();
 
     train.translateOnAxis(dr, -delta * forwardMove);
 
     dr.applyAxisAngle(up, div(Math.PI, 2));
     train.translateOnAxis(dr, -delta * sidewaysMove);
 
-    camera.rotateY(-turnMove * delta);
+    camera.rotateOnWorldAxis(up, -turnMove * delta);
     camera.rotateX(turnDownMove * delta);
 
     const curY = train.position.y;
