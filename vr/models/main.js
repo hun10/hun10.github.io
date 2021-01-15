@@ -59,26 +59,26 @@ const loader = new GLTFLoader();
 function loadModel(name, height, process) {
     loader.load( `./${name}/scene.gltf`, function ( gltf ) {
         const bbox = new THREE.Box3();
-        
+
         const md = gltf.scene;
-        
+
         bbox.setFromObject(md);
-        
+
         md.scale.divideScalar(bbox.max.y - bbox.min.y);
         md.scale.multiplyScalar(height);
-        
+
         bbox.setFromObject(md);
-        
+
         md.translateY(-bbox.min.y);
-        
+
         scene.add( md );
-        
+
         process(md, gltf.animations);
-        
+
     }, undefined, function ( error ) {
-        
+
         console.error( error );
-        
+
     } );
 }
 
@@ -107,14 +107,14 @@ loadModel("ira-low", 4, (md, animations) => {
     md
     .translateOnAxis(positions[0], 8)
     .rotateY(angles[0]);
-    
+
     if (animations && animations[ 0 ]) {
         mixer = new THREE.AnimationMixer( md );
         animation = mixer.clipAction( animations[ 0 ] );
         animation.timeScale = 0;
         animation.play();
     }
-    
+
 });
 
 let playButton;
@@ -135,7 +135,7 @@ loadModel("play_button", 0.1, md => {
     md
     .translateOnAxis(positions[0], 4)
     .rotateY(angles[0]);
-    
+
     md.scale.setY(md.scale.y * 1.5);
 
     playButtonOverlay = md;
@@ -150,10 +150,10 @@ const sightCenter = new THREE.Vector2(0, 0);
 
 function render() {
     const delta = clock.getDelta();
-    
+
     if (mixer) mixer.update( delta );
-    
-    
+
+
     if (renderer.xr.isPresenting) {
         let xrCamera = renderer.xr.getCamera(camera);
         xrCamera.getWorldDirection(dr);
@@ -162,42 +162,42 @@ function render() {
         camera.getWorldDirection(dr);
         raycaster.setFromCamera( sightCenter, camera );
     }
-    
+
     if (playButton && playButtonOverlay) {
         const intersects = raycaster.intersectObject(playButton, true);
         canPress = intersects.length > 0;
-        
+
         playButton.visible = !canPress;
         playButtonOverlay.visible = canPress;
     }
-    
+
     dr.setY(0);
-    
+
     train.translateOnAxis(dr, -delta * forwardMove);
-    
+
     dr.applyAxisAngle(up, div(Math.PI, 2));
     train.translateOnAxis(dr, -delta * sidewaysMove);
-    
+
     camera.rotateY(-turnMove * delta);
     camera.rotateX(turnDownMove * delta);
-    
+
     const curY = train.position.y;
     const tarY = -duckMove * 0.6;
-    
+
     train.position.setY(curY + (tarY - curY) * delta);
-    
+
     renderer.render(scene, camera);
 }
 
 window.addEventListener( 'resize', onWindowResize, false );
 
 function onWindowResize() {
-    
+
     camera.aspect = div(window.innerWidth, window.innerHeight);
     camera.updateProjectionMatrix();
-    
+
     renderer.setSize( window.innerWidth , window.innerHeight );
-    
+
 }
 
 window.addEventListener( 'keydown', function ( event ) {
