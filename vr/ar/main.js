@@ -83,7 +83,7 @@ function initialize()
 	// setup markerRoots
 	////////////////////////////////////////////////////////////
 
-	markerNames = ["kanji", "letterA", "letterB"];
+	markerNames = ["kanji", "letterA", "letterB", "letterC"];
 	
 	markerArray = [];
 	
@@ -116,7 +116,7 @@ function initialize()
 	globe.position.y = 1;
 	sceneGroup.add(globe); 
 	
-	markerArray[0].children[0].add( sceneGroup );
+	scene.add( sceneGroup );
 	currentMarkerName = markerNames[0];
 	
 	let pointLight = new THREE.PointLight( 0xffffff, 1, 50 );
@@ -128,8 +128,21 @@ function update()
 {
 	
 	globe.rotation.y += 0.01;
-	
-	let anyMarkerVisible = false;
+
+let c = new THREE.Vector3();
+let count = 0;
+for (let i = 0; i < markerArray.length; i++) {
+  if (markerArray[i].visible) {
+    c.add( markerArray[i].position );
+    count++;
+  }
+}
+
+c.divideScalar(count);
+
+sceneGroup.position.copy(c);
+
+/*	let anyMarkerVisible = false;
 	for (let i = 0; i < markerArray.length; i++)
 	{
 		if ( markerArray[i].visible )
@@ -179,7 +192,7 @@ function update()
 			currentGroup.quaternion.copy( relativeRotation );
 		}
 	}
-	
+*/	
 	// update artoolkit on every frame
 	if ( arToolkitSource.ready !== false )
 		arToolkitContext.update( arToolkitSource.domElement );
