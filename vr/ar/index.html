@@ -4,18 +4,15 @@
         <title>AR Demo</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-        <script src="aframe.min.js"></script>
-        <script src="aframe-ar.js"></script>
+        <script src="three.js"></script>
+        <script src="ar.js"></script>
         <style>
             body { margin: 0; overflow: hidden; }
         </style>
     </head>
     <body>
-        <a-scene embedded arjs='trackingMethod: best'>
-            <a-anchor hit-testing-enabled='true' hit-testing-render-debug='true'>
-                <a-box position='0 0.5 0'></a-box>
-            </a-anchor>
-            <a-camera-static/>
-        </a-scene>
+        <script type="module">
+            import * as Main from './main.js';
+        </script>
     </body>
 </html>
