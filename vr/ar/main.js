@@ -8,6 +8,9 @@ var sceneGroup;
 
 var globe;
 
+const prevMarkerState = [];
+const markerGroup = [];
+
 initialize();
 animate();
 
@@ -71,7 +74,7 @@ function initialize()
     arToolkitContext = new THREEx.ArToolkitContext({
     cameraParametersUrl: 'data/camera_para.dat',
     detectionMode: 'mono',
-    maxDetectionRate: 30,
+    maxDetectionRate: 60,
     });
 
     // copy projection matrix to camera when initialization complete
@@ -83,7 +86,7 @@ function initialize()
     // setup markerRoots
     ////////////////////////////////////////////////////////////
 
-    markerNames = ["kanji", "letterA", "letterB", "letterC"];
+    markerNames = ["kanji", "letterA", "letterC", "letterB"];
 
     markerArray = [];
 
@@ -97,11 +100,11 @@ function initialize()
         type: 'pattern', patternUrl: "data/" + markerNames[i] + ".patt",
         });
 
-        let markerGroup = new THREE.Group();
-        const mesh = new THREE.Mesh( new THREE.BoxGeometry( ), new THREE.MeshBasicMaterial( { color: 0x0000ff, opacity: 0.5 } ) );
+        markerGroup[i] = new THREE.Group();
+        const mesh = new THREE.Mesh( new THREE.BoxGeometry( ), new THREE.MeshBasicMaterial( { color: 0x0000ff, opacity: 0.5, wireframe: true } ) );
         mesh.position.setY(0.5);
-        markerGroup.add( mesh);
-        marker.add(markerGroup);
+        markerGroup[i].add( mesh);
+        scene.add(markerGroup[i]);
     }
 
     ////////////////////////////////////////////////////////////
@@ -139,85 +142,49 @@ function initialize()
     camera.add( pointLight );
 }
 
+function alignPrevMarkers(base, target) {
+    let relativeRotation = target.quaternion.clone().normalize().multiply( base.quaternion.clone().normalize().invert() );
+
+    let relativeScale = target.scale.clone().divide( base.scale.clone() );
+
+    for (let i = 0; i < markerArray.length; i++) {
+        if (prevMarkerState[i]) {
+            prevMarkerState[i].position.sub(base.position.clone());
+            prevMarkerState[i].position.applyQuaternion(relativeRotation.clone().normalize());
+            prevMarkerState[i].position.add(target.position.clone());
+            prevMarkerState[i].quaternion.premultiply(relativeRotation.clone().normalize());
+            prevMarkerState[i].scale.multiply(relativeScale.clone());
+        }
+    }
+}
 
 function update()
 {
-    //let c = new THREE.Vector3();
-    //    let q, s;
-    //let count = 0;
-    //for (let i = 0; i < markerArray.length; i++) {
-    //  if (markerArray[i].visible) {
-    //    c.add( markerArray[i].position );
-    //      q = markerArray[i].quaternion;
-    //      s = markerArray[i].scale;
-    //    count++;
-    //  }
-    //}
+    for (let i = 0; i < markerArray.length; i++) {
+        const marker = markerArray[i];
+        if (marker.visible) {
+            if (prevMarkerState[i]) {
+                alignPrevMarkers(prevMarkerState[i], markerArray[i]);
+                break;
+            } else {
+                prevMarkerState[i] = {
+                    position: marker.position.clone(),
+                    quaternion: marker.quaternion.clone(),
+                    scale: marker.scale.clone()
+                };
+            }
+        }
+    }
 
-    //    if (count > 0) {
-    //c.divideScalar(count);
-
-    //sceneGroup.visible = true;
-    //sceneGroup.position.copy(c);
-
-    //        globe.lookAt(0, 1, 0);
-    //sceneGroup.scale.copy(s);
-    //sceneGroup.quaternion.copy(q);
-    //    } else {
-    //        sceneGroup.visible = false;
-    //    }
-
-    /*	let anyMarkerVisible = false;
-     for (let i = 0; i < markerArray.length; i++)
-     {
-     if ( markerArray[i].visible )
-     {
-     anyMarkerVisible = true;
-     markerArray[i].children[0].add( sceneGroup );
-     if ( currentMarkerName != markerNames[i] )
-     {
-     currentMarkerName = markerNames[i];
-     // console.log("Switching to " + currentMarkerName);
-     }
-
-     let p = markerArray[i].children[0].getWorldPosition();
-     let q = markerArray[i].children[0].getWorldQuaternion();
-     let s = markerArray[i].children[0].getWorldScale();
-     let lerpAmount = 0.5;
-
-     scene.add(sceneGroup);
-     sceneGroup.position.lerp(p, lerpAmount);
-     sceneGroup.quaternion.slerp(q, lerpAmount);
-     sceneGroup.scale.lerp(s, lerpAmount);
-
-     break;
-     }
-     }
-
-     if ( !anyMarkerVisible )
-     {
-     // console.log("No marker currently visible.");
-     }
-
-     let baseMarker = markerArray[0];
-
-     // update relative positions of markers
-     for (let i = 1; i < markerArray.length; i++)
-     {
-     let currentMarker = markerArray[i];
-     let currentGroup  = currentMarker.children[0];
-     if ( baseMarker.visible && currentMarker.visible )
-     {
-     // console.log("updating marker " + i " -> base offset");
-
-     let relativePosition = currentMarker.worldToLocal( baseMarker.position.clone() );
-     currentGroup.position.copy( relativePosition );
-
-     let relativeRotation = currentMarker.quaternion.clone().inverse().multiply( baseMarker.quaternion.clone() );
-     currentGroup.quaternion.copy( relativeRotation );
-     }
-     }
-     */
+    // update relative positions of markers
+    for (let i = 0; i < markerArray.length; i++)
+    {
+        if (prevMarkerState[i]) {
+            markerGroup[i].position.copy( prevMarkerState[i].position );
+            markerGroup[i].quaternion.copy( prevMarkerState[i].quaternion );
+            markerGroup[i].scale.copy( prevMarkerState[i].scale );
+        }
+    }
     // update artoolkit on every frame
     if ( arToolkitSource.ready !== false )
         arToolkitContext.update( arToolkitSource.domElement );
@@ -239,4 +206,3 @@ function animate()
     update();
     render();
 }
-
