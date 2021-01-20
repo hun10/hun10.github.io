@@ -201,11 +201,13 @@ function render()
 }
 
 
-function animate()
+function animate( timestamp, frame )
 {
-    requestAnimationFrame(animate);
     deltaTime = clock.getDelta();
     totalTime += deltaTime;
+
+    
+
     update();
     render();
 }
