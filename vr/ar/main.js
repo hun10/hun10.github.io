@@ -167,6 +167,7 @@ function update()
     for (let i = 0; i < markerArray.length; i++) {
         const marker = markerArray[i];
         if (marker.visible) {
+            alert("vis!");
             if (prevMarkerState[i]) {
                 alignPrevMarkers(prevMarkerState[i], markerArray[i]);
                 break;
