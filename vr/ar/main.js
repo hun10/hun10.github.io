@@ -1,3 +1,5 @@
+import { ARButton } from "./ARButton.js";
+
 var scene, camera, renderer, clock, deltaTime, totalTime;
 
 var arToolkitSource, arToolkitContext;
@@ -34,6 +36,7 @@ function initialize()
     renderer.domElement.style.top = '0px'
     renderer.domElement.style.left = '0px'
     document.body.appendChild( renderer.domElement );
+    document.body.appendChild( ARButton.createButton( renderer ) );
 
     clock = new THREE.Clock();
     deltaTime = 0;
