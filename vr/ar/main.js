@@ -168,7 +168,7 @@ function update()
     for (let i = 0; i < markerArray.length; i++) {
         const marker = markerArray[i];
         if (marker.visible) {
-            globe.visible = true;
+            globe.visible = false;
             if (prevMarkerState[i]) {
                 alignPrevMarkers(prevMarkerState[i], markerArray[i]);
                 break;
@@ -180,7 +180,7 @@ function update()
                 };
             }
         } else {
-            globe.visible = false;
+            globe.visible = true;
         }
     }
 
