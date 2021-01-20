@@ -14,7 +14,7 @@ const prevMarkerState = [];
 const markerGroup = [];
 
 initialize();
-animate();
+renderer.setAnimationLoop( animate );
 
 function initialize()
 {
@@ -36,7 +36,7 @@ function initialize()
     renderer.domElement.style.top = '0px'
     renderer.domElement.style.left = '0px'
     document.body.appendChild( renderer.domElement );
-    document.body.appendChild( ARButton.createButton( renderer ) );
+    document.body.appendChild( ARButton.createButton( renderer, { requiredFeatures: [ 'hit-test' ] }) );
 
     clock = new THREE.Clock();
     deltaTime = 0;
