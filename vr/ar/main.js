@@ -137,6 +137,7 @@ function initialize()
     globe = new THREE.Mesh( geometry1, material1 );
 
     globe.position.y = 1;
+    globe.position.z = -1;
     sceneGroup.add(globe);
 
     scene.add( sceneGroup );
@@ -167,7 +168,7 @@ function update()
     for (let i = 0; i < markerArray.length; i++) {
         const marker = markerArray[i];
         if (marker.visible) {
-            alert("vis!");
+            globe.visible = true;
             if (prevMarkerState[i]) {
                 alignPrevMarkers(prevMarkerState[i], markerArray[i]);
                 break;
@@ -178,6 +179,8 @@ function update()
                     scale: marker.scale.clone()
                 };
             }
+        } else {
+            globe.visible = false;
         }
     }
 
