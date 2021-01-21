@@ -180,7 +180,7 @@ function update()
                 let p = markerArray[i].children[0].getWorldPosition();
                 let q = markerArray[i].children[0].getWorldQuaternion();
                 let s = markerArray[i].children[0].getWorldScale();
-                let lerpAmount = 0.5;
+                let lerpAmount = 0.1;
 
                 scene.add(sceneGroup);
                 sceneGroup.position.lerp(p, lerpAmount);
