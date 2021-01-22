@@ -54,7 +54,9 @@ controller1.addEventListener( 'selectstart', tryToPlay );
 train.add( controller1 );
 
 const line = new THREE.Line( new THREE.BufferGeometry().setFromPoints( [ new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, - 1 ) ] ) );
-line.material.color.setRGB(30, 0, 0);
+line.material.color.setRGB(0, 0, 1);
+line.material.transparent = true;
+line.material.opacity = 0.5;
 controller1.add(line);
 
 const camera = new THREE.PerspectiveCamera( 40, div(window.innerWidth, window.innerHeight), 0.1, 100 );
