@@ -188,6 +188,8 @@ function render() {
     let xrCamera;
     if (renderer.xr.isPresenting) {
         xrCamera = renderer.xr.getCamera(camera);
+        let el = document.querySelector( ':focus' );
+        if( el ) el.blur();
     } else {
         xrCamera = camera;
     }
@@ -267,18 +269,22 @@ window.addEventListener( 'keydown', function ( event ) {
     switch ( event.keyCode ) {
             // W
         case 87:
+        case 38:
             forwardMove = -2;
             break;
             // S
         case 83:
+        case 40:
             forwardMove = 2;
             break;
             // A
         case 65:
+        case 37:
             sidewaysMove = -2;
             break;
             // D
         case 68:
+        case 39:
             sidewaysMove = 2;
             break;
             // Q
@@ -295,6 +301,7 @@ window.addEventListener( 'keydown', function ( event ) {
             break;
             // R
         case 82:
+        case 13:
             tryToPlay();
             break;
             // G
@@ -323,18 +330,22 @@ window.addEventListener( 'keyup', function ( event ) {
     switch ( event.keyCode ) {
             // W
         case 87:
+        case 38:
             forwardMove = 0;
             break;
             // S
         case 83:
+        case 40:
             forwardMove = 0;
             break;
             // A
         case 65:
+        case 37:
             sidewaysMove = 0;
             break;
             // D
         case 68:
+        case 39:
             sidewaysMove = 0;
             break;
             // Q
