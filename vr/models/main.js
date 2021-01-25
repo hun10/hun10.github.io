@@ -53,12 +53,6 @@ const controller1 = renderer.xr.getController( 0 );
 controller1.addEventListener( 'selectstart', tryToPlay );
 train.add( controller1 );
 
-const line = new THREE.Line( new THREE.BufferGeometry().setFromPoints( [ new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, - 1 ) ] ) );
-line.material.color.setRGB(0, 0, 1);
-line.material.transparent = true;
-line.material.opacity = 0.5;
-controller1.add(line);
-
 const camera = new THREE.PerspectiveCamera( 40, div(window.innerWidth, window.innerHeight), 0.1, 100 );
 camera.position.set(0, 1.6, 0);
 
@@ -198,8 +192,7 @@ function render() {
 
     xrCamera.getWorldDirection(dr);
 
-    dot.visible = !controller1.visible;
-    if (dot.visible) {
+    if (!controller1.visible) {
         raycaster.setFromCamera( sightCenter, xrCamera );
     } else {
         tempMatrix.identity().extractRotation( controller1.matrixWorld );
@@ -220,10 +213,6 @@ function render() {
             glow += delta;
             glow %= 2 * Math.PI;
             buttonSprite.material.color.setRGB(1,1,1).multiplyScalar(20 * (1.5 + Math.sin(glow * 6)));
-
-            line.scale.z = intersects[0].distance;
-        } else {
-            line.scale.z = 5;
         }
         buttonSprite.visible = canPress;
     }
@@ -251,8 +240,32 @@ function render() {
         xrCamera = renderer.xr.getCamera(camera);
     }
 
-    dot.position.set(0, 0, -0.11);
-    dot.position.unproject(xrCamera);
+    {
+        if (!controller1.visible) {
+            raycaster.setFromCamera( sightCenter, xrCamera );
+        } else {
+            tempMatrix.identity().extractRotation( controller1.matrixWorld );
+            raycaster.ray.origin.setFromMatrixPosition( controller1.matrixWorld );
+            raycaster.ray.direction.set( 0, 0, - 1 ).applyMatrix4( tempMatrix );
+        }
+
+        dot.visible = false;
+        const intersects = raycaster.intersectObjects(scene.children, true);
+        let dist = 100;
+
+        if (intersects.length > 0) {
+            for (let i = 0; i < intersects.length; i++) {
+                if (intersects[i].object.visible) {
+                    dist = intersects[i].distance;
+                    break;
+                }
+            }
+        }
+
+        dot.visible = true;
+        dot.position.copy(raycaster.ray.origin);
+        dot.translateOnAxis(raycaster.ray.direction, dist - 0.05);
+    }
     renderer.render(scene, camera);
 }
 
