@@ -130,7 +130,8 @@ loadModel("lathe-lowtex", 2, md => {
 loadModel("ira-low", 4, (md, animations) => {
     md
     .translateOnAxis(positions[0], 8)
-    .rotateY(angles[0]);
+    .rotateY(angles[0])
+    .rotateY(-div(Math.PI, 6));
 
     lights[0].target = md;
 
