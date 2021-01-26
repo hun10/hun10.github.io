@@ -1,5 +1,8 @@
 import { div } from './div.js';
 
+import WebXRPolyfill from './webxr-polyfill.module.js';
+const polyfill = new WebXRPolyfill();
+
 let forwardMove = 0;
 let sidewaysMove = 0;
 let turnMove = 0;
