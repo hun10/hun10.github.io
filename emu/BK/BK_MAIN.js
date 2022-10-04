@@ -1,0 +1,346 @@
+import { webBk0010_01, translation, bk0010_01 } from './Keys.js'
+
+const emulator = new Worker('./main-worker.js', {
+	type: 'module'
+})
+
+let overJoystick = 0
+export function toggleJoystick() {
+	overJoystick ^= 1
+}
+
+let buzzer, clippingListeners = []
+
+const videoChannel = new MessageChannel()
+
+emulator.postMessage({
+	portForVideo: videoChannel.port2
+}, [videoChannel.port2])
+
+export const video = {
+	receivedBuffer: new Uint16Array(256 * 32)
+}
+
+videoChannel.port1.onmessage = ({ data }) => {
+	video.receivedBuffer = data
+}
+
+export function returnVideoBuffer() {
+	videoChannel.port1.postMessage(video.receivedBuffer, [video.receivedBuffer.buffer])
+	video.receivedBuffer = null
+}
+
+returnVideoBuffer()
+
+export function setCpuSpeed(HZ) {
+	emulator.postMessage({
+		setCpuSpeed: HZ
+	})
+}
+
+const printerFrame = document.createElement('iframe')
+let tapeControls
+
+function processPrinterStream(stream) {
+	return stream.replaceAll(String.fromCharCode(19), '')
+}
+
+emulator.onmessage = ({ data: {
+	printerPaper,
+	newRecording,
+	recordEnded,
+	motorRunning,
+	ffChanged
+} }) => {
+	if (printerPaper !== undefined) {
+		const uri = `data:text/plain;charset=koi8-r;base64,${btoa(processPrinterStream(printerPaper))}`
+		printerFrame.src = uri
+	}
+
+	if (newRecording !== undefined && tapeControls !== undefined) {
+		tapeControls.appendRecording(newRecording)
+	}
+	if (recordEnded !== undefined && tapeControls !== undefined) {
+		tapeControls.update({
+			ended: true
+		})
+	}
+	if (motorRunning !== undefined && tapeControls !== undefined) {
+		tapeControls.update({
+			motor: motorRunning
+		})
+	}
+	if (ffChanged !== undefined && tapeControls !== undefined) {
+		tapeControls.update({
+			ff: ffChanged
+		})
+	}
+}
+
+export function mode(mode) {
+	emulator.postMessage({
+		mode
+	})
+}
+
+let printerEnabled = false
+export function togglePrinter() {
+	printerEnabled = !printerEnabled
+
+	if (printerEnabled) {
+		document.body.appendChild(printerFrame)
+	} else {
+		document.body.removeChild(printerFrame)
+	}
+
+	emulator.postMessage({
+		togglePrinter: printerEnabled
+	})
+}
+
+let audioCtx = { close: () => {} }
+
+export async function setTapeAudio(audio) {
+	const audioBuffer = await audioCtx.decodeAudioData(audio)
+	const sampleRate = audioBuffer.sampleRate
+	const rawData = audioBuffer.getChannelData(0)
+
+	const pwm = [1]
+	for (let i = 0, pp = 0; i < rawData.length; i++) {
+		const sample = rawData[i]
+
+		if (sample > 0 && pwm[pp] > 0) {
+			pwm[pp] += 3e6 / sampleRate
+		}
+		if (sample < 0 && pwm[pp] < 0) {
+			pwm[pp] -= 3e6 / sampleRate
+		}
+
+		if (sample > 0 && pwm[pp] < 0) {
+			pwm.push(3e6 / sampleRate)
+			pp++
+		}
+		if (sample < 0 && pwm[pp] > 0) {
+			pwm.push(-3e6 / sampleRate)
+			pp++
+		}
+	}
+
+	setTapePwm(pwm)
+}
+
+export function setTapePwm(pwm) {
+	emulator.postMessage({
+		setTapePwm: pwm
+	})
+}
+
+export function setTapeState({
+	ignoringRemote,
+	fastForward,
+	mode
+}) {
+	emulator.postMessage({
+		ignoreTapeRemoteControl: ignoringRemote,
+		tapeFastForward: fastForward,
+		setTapeMode: mode
+	})
+}
+
+export function registerTapeControls(controls) {
+	tapeControls = controls
+}
+
+export function turnSoundOn() {
+	if (audioCtx.state === 'running') {
+		return
+	}
+
+	audioCtx.close()
+
+	audioCtx = new AudioContext()
+
+	const silBuf = audioCtx.createBuffer(1, 1, audioCtx.sampleRate)
+	const silBufNode = new AudioBufferSourceNode(audioCtx)
+	silBufNode.buffer = silBuf
+	silBufNode.connect(audioCtx.destination)
+	silBufNode.start()
+
+	audioCtx.audioWorklet.addModule('sound/buzzer.js').then(() => {
+		buzzer = new AudioWorkletNode(audioCtx, 'buzzer')
+
+		buzzer.connect(audioCtx.destination)
+
+		buzzer.port.onmessage = ({
+			data: {
+				clipped
+			}
+		}) => {
+			if (clipped !== undefined) {
+				clippingListeners.forEach(listener => listener(clipped))
+			}
+		}
+
+		const audioChannel = new MessageChannel()
+
+		buzzer.port.postMessage({
+			portForAudio: audioChannel.port1
+		}, [audioChannel.port1])
+
+		emulator.postMessage({
+			portForAudio: audioChannel.port2
+		}, [audioChannel.port2])
+	})
+}
+
+export function updateParams({ lpfCutoff, buttCutoff, buttOrder, hpfCutoff, gainVal, ctrls }) {
+	if (buzzer) {
+		buzzer.parameters.get('firstOrderLpfCutoff').value = lpfCutoff
+		buzzer.parameters.get('butterworthCutoff').value = buttCutoff
+		buzzer.parameters.get('butterworthOrder').value = buttOrder
+		buzzer.parameters.get('firstOrderHpfCutoff').value = hpfCutoff
+		buzzer.parameters.get('gain').value = gainVal
+
+		if (clippingListeners.length < 1) {
+			clippingListeners = ctrls.map(vc => vc.markInvalid)
+		}
+	}
+}
+
+const joystick = {
+	port: 0,
+	'ArrowUp': 1024,
+	'KeyW': 1024,
+	'ArrowLeft': 512,
+	'KeyA': 512,
+	'ArrowDown': 32,
+	'KeyS': 32,
+	'ArrowRight': 16,
+	'KeyD': 16,
+	'Space': 2,
+	'KeyQ': 1,
+	'MetaLeft': 1,
+	'KeyE': 16384,
+	'MetaRight': 16384
+}
+
+let classicKeyboard = true
+export function toggleClassicKeyboard() {
+	classicKeyboard ^= true
+
+	emulator.postMessage({
+		keyboard: {
+			action: 'releaseAll'
+		}
+	})
+}
+
+let nonClassicLayout = false
+function ensureLayout(rus, action, fallback) {
+	if (rus !== undefined && nonClassicLayout !== rus) {
+		emulator.postMessage({
+			keyboard: {
+				...rus ? bk0010_01['РУС'] : bk0010_01['ЛАТ'],
+				action
+			}
+		})
+		if (action === 'open') {
+			nonClassicLayout = rus
+
+			emulator.postMessage({
+				keyboard: {
+					...fallback,
+					action: 'close'
+				}
+			})
+			emulator.postMessage({
+				keyboard: {
+					...fallback,
+					action: 'open'
+				}
+			})
+		}
+	} else {
+		emulator.postMessage({
+			keyboard: {
+				...fallback,
+				action
+			}
+		})
+	}
+}
+
+let lastCapsState = null
+function keyact(e, action) {
+	if (document.activeElement === document.body) {
+		if (!e.repeat) {
+			turnSoundOn()
+
+			if (!classicKeyboard && action === 'close') {
+				emulator.postMessage({
+					keyboard: {
+						action: 'releaseNonCtrl'
+					}
+				})
+			}
+
+			if (overJoystick && joystick[e.code]) {
+				if (action === 'open') {
+					joystick.port &= ~joystick[e.code]
+				}
+
+				if (action === 'close') {
+					joystick.port |= joystick[e.code]
+				}
+
+				emulator.postMessage({
+					ioRegister: joystick.port
+				})
+			} else if (e.code === 'F11' && action === 'close') {
+				toggleClassicKeyboard()
+			} else if (!classicKeyboard && !e.ctrlKey && !e.altKey && translation[e.key]) {
+				const t = translation[e.key]
+				ensureLayout(t.rus, action, t.key)
+			} else {
+				if (!classicKeyboard) {
+					if (e.code === 'MetaLeft') {
+						nonClassicLayout = true
+					} else if (e.code === 'MetaRight') {
+						nonClassicLayout = false
+					}
+				}
+
+				const bkKey = webBk0010_01[e.code]
+
+				const newCapsState = e.getModifierState("CapsLock")
+				let setCapital
+				if (lastCapsState === null) {
+					lastCapsState = newCapsState
+				}
+				if (lastCapsState !== newCapsState) {
+					lastCapsState = newCapsState
+					setCapital = newCapsState
+				}
+
+				emulator.postMessage({
+					keyboard: {
+						...bkKey,
+						setCapital,
+						action
+					}
+				})
+			}
+		}
+
+		e.preventDefault();
+		e.stopPropagation();
+	}
+}
+
+document.onkeydown = e => keyact(e, 'close')
+document.onkeyup = e => keyact(e, 'open')
+document.body.onblur = () => emulator.postMessage({
+	keyboard: {
+		action: 'releaseAll'
+	}
+})
