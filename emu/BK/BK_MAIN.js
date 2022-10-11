@@ -17,24 +17,67 @@ emulator.postMessage({
 	portForVideo: videoChannel.port2
 }, [videoChannel.port2])
 
-export const video = {
+const video = {
+	v: [
+		new Uint16Array(256 * 32),
+		new Uint16Array(256 * 32),
+		new Uint16Array(256 * 32)
+	],
+	vFull: [
+		false,
+		false,
+		false
+	],
+	current: 0,
 	receivedBuffer: new Uint16Array(256 * 32)
+}
+
+export function getVideoFrame(copier) {
+	returnVideoBuffer()
+
+	for (let i = 0; i < video.vFull.length; i++) {
+		if (!video.vFull[video.current]) {
+			video.current = (video.current + 1) % video.vFull.length
+		} else {
+			copier(video.v[video.current])
+			video.vFull[video.current] = false
+			return true
+		}
+	}
+
+	return false
 }
 
 videoChannel.port1.onmessage = ({ data }) => {
 	video.receivedBuffer = data
+
+	for (let j = 0; j < video.vFull.length; j++) {
+		const cur = (video.current + j) % video.vFull.length
+
+		if (!video.vFull[cur]) {
+			const vv = video.v[cur]
+			for (let i = 0; i < data.length; i++) {
+				vv[i] = data[i]
+			}
+			video.vFull[cur] = true
+			break
+		}
+	}
 }
 
 export function returnVideoBuffer() {
-	videoChannel.port1.postMessage(video.receivedBuffer, [video.receivedBuffer.buffer])
-	video.receivedBuffer = null
+	if (video.receivedBuffer !== null) {
+		videoChannel.port1.postMessage(video.receivedBuffer, [video.receivedBuffer.buffer])
+		video.receivedBuffer = null
+	}
 }
 
 returnVideoBuffer()
 
-export function setCpuSpeed(HZ) {
+export function setCpuSpeed(HZ, videoFactor) {
 	emulator.postMessage({
-		setCpuSpeed: HZ
+		setCpuSpeed: HZ,
+		setVideoSpeedup: videoFactor
 	})
 }
 

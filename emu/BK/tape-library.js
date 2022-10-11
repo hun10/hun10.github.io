@@ -671,8 +671,24 @@ const tapes = [
                 name: 'SCROLLER',
                 type: 'bin',
                 url: 'maintape/SCROLLER'
+            },
+            {
+                name: 'INF',
+                type: 'pwm',
+                url: 'maintape/inf.json'
             }
         ],
-        sideB: []
+        sideB: [
+            {
+                name: 'MADDOC.BIN',
+                type: 'bin',
+                url: 'maintape/MadDoc.bin'
+            },
+            {
+                name: 'MADGHOST_SCR',
+                type: 'bin',
+                url: 'maintape/MadGhost_Scr'
+            }
+        ]
     }
 ]

@@ -167,6 +167,7 @@ let pSound, pTime = 0, cTime = 0
 let tapeMode = 'stopped', record = [], motorRunning = false
 
 let cpuSpeed = 3e6
+let videoSpeedup = 1
 
 function emulateTillBuffersAreFull() {
 	let eightCycle = cpu.Cycles;
@@ -228,13 +229,14 @@ function emulateTillBuffersAreFull() {
 
 			putAudioDelta((wSound ? 1 : -1) * sTime / cpuSpeed)
 
-			let dif = Math.floor(cpu.Cycles / 4) - Math.floor(eightCycle / 4);
+			const vidLength = 4 / videoSpeedup
+			let dif = Math.floor(cpu.Cycles / vidLength) - Math.floor(eightCycle / vidLength)
 			if (dif > 0) {
 				while (dif > 0) {
-					simulateWtiPulse();
-					dif -= 1;
+					simulateWtiPulse()
+					dif -= 1
 				}
-				eightCycle = cpu.Cycles;
+				eightCycle = cpu.Cycles
 			}
 
 			base.movePrinterHead()
@@ -300,7 +302,8 @@ onmessage = ({ data: {
 	ignoreTapeRemoteControl,
 	tapeFastForward,
 	setTapeMode,
-	setCpuSpeed
+	setCpuSpeed,
+	setVideoSpeedup
 } }) => {
 	if (portForVideo !== undefined) {
 		videoPort = portForVideo
@@ -369,5 +372,8 @@ onmessage = ({ data: {
 
 	if (setCpuSpeed !== undefined) {
 		cpuSpeed = setCpuSpeed
+	}
+	if (setVideoSpeedup !== undefined) {
+		videoSpeedup = setVideoSpeedup
 	}
 }

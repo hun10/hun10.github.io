@@ -7,13 +7,13 @@ import {
     setTapeState,
     setTapeAudio,
     registerTapeControls,
-    video,
     returnVideoBuffer,
-    setCpuSpeed
+    setCpuSpeed,
+    getVideoFrame
 } from './BK/BK_MAIN.js'
 import { createTapeControls } from './BK/tape-library.js'
 import buffersGl from './buffers-gl.js'
-import { numericControl, button, binaryControl } from './controls.js'
+import { numericControl, button, binaryControl, selectControl } from './controls.js'
 
 button('Toggle Joystick', toggleJoystick)
 
@@ -55,9 +55,26 @@ const vRgbCtrl = binaryControl('RGB output', false, v => {
     lastVideoParam = null
 })
 
-binaryControl('Speed Up to 60 FPS', false, v => {
-    setCpuSpeed(v ? 3686400 : 3000000)
-})
+selectControl('Animation Smoothing', [
+    'None',
+    'Video Output Speed-Up Only',
+    'Whole Emulation Speed-Up'
+], option => {
+    switch (option) {
+        case 'None':
+            setCpuSpeed(3000000, 1)
+            break;
+        case 'Video Output Speed-Up Only':
+            setCpuSpeed(3000000, 1.2288)
+            break;
+        case 'Whole Emulation Speed-Up':
+            setCpuSpeed(3686400, 1)
+            break;
+
+        default:
+            break;
+    }
+}, 'None')
 
 registerTapeControls(createTapeControls(({ pwm, audio, state }) => {
     if (pwm !== undefined) {
@@ -293,12 +310,46 @@ animateImageData(resolution, resolution * 4 / 5, gl => {
     tonemapping,
     screen
 }, info) => {
-    if (video.receivedBuffer === null) {
-        return
-    }
-
     const t0 = performance.now()
     const expVideo = -2 * Math.PI * vFilterCtrl.value
+
+    const hasNewFrame = getVideoFrame(frame => {
+        for (let i = 0, rawWord; i < encodedSignal2.size; i++) {
+            if (i % 2 == 0) {
+                rawWord = frame[i / 2]
+            } else {
+                rawWord >>= 8
+            }
+            const rawByte = rawWord & 0xFF
+    
+            if (i % 64 === 0) {
+                for (let j = 0; j < 3; j++) {
+                    rgbTails[j] = 0
+                }
+            }
+    
+            encodedBuffer[i * 4 + 0] = rgbTails[0] * 255
+            encodedBuffer[i * 4 + 1] = rgbTails[1] * 255
+            encodedBuffer[i * 4 + 2] = rgbTails[2] * 255
+            encodedBuffer[i * 4 + 3] = rawByte
+            downloadBuffer[i] = rawByte
+    
+            for (let j = 0; j < 3; j++) {
+                rgbTails[j] *= Math.exp(expVideo * 7 / (15625 * 96 * 8))
+                rgbTails[j] += byteLookupBuffer[rawByte * 8 * 4 + 7 * 4 + j] / 255
+                rgbTails[j] *= Math.exp(expVideo / (15625 * 96 * 8))
+    
+                const high = !!(byteLookupBuffer[rawByte * 8 * 4 + 7 * 4 + 3] & (4 >> j))
+                if (high) {
+                    rgbTails[j] += 1 - Math.exp(expVideo / (15625 * 96 * 8))
+                }
+            }
+        }    
+    })
+
+    if (!hasNewFrame) {
+        return
+    }
 
     if (lastVideoParam !== vFilterCtrl.value) {
         lastVideoParam = vFilterCtrl.value
@@ -348,38 +399,6 @@ animateImageData(resolution, resolution * 4 / 5, gl => {
             }
         }
         byteLookup.update(byteLookupBuffer)
-    }
-
-    for (let i = 0, rawWord; i < encodedSignal2.size; i++) {
-        if (i % 2 == 0) {
-            rawWord = video.receivedBuffer[i / 2]
-        } else {
-            rawWord >>= 8
-        }
-        const rawByte = rawWord & 0xFF
-
-        if (i % 64 === 0) {
-            for (let j = 0; j < 3; j++) {
-                rgbTails[j] = 0
-            }
-        }
-
-        encodedBuffer[i * 4 + 0] = rgbTails[0] * 255
-        encodedBuffer[i * 4 + 1] = rgbTails[1] * 255
-        encodedBuffer[i * 4 + 2] = rgbTails[2] * 255
-        encodedBuffer[i * 4 + 3] = rawByte
-        downloadBuffer[i] = rawByte
-
-        for (let j = 0; j < 3; j++) {
-            rgbTails[j] *= Math.exp(expVideo * 7 / (15625 * 96 * 8))
-            rgbTails[j] += byteLookupBuffer[rawByte * 8 * 4 + 7 * 4 + j] / 255
-            rgbTails[j] *= Math.exp(expVideo / (15625 * 96 * 8))
-
-            const high = !!(byteLookupBuffer[rawByte * 8 * 4 + 7 * 4 + 3] & (4 >> j))
-            if (high) {
-                rgbTails[j] += 1 - Math.exp(expVideo / (15625 * 96 * 8))
-            }
-        }
     }
 
     encodedSignal2.update(encodedBuffer)
