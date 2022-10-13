@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8"/>
         <title>
-            Cookie Getter
+            Cookie Setter
         </title>
         <style>
             body {
@@ -12,6 +12,28 @@
         </style>
     </head>
     <body>
-        <iframe src="https://192.168.1.50/"></iframe>
+        <script>
+document.hasStorageAccess().then(result => {
+    if (!result) {
+        const requestStorageAccessButton = document.createElement('a');
+        requestStorageAccessButton.innerText = 'Click here'
+        requestStorageAccessButton.href = '#'
+        document.body.appendChild(requestStorageAccessButton);
+
+        requestStorageAccessButton.addEventListener("click", event => {
+            document.requestStorageAccess().then(result => {
+                window.location.reload();
+            })
+        });
+    } else {
+        document.write(document.cookie)
+    }
+})
+
+function update() {
+    document.cookie = "Set-Cookie: X-8NeG-JWT-TOKEN=" + new Date() + "; Domain=hun10.github.io; Path=/; Secure"
+}
+        </script>
+        <button onclick="update()">Update Cookies</button>
     </body>
 </html>
