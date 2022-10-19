@@ -32,6 +32,7 @@ document.hasStorageAccess().then(result => {
 
 function update() {
     document.cookie = "X-MY-JWT-TOKEN=" + new Date() + "; Domain=hun10.github.io; Path=/; Secure"
+    document.cookie = "X-H-ONLY-TOKEN=" + new Date() + "; Domain=hun10.github.io; Path=/; Secure; HttpOnly"
 }
         </script>
         <button onclick="update()">Update Cookies</button>
