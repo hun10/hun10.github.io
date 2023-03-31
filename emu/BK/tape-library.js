@@ -1,5 +1,5 @@
 import { binaryControl, selectControl } from '../controls.js'
-import { bin2tape } from './tape.js'
+import { bin2tape, raw2bin } from './tape.js'
 
 function createSidesTable() {
     const table = document.createElement('table')
@@ -172,6 +172,20 @@ export function createTapeControls(callback) {
                             refresh()
                         }
                     })
+            } else if (recording.type === 'raw') {
+                fetch(recording.url)
+                    .then(response => response.arrayBuffer())
+                    .then(array => callback({ pwm: bin2tape(
+                        koi8(recording.name.padEnd(16)),
+                        raw2bin(new Uint8Array(array))
+                    ) }))
+                    .then(() => {
+                        if (run) {
+                            state.mode = 'play'
+                            callback({ state })
+                            refresh()
+                        }
+                    })
             } else if (recording.type === 'pwm') {
                 if (recording.pwm) {
                     callback({ pwm: recording.pwm })
@@ -227,15 +241,20 @@ export function createTapeControls(callback) {
         refresh()
         selectTapeLocal(state.currentTape)
     }, tapes[0].title)
-    document.body.appendChild(table)
 
-    document.body.appendChild(rec)
-    document.body.appendChild(ff)
-    document.body.appendChild(play)
-    document.body.appendChild(again)
-    document.body.appendChild(stop)
+    const container = document.createElement('div')
+    container.style.display = 'inline-block'
+    document.body.appendChild(container)
 
-    document.body.appendChild(motorStatus)
+    container.appendChild(table)
+
+    container.appendChild(rec)
+    container.appendChild(ff)
+    container.appendChild(play)
+    container.appendChild(again)
+    container.appendChild(stop)
+
+    container.appendChild(motorStatus)
 
     binaryControl('Ignore remote control', false, ignore => {
         state.ignoringRemote = ignore
@@ -350,22 +369,22 @@ const tapes = [
             {
                 name: 'DEMON STALKER II',
                 type: 'bin',
-                url: 'maintape/DemSl.gms'
+                url: 'maintape/DemSl.gms.bin'
             },
             {
                 name: 'LEVEL1',
                 type: 'bin',
-                url: 'maintape/DemSl1'
+                url: 'maintape/DemSl1.bin'
             },
             {
                 name: 'LEVEL2',
                 type: 'bin',
-                url: 'maintape/DemSl2'
+                url: 'maintape/DemSl2.bin'
             },
             {
                 name: 'LEVEL3',
                 type: 'bin',
-                url: 'maintape/DemSl3'
+                url: 'maintape/DemSl3.bin'
             },
             {
                 name: 'CAVEMAN',
@@ -407,27 +426,27 @@ const tapes = [
             {
                 name: 'WAY',
                 type: 'bin',
-                url: 'maintape/WAY'
+                url: 'maintape/WAY.bin'
             },
             {
                 name: 'БАТИСКАФ',
                 type: 'bin',
-                url: 'maintape/batiskaf'
+                url: 'maintape/batiskaf.bin'
             },
             {
                 name: 'БАТ2.ГМЕ',
                 type: 'bin',
-                url: 'maintape/batiskaf2'
+                url: 'maintape/batiskaf2.bin'
             },
             {
                 name: 'SUPWAR',
                 type: 'bin',
-                url: 'maintape/SUPWAR'
+                url: 'maintape/SUPWAR.bin'
             },
             {
                 name: 'BUBBLER',
                 type: 'bin',
-                url: 'maintape/BUBBLER'
+                url: 'maintape/BUBBLER.bin'
             },
             {
                 name: '*CAVEMONTY*',
@@ -437,12 +456,12 @@ const tapes = [
             {
                 name: 'PARRY FALL',
                 type: 'bin',
-                url: 'maintape/PARRY FALL'
+                url: 'maintape/PARRYFALL.bin'
             },
             {
                 name: 'DEKATL.GME',
                 type: 'bin',
-                url: 'maintape/DEKATL.GME'
+                url: 'maintape/DEKATL.GME.bin'
             },
             {
                 name: 'WIST.GME',
@@ -497,12 +516,12 @@ const tapes = [
             {
                 name: 'ASS1.ZAG',
                 type: 'bin',
-                url: 'maintape/ASSASSIN'
+                url: 'maintape/ASSASSIN.bin'
             },
             {
                 name: 'ASSASSIN2',
                 type: 'bin',
-                url: 'maintape/ASS2'
+                url: 'maintape/ASSASSIN.gms.bin'
             },
             {
                 name: 'SOLDIER',
@@ -518,7 +537,7 @@ const tapes = [
             {
                 name: 'FLYBALL',
                 type: 'bin',
-                url: 'maintape/FLYBALL'
+                url: 'maintape/FLYBALL.bin'
             },
             {
                 name: 'WINDOW.DOC',
@@ -574,7 +593,7 @@ const tapes = [
             {
                 name: 'ПАРОВОЗ',
                 type: 'bin',
-                url: 'maintape/parowoz'
+                url: 'maintape/parowoz.bin'
             }
         ],
         sideB: [
@@ -591,29 +610,29 @@ const tapes = [
             {
                 name: 'ШЕРИФ',
                 type: 'bin',
-                url: 'maintape/SHERIF'
+                url: 'maintape/SHERIF.bin'
             }
         ],
         sideB: [
             {
                 name: 'УНИВЕРМАГ',
                 type: 'bin',
-                url: 'maintape/uniwermag'
+                url: 'maintape/uniwermag.bin'
             },
             {
                 name: 'КОШКА',
                 type: 'bin',
-                url: 'maintape/CAT'
+                url: 'maintape/CAT.bin'
             },
             {
                 name: 'ТЕННИС',
                 type: 'bin',
-                url: 'maintape/tennis'
+                url: 'maintape/tennis.bin'
             },
             {
                 name: 'РАЛЛИ21',
                 type: 'bin',
-                url: 'maintape/ralli'
+                url: 'maintape/ralli.bin'
             }
         ]
     },
@@ -623,44 +642,44 @@ const tapes = [
             {
                 name: 'BLOCK OUT',
                 type: 'bin',
-                url: 'maintape/BLOCK OUT'
+                url: 'maintape/BLOCKOUT.bin'
             },
             {
                 name: 'STONE NIGHTMARE',
                 type: 'bin',
-                url: 'maintape/STONE NIGHTMARE'
+                url: 'maintape/STONENIGHTMARE.bin'
             },
             {
-                name: 'BREAK HOUSE 1',
+                name: 'BREAK HOUSE',
                 type: 'bin',
-                url: 'maintape/BREAK HOUSE'
+                url: 'maintape/BREAKHOUSE.bin'
             }
         ],
         sideB: [
             {
                 name: 'ARKANOID',
                 type: 'bin',
-                url: 'maintape/ARKANOID'
+                url: 'maintape/ARKANOID.bin'
             },
             {
                 name: 'HELL',
                 type: 'bin',
-                url: 'maintape/HELL'
+                url: 'maintape/HELL.bin'
             },
             {
                 name: 'PARADIS',
                 type: 'bin',
-                url: 'maintape/HEAVEN'
+                url: 'maintape/HEAVEN.bin'
             },
             {
                 name: 'BARMEN',
                 type: 'bin',
-                url: 'maintape/BARMAN'
+                url: 'maintape/BARMAN.bin'
             },
             {
                 name: 'FARAON',
                 type: 'bin',
-                url: 'maintape/FARAON'
+                url: 'maintape/FARAON.bin'
             }
         ]
     },
@@ -670,12 +689,37 @@ const tapes = [
             {
                 name: 'SCROLLER',
                 type: 'bin',
-                url: 'maintape/SCROLLER'
+                url: 'maintape/SCROLLER.bin'
             },
             {
                 name: 'INF',
                 type: 'pwm',
                 url: 'maintape/inf.json'
+            },
+            {
+                name: 'TEST ADD',
+                type: 'bin',
+                url: 'tools/test-add.bin'
+            },
+            {
+                name: 'TEST CMP',
+                type: 'bin',
+                url: 'tools/test-cmp.bin'
+            },
+            {
+                name: 'TEST MOV',
+                type: 'bin',
+                url: 'tools/test-mov.bin'
+            },
+            {
+                name: 'CODE TEST',
+                type: 'bin',
+                url: 'tools/code-test.bin'
+            },
+            {
+                name: '45COM LO',
+                type: 'bin',
+                url: 'tools/45com-lo.bin'
             }
         ],
         sideB: [
@@ -687,7 +731,124 @@ const tapes = [
             {
                 name: 'MADGHOST_SCR',
                 type: 'bin',
-                url: 'maintape/MadGhost_Scr'
+                url: 'maintape/MadGhost_Scr.bin'
+            },
+            {
+                name: 'LOG CABIN DIZZY',
+                type: 'bin',
+                url: 'maintape/dizzy2021.bin'
+            },
+            {
+                name: '3CH PLAY',
+                type: 'bin',
+                url: 'tools/3CHplay.bin'
+            },
+            {
+                name: 'DIZZY.3CH',
+                type: 'raw',
+                url: 'tools/DIZZY.3CH.raw.bin'
+            },
+            {
+                name: 'TRON.3CH',
+                type: 'raw',
+                url: 'tools/TRON.3CH.raw.bin'
+            }
+        ]
+    },
+    {
+        title: 'Новый сборник',
+        sideA: [
+            {
+                name: 'FIST',
+                type: 'audio',
+                url: 'realtape/FIST.wav'
+            },
+            {
+                name: 'FIST.OVL',
+                type: 'audio',
+                url: 'realtape/FIST.OVL.wav'
+            },
+            {
+                name: 'KLADJ',
+                type: 'audio',
+                url: 'realtape/KLADJ.wav'
+            },
+            {
+                name: 'LIFE.EXE',
+                type: 'audio',
+                url: 'realtape/LIFE.EXE.wav'
+            },
+            {
+                name: 'COMIC',
+                type: 'bin',
+                url: 'maintape/COMIC.bin'
+            },
+            {
+                name: 'ETAP01.DAT',
+                type: 'bin',
+                url: 'maintape/ETAP01.DAT.bin'
+            },
+            {
+                name: 'ETAP2A.DAT',
+                type: 'bin',
+                url: 'maintape/ETAP2A.DAT.bin'
+            },
+            {
+                name: 'ETAP2B.DAT',
+                type: 'bin',
+                url: 'maintape/ETAP2B.DAT.bin'
+            }
+        ],
+        sideB: [
+            {
+                name: 'TOORUN',
+                type: 'bin',
+                url: 'maintape/TOORUN.bin'
+            },
+            {
+                name: 'EXOLON',
+                type: 'bin',
+                url: 'maintape/Exolon.bin'
+            },
+            {
+                name: 'exolon.ovl',
+                type: 'bin',
+                url: 'maintape/Exolon.ovl.bin'
+            },
+            {
+                name: 'ДЕСАНТНИК.ДОК',
+                type: 'bin',
+                url: 'maintape/DESANTNIK.DOC.bin'
+            },
+            {
+                name: 'ДЕСАНТНИК',
+                type: 'bin',
+                url: 'maintape/DESANTNIK.bin'
+            },
+            {
+                name: 'ДЕСАНТНИК1',
+                type: 'bin',
+                url: 'maintape/DESANTNIK1.bin'
+            },
+            {
+                name: 'ДЕСАНТНИК2',
+                type: 'bin',
+                url: 'maintape/DESANTNIK2.bin'
+            },
+            {
+                name: 'ДЕСАНТНИК3',
+                type: 'bin',
+                url: 'maintape/DESANTNIK3.bin'
+            },
+            {
+                name: 'ДЕСАНТНИК4',
+                type: 'bin',
+                url: 'maintape/DESANTNIK4.bin'
+            },
+            {
+                name: 'ДЕСАНТНИК5',
+                type: 'bin',
+                url: 'maintape/DESANTNIK5.bin'
             }
         ]
     }

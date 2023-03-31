@@ -56,6 +56,7 @@ export default function(cpu)
   /*boolean*/this.writeByteAsWord = function(/*int*/addr, /*short*/data)
   {
     self.updateTimer();
+    self.writeWord(addr, data & 0xFF)
     console.warn('Timer byte write')
     return true;
   }
@@ -121,6 +122,17 @@ export default function(cpu)
     CAP = !!(data & 0o2)
     SP = !!(data & 0o1)
   }
+
+  this.setStart = data => {
+    start = data
+  }
+  this.getStart = () => start
+  this.setCount = data => {
+    count = data
+  }
+  this.getCount = () => count
+  this.getConfig = getConfig
+  this.setConfig = setConfig
 
   function advance(delta) {
     const speed = (D4 ? 1 : 4) * (D16 ? 1 : 16)

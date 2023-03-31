@@ -8,7 +8,7 @@ let forceMotorMode = false
 
 let audioPort, audioStarted = false
 
-const audioBufMax = 1 + 0.01
+const audioBufMax = 1 + 1 / 120
 const audioBufSize = Math.ceil((audioBufMax - 1) * 3e6)
 const audioBufState = {
 	write: { ptr: 0, buf: new Float64Array(audioBufSize) },
@@ -80,6 +80,11 @@ const videoBufState = {
 	received: null
 }
 
+const movie = {
+	storage: new Uint16Array(videoBufSize * 5000),
+	ptr: 0
+}
+
 function acceptVideoBuffer(buf) {
 	if (videoBufState.received !== null) {
 		return
@@ -103,6 +108,9 @@ function hasNotFullBuffers() {
 }
 
 function putVideo(word) {
+	movie.storage[movie.ptr] = word
+	movie.ptr = (movie.ptr + 1) % movie.storage.length
+
 	if (videoBufState.write.ptr < videoBufSize) {
 		videoBufState.write.buf[videoBufState.write.ptr++] = word
 	}
@@ -169,7 +177,16 @@ let tapeMode = 'stopped', record = [], motorRunning = false
 let cpuSpeed = 3e6
 let videoSpeedup = 1
 
+let totalCycles
+let startMoment
+
 function emulateTillBuffersAreFull() {
+	if (!totalCycles && audioStarted) {
+		totalCycles = 0
+		startMoment = performance.now()
+	}
+
+	const initCyc = cpu.Cycles
 	let eightCycle = cpu.Cycles;
 	while (hasNotFullBuffers() || (tapeSkipMode && (tapeMode === 'playing' || (tapeMode === 'recording' && !forceMotorMode)))) {
 		const prevCyc = cpu.Cycles
@@ -243,6 +260,11 @@ function emulateTillBuffersAreFull() {
 		}
 	}
 
+	if (audioStarted) {
+		totalCycles += cpu.Cycles - initCyc
+		// console.log(totalCycles / (performance.now() - startMoment))
+	}
+
 	base.minimizeCycles()
 }
 
@@ -291,6 +313,12 @@ function processKey({
 	}
 }
 
+function assign(a, b) {
+	for (let i = 0; i < b.length; i++) {
+		a[i] = b[i]
+	}
+}
+
 onmessage = ({ data: {
 	portForVideo,
 	portForAudio,
@@ -303,7 +331,10 @@ onmessage = ({ data: {
 	tapeFastForward,
 	setTapeMode,
 	setCpuSpeed,
-	setVideoSpeedup
+	setVideoSpeedup,
+	loadState,
+	saveState,
+	getMovie
 } }) => {
 	if (portForVideo !== undefined) {
 		videoPort = portForVideo
@@ -375,5 +406,61 @@ onmessage = ({ data: {
 	}
 	if (setVideoSpeedup !== undefined) {
 		videoSpeedup = setVideoSpeedup
+	}
+
+	if (saveState !== undefined) {
+		const bkState = {
+			memory: [],
+			readable: [],
+			writeable: [],
+			scrollReg: base.getScrollReg(),
+			cpuRegs: [],
+			cpuPsw: base.cpu.getPSW(),
+			timerStart: base.accTimer.getStart(),
+			timerCount: base.accTimer.getCount(),
+			timerConfig: base.accTimer.getConfig(),
+			keyInt: base.keyboard.isInterruptAllowed()
+		}
+
+		assign(bkState.cpuRegs, base.cpu.regs)
+		assign(bkState.memory, base.accMemory)
+		assign(bkState.readable, base.accMmap.mmap_readable)
+		assign(bkState.writeable, base.accMmap.mmap_writeable)
+
+		postMessage({
+			bkState
+		})
+	}
+
+	if (loadState !== undefined) {
+		assign(base.accMemory, loadState.memory)
+		assign(base.accMmap.mmap_readable, loadState.readable)
+		assign(base.accMmap.mmap_writeable, loadState.writeable)
+		base.setScrollReg(loadState.scrollReg)
+		assign(base.cpu.regs, loadState.cpuRegs)
+		base.cpu.setPSW(loadState.cpuPsw)
+		base.accTimer.setStart(loadState.timerStart)
+		base.accTimer.setCount(loadState.timerCount)
+		base.accTimer.setConfig(loadState.timerConfig)
+		base.keyboard.setInterruptAllowed(loadState.keyInt)
+	}
+
+	if (getMovie !== undefined) {
+		const len = getMovie * 256 * 32
+
+		if (len <= movie.storage.length) {
+			const stor = new Uint16Array(len)
+
+			const sp = (Math.floor(movie.ptr / (256 * 32)) * 256 * 32 - len + movie.storage.length) % movie.storage.length
+			for (let i = 0; i < len; i++) {
+				stor[i] = movie.storage[(i + sp) % movie.storage.length]
+			}
+
+			postMessage({
+				movie: {
+					storage: stor
+				}
+			}, [stor.buffer])
+		}
 	}
 }

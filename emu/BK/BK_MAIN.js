@@ -1,8 +1,30 @@
-import { webBk0010_01, translation, bk0010_01 } from './Keys.js'
+import { webBk0010_01, bk0010, translation, bk0010_01 } from './Keys.js'
 
 const emulator = new Worker('./main-worker.js', {
 	type: 'module'
 })
+
+let movieCallback
+
+export function getMovie(frames, callback) {
+	movieCallback = callback
+
+	emulator.postMessage({
+		getMovie: frames
+	})
+}
+
+export function saveState() {
+	emulator.postMessage({
+		saveState: true
+	})
+}
+
+export function loadState() {
+	emulator.postMessage({
+		loadState: JSON.parse(localStorage.getItem('bkState-0'))
+	})
+}
 
 let overJoystick = 0
 export function toggleJoystick() {
@@ -93,7 +115,9 @@ emulator.onmessage = ({ data: {
 	newRecording,
 	recordEnded,
 	motorRunning,
-	ffChanged
+	ffChanged,
+	bkState,
+	movie
 } }) => {
 	if (printerPaper !== undefined) {
 		const uri = `data:text/plain;charset=koi8-r;base64,${btoa(processPrinterStream(printerPaper))}`
@@ -118,11 +142,22 @@ emulator.onmessage = ({ data: {
 			ff: ffChanged
 		})
 	}
+	if (bkState !== undefined) {
+		localStorage.setItem('bkState-0', JSON.stringify(bkState))
+	}
+	if (movie !== undefined && movieCallback !== undefined) {
+		movieCallback(movie)
+		movieCallback = undefined
+	}
 }
 
 export function mode(mode) {
 	emulator.postMessage({
-		mode
+		mode,
+		keyboard: {
+			cpuReset: true,
+			action: 'close'
+		}
 	})
 }
 
@@ -141,7 +176,33 @@ export function togglePrinter() {
 	})
 }
 
-let audioCtx = { close: () => {} }
+let audioCtx = new AudioContext()
+
+audioCtx.audioWorklet?.addModule('sound/buzzer.js').then(() => {
+	buzzer = new AudioWorkletNode(audioCtx, 'buzzer')
+
+	buzzer.connect(audioCtx.destination)
+
+	buzzer.port.onmessage = ({
+		data: {
+			clipped
+		}
+	}) => {
+		if (clipped !== undefined) {
+			clippingListeners.forEach(listener => listener(clipped))
+		}
+	}
+
+	const audioChannel = new MessageChannel()
+
+	buzzer.port.postMessage({
+		portForAudio: audioChannel.port1
+	}, [audioChannel.port1])
+
+	emulator.postMessage({
+		portForAudio: audioChannel.port2
+	}, [audioChannel.port2])
+})
 
 export async function setTapeAudio(audio) {
 	const audioBuffer = await audioCtx.decodeAudioData(audio)
@@ -192,48 +253,6 @@ export function setTapeState({
 
 export function registerTapeControls(controls) {
 	tapeControls = controls
-}
-
-export function turnSoundOn() {
-	if (audioCtx.state === 'running') {
-		return
-	}
-
-	audioCtx.close()
-
-	audioCtx = new AudioContext()
-
-	const silBuf = audioCtx.createBuffer(1, 1, audioCtx.sampleRate)
-	const silBufNode = new AudioBufferSourceNode(audioCtx)
-	silBufNode.buffer = silBuf
-	silBufNode.connect(audioCtx.destination)
-	silBufNode.start()
-
-	audioCtx.audioWorklet.addModule('sound/buzzer.js').then(() => {
-		buzzer = new AudioWorkletNode(audioCtx, 'buzzer')
-
-		buzzer.connect(audioCtx.destination)
-
-		buzzer.port.onmessage = ({
-			data: {
-				clipped
-			}
-		}) => {
-			if (clipped !== undefined) {
-				clippingListeners.forEach(listener => listener(clipped))
-			}
-		}
-
-		const audioChannel = new MessageChannel()
-
-		buzzer.port.postMessage({
-			portForAudio: audioChannel.port1
-		}, [audioChannel.port1])
-
-		emulator.postMessage({
-			portForAudio: audioChannel.port2
-		}, [audioChannel.port2])
-	})
 }
 
 export function updateParams({ lpfCutoff, buttCutoff, buttOrder, hpfCutoff, gainVal, ctrls }) {
@@ -313,12 +332,21 @@ function ensureLayout(rus, action, fallback) {
 	}
 }
 
+export function directKey0010(code, action) {
+	const bkKey = bk0010[code]
+
+	emulator.postMessage({
+		keyboard: {
+			...bkKey,
+			action
+		}
+	})
+}
+
 let lastCapsState = null
 function keyact(e, action) {
 	if (document.activeElement === document.body) {
 		if (!e.repeat) {
-			turnSoundOn()
-
 			if (!classicKeyboard && action === 'close') {
 				emulator.postMessage({
 					keyboard: {
@@ -339,8 +367,6 @@ function keyact(e, action) {
 				emulator.postMessage({
 					ioRegister: joystick.port
 				})
-			} else if (e.code === 'F11' && action === 'close') {
-				toggleClassicKeyboard()
 			} else if (!classicKeyboard && !e.ctrlKey && !e.altKey && translation[e.key]) {
 				const t = translation[e.key]
 				ensureLayout(t.rus, action, t.key)
@@ -375,15 +401,29 @@ function keyact(e, action) {
 			}
 		}
 
-		e.preventDefault();
-		e.stopPropagation();
+		e.preventDefault()
+		e.stopPropagation()
 	}
 }
 
-document.onkeydown = e => keyact(e, 'close')
-document.onkeyup = e => keyact(e, 'open')
-document.body.onblur = () => emulator.postMessage({
-	keyboard: {
-		action: 'releaseAll'
-	}
+document.addEventListener('keydown', e => {
+	audioCtx.resume()
+
+	keyact(e, 'close')
 })
+
+document.addEventListener('keyup', e => keyact(e, 'open'))
+
+const revive = () => {
+	audioCtx.resume()
+
+	emulator.postMessage({
+		keyboard: {
+			action: 'releaseAll'
+		}
+	})
+}
+
+document.body.onclick = revive
+document.body.onfocus = revive
+document.body.onblur = () => audioCtx.suspend()

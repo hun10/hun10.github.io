@@ -46,6 +46,11 @@ export default function () {
   var /*QBusReadDTO*/ readDTO = new QBusReadDTO(-1);
 
   this.accMemory = memory
+  this.accMmap = {
+    mmap_readable,
+    mmap_writeable
+  }
+  this.accTimer = timer
 
   this.remap = false;
 
@@ -167,9 +172,9 @@ export default function () {
       return false
     }
 
-    if (!!(syswritereg & 0x40)) {
-      syswritereg -= 0x40
-    }
+    // if (!!(syswritereg & 0x40)) {
+    //   syswritereg -= 0x40
+    // }
 
     const realTapeState = this.realTapeState
     const samplePos = realTapeState.time
@@ -184,7 +189,7 @@ export default function () {
         realTapeState.pwmIterator++
       }
       if (realTapeState.pwmData[realTapeState.pwmIterator] > 0) {
-        syswritereg |= 0x40
+        // syswritereg |= 0x40
         realTapeState.input = true
       } else {
         realTapeState.input = false
@@ -251,6 +256,9 @@ export default function () {
 
   this.getScrollReg = function () {
     return scrollReg
+  }
+  this.setScrollReg = function (v) {
+    scrollReg = v
   }
   this.getSoundReg = function () {
     return !!(syswritereg & 0x40)

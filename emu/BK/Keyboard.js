@@ -99,6 +99,9 @@ export default function () {
     processGrid()
   }
 
+  this.isInterruptAllowed = () => interruptAllowed
+  this.setInterruptAllowed = data => interruptAllowed = data
+
   /*int*/this.getBaseAddress = function () {
     return 65456;
   }

@@ -9,11 +9,15 @@ import {
     registerTapeControls,
     returnVideoBuffer,
     setCpuSpeed,
-    getVideoFrame
+    getVideoFrame,
+    saveState,
+    loadState,
+    getMovie,
+    directKey0010
 } from './BK/BK_MAIN.js'
 import { createTapeControls } from './BK/tape-library.js'
 import buffersGl from './buffers-gl.js'
-import { numericControl, button, binaryControl, selectControl } from './controls.js'
+import { numericControl, button, binaryControl, selectControl, number } from './controls.js'
 
 button('Toggle Joystick', toggleJoystick)
 
@@ -44,10 +48,13 @@ const aSoundButtOrd = numericControl("Sound LPF Order", 0.0, 40.0, 1, 8)
 
 const heightCtrl = numericControl("Height", 0.5, 3.0, 0.00001, 1.11);
 const widthCtrl = numericControl("Width", 0.5, 4.0, 0.00001, 1.54);
-const brightCtrl = numericControl("Brightness", 0.02, 2, 0.0001, 0.85);
-const gaussCtrl = numericControl("Gauss Width", 0.001, 0.02, 0.0001, 0.0027);
-const gaussCutoffCtrl = numericControl("Gauss Cutoff", 1e-6, 1, 1e-6, 0.001);
-const repeatsCtrl = numericControl("Repeats", 1, 500, 1, 200);
+const brightCtrl = numericControl("Brightness", -1, 0.5, 0.0001, 0.12);
+const contrastCtrl = numericControl("Contrast", 0, 2, 0.0001, 1.5);
+const gammaCtrl = numericControl("Gamma", 1, 5, 0.1, 2.8);
+const exposureCtrl = numericControl("Exposure", 0.02, 2, 0.0001, 0.64);
+const gaussCtrl = numericControl("Gauss Width", 0.001, 0.02, 0.0001, 0.0025);
+const gaussCutoffCtrl = numericControl("Gauss Cutoff", 1e-6, 1, 1e-6, 0.007);
+const repeatsCtrl = numericControl("Repeats", 1, 500, 1, 31);
 const vFilterCtrl = numericControl("Video Signal Filter", 10000, 12e6, 1, 1500000);
 
 let lastVideoParam
@@ -55,20 +62,23 @@ const vRgbCtrl = binaryControl('RGB output', false, v => {
     lastVideoParam = null
 })
 
+let avFps = 0
+
 selectControl('Animation Smoothing', [
     'None',
     'Video Output Speed-Up Only',
     'Whole Emulation Speed-Up'
 ], option => {
+    const fact = 1000 / avFps * 320 / 15625
     switch (option) {
         case 'None':
             setCpuSpeed(3000000, 1)
             break;
         case 'Video Output Speed-Up Only':
-            setCpuSpeed(3000000, 1.2288)
+            setCpuSpeed(3000000, fact)
             break;
         case 'Whole Emulation Speed-Up':
-            setCpuSpeed(3686400, 1)
+            setCpuSpeed(3000000 * fact, 1)
             break;
 
         default:
@@ -88,28 +98,28 @@ registerTapeControls(createTapeControls(({ pwm, audio, state }) => {
     }
 }))
 
-const resolution = 971 / Math.pow(2, 0)
+const resolution = 1040 / Math.pow(2, 0)
 let averageMs = 0.0
-let lastTime = performance.now()
+let lastT0 = performance.now()
 
-const downloadBuffer = new Uint8Array(320 * 96)
-button('Download Screen', () => {
-    const bs = new Uint8Array(256 * 64)
-    for (let y = 0, a = 0; y < 256; y++) {
-        for (let x = 0; x < 64; x++) {
-            bs[a++] = downloadBuffer[x + y * 96]
-        }
-    }
-    const blob = new Blob(
-        [bs],
-        {type: 'application/octet-stream'}
-    )
-    const uri = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = uri
-    a.download = 'screen.raw'
-    a.click()
+const framesCtrl = number('Frames', 150)
+button('Download Movie', () => {
+    getMovie(framesCtrl.value, movie => {
+        movie.storage = Array.from(movie.storage)
+        const blob = new Blob(
+            [JSON.stringify(movie)],
+            {type: 'application/json'}
+        )
+        const uri = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = uri
+        a.download = 'movie.json'
+        a.click()
+    })
 })
+
+button('Save State', () => saveState())
+button('Load State', () => loadState())
 
 let encodedSignal1, encodedSignal2, encodedBuffer, encodedBuffer2
 
@@ -180,6 +190,8 @@ animateImageData(resolution, resolution * 4 / 5, gl => {
         uniform float u_count;
         uniform float u_gauss;
         uniform float u_brightness;
+        uniform float u_contrast;
+        uniform float u_gamma;
         uniform float u_width;
         uniform float u_height;
         uniform float u_exp_perbit;
@@ -227,23 +239,24 @@ animateImageData(resolution, resolution * 4 / 5, gl => {
                 float shift = gaussian_rand( (i + 0.1) / u_count );
                 shift *= u_gauss * factor;
                 vec2 u = uv + vec2(shift + 0.5, 0.0);
-                s += signal(u);
+                s += pow(clamp(u_brightness + u_contrast * signal(u) * 0.7, 0.0, 1.0), vec3(u_gamma));
             }
-            s *= u_brightness * factor / u_count;
+            s *= factor / u_count;
 
-            outColor = vec4(s, 1.0);
+            outColor = dither(s);
         }
     `)
 
     const finalBuffer = doublePixelBuffer()
     const finalPass = shader(`
+        const vec2 scan_res = vec2(${scanlinesBuffer.width.toFixed(1)}, ${scanlinesBuffer.height.toFixed(1)});
         const vec2 resolution = vec2(${finalBuffer.width.toFixed(1)}, ${finalBuffer.height.toFixed(1)});
 
         out vec4 outColor;
 
         uniform sampler2D u_scanlines;
         uniform float u_gauss;
-        uniform float u_brightness;
+        uniform float u_exposure;
         uniform float u_gauss_cutoff;
         uniform float u_width;
         uniform float u_height;
@@ -256,35 +269,32 @@ animateImageData(resolution, resolution * 4 / 5, gl => {
             vec2 speed = vec2(1.0 / 80.0, -1.0 / (288.0 * 96.0)) * vec2(u_width, u_height);
             vec2 dir = normalize(speed);
 
+            vec2 nor = vec2(dir.y, -dir.x);
+            float d0 = dot(uv - vec2(0.0, 0.5 - u_height * (0.0 + 0.5) / 288.0), nor);
+            float di = dot(vec2(0.0, -u_height / 288.0), nor);
+
+            float firstLine = max(-128.0, ceil((d0 - u_gauss_cutoff) / di));
+            float lastLine = min(128.0, ceil((d0 + u_gauss_cutoff) / di));
+
             vec3 s = vec3(0.0);
-            for (float i = -128.0; i < 128.0; i++) {
+            for (float i = firstLine; i < lastLine; i++) {
                 float y = (i + 0.5) / 288.0;
                 
                 vec2 dispos = uv - vec2(0.0, 0.5 - u_height * y);
 
                 float len = dot(dispos, dir);
                 
-                vec2 perp = dispos - len * dir;
+                float d = dot(dispos, nor);
+                float dp = d * d;
                 
-                float dp = dot(perp, perp);
-                
-                if (dp < u_gauss_cutoff) {
+                if (d < u_gauss_cutoff) {
                     float xPos = len * dir.x;
-                    s += u_brightness * exp(-dp / u_gauss / u_gauss) * texture(u_scanlines, vec2(xPos / resWidth + 0.5, (i + 128.5) / 256.0)).rgb;
+                    s += u_exposure * exp(-dp / u_gauss / u_gauss) * texLerp(u_scanlines, vec2(0, 0), scan_res, vec2((xPos / resWidth + 0.5) * scan_res.x, i + 128.5));
                 }
             }
-            outColor = vec4(s.rgb, 1.0);
-        }
-    `)
 
-    const tonemapping = shader(`
-        out vec4 outColor;
-
-        uniform sampler2D u_source;
-
-        void main() {
-            vec3 s = texelFetch(u_source, ivec2(gl_FragCoord.xy), 0).rgb;
-            outColor = vec4(s, 1.0);
+            s = fromLinear(s);
+            outColor = ditherFinal(s);
         }
     `)
 
@@ -296,7 +306,6 @@ animateImageData(resolution, resolution * 4 / 5, gl => {
         scanlines,
         finalBuffer,
         finalPass,
-        tonemapping,
         screen: screen()
     }
 }, (gl, {
@@ -305,12 +314,20 @@ animateImageData(resolution, resolution * 4 / 5, gl => {
     rgbTails,
     scanlinesBuffer,
     scanlines,
-    finalBuffer,
     finalPass,
-    tonemapping,
     screen
 }, info) => {
     const t0 = performance.now()
+
+    const sinceLast = t0 - lastT0
+    lastT0 = t0
+
+    {
+        const cFpr = sinceLast
+        const trust = 0.99
+        avFps = avFps * trust + cFpr * (1 - trust)
+    }
+
     const expVideo = -2 * Math.PI * vFilterCtrl.value
 
     const hasNewFrame = getVideoFrame(frame => {
@@ -332,7 +349,6 @@ animateImageData(resolution, resolution * 4 / 5, gl => {
             encodedBuffer[i * 4 + 1] = rgbTails[1] * 255
             encodedBuffer[i * 4 + 2] = rgbTails[2] * 255
             encodedBuffer[i * 4 + 3] = rawByte
-            downloadBuffer[i] = rawByte
     
             for (let j = 0; j < 3; j++) {
                 rgbTails[j] *= Math.exp(expVideo * 7 / (15625 * 96 * 8))
@@ -415,6 +431,8 @@ animateImageData(resolution, resolution * 4 / 5, gl => {
         u_count: repeatsCtrl.value,
         u_gauss: gaussCtrl.value,
         u_brightness: brightCtrl.value,
+        u_contrast: contrastCtrl.value,
+        u_gamma: gammaCtrl.value,
         u_width: widthCtrl.value,
         u_height: heightCtrl.value,
         u_exp_perbit: expVideo / (15625 * 96 * 8)
@@ -428,34 +446,32 @@ animateImageData(resolution, resolution * 4 / 5, gl => {
         u_scanlines: scanlinesBuffer,
         u_gauss: gaussCtrl.value,
         u_gauss_cutoff: gaussCutoffCtrl.value,
-        u_brightness: brightCtrl.value,
+        u_exposure: exposureCtrl.value,
         u_width: widthCtrl.value,
         u_height: heightCtrl.value
-    }, finalBuffer)
-
-    tonemapping.draw({
-        u_source: finalBuffer
     }, screen)
 
     const perfNow = performance.now()
-    const sinceLast = perfNow - lastTime
-    lastTime = perfNow
-    const t1 = perfNow - t0
 
-    const unbiased_diff = Math.abs(averageMs - t1) / Math.max(averageMs, Math.max(t1, 0.2))
-    const unbiased_weight = 1.0 - unbiased_diff;
-    const unbiased_weight_sqr = unbiased_weight * unbiased_weight;
-    const trust = 0.88 * (1 - unbiased_weight_sqr) + 0.97 * unbiased_weight_sqr
-    averageMs = averageMs * trust + t1 * (1 - trust)
+    {
+        const t1 = perfNow - t0
+        const unbiased_diff = Math.abs(averageMs - t1) / Math.max(averageMs, Math.max(t1, 0.2))
+        const unbiased_weight = 1.0 - unbiased_diff;
+        const unbiased_weight_sqr = unbiased_weight * unbiased_weight;
+        const trust = 0.88 * (1 - unbiased_weight_sqr) + 0.97 * unbiased_weight_sqr
+        averageMs = averageMs * trust + t1 * (1 - trust)
+    }
 
-    info(`${averageMs.toFixed(1)} ms, between frames ${sinceLast.toFixed(1)} ms`)
+    info(`${averageMs.toFixed(1)} ms, between frames ${sinceLast.toFixed(1)} ms, average FPS ${(1000 / avFps).toFixed(1)}`)
 })
 
 function animateImageData(width, height, init, animator) {
     const canvas = document.createElement("canvas")
     canvas.width = width
     canvas.height = height
-    canvas.style = 'padding: 27px; background: black'
+    canvas.style.padding = '27px'
+    canvas.style.backgroundColor = 'black'
+    canvas.style.float = 'left'
 
     const gl = canvas.getContext(
         "webgl2",
@@ -495,3 +511,83 @@ function animateImageData(width, height, init, animator) {
 
     draw()
 }
+
+const flatKeyboard = document.createElement('div')
+
+const flatKeyboardImg = document.createElement('img')
+flatKeyboardImg.src = 'flat_keyboard.png'
+flatKeyboardImg.style.width = '100vw'
+flatKeyboard.appendChild(flatKeyboardImg)
+// flatKeyboard.style.webkitTouchCallout = 'none'
+// flatKeyboard.style.webkitUserSelect = 'none'
+
+const flatKeys = [
+    [
+        'НР', 'СУ', 'СТОП', 'ШАГ', 'ИНД СУ', 'БЛОК РЕД', 'ГРАФ', 'ЗАП', 'СТИР', 'УСТ ТАБ', 'СБР ТАБ', 'КТ', 'ВС', 'СБР', 'ГТ', 'СБРОС ЧАСТИ СТРОКИ'
+    ],
+    [
+        ';', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', 'ВЛЕВО-ВВЕРХ', 'ВВЕРХ', 'ВПРАВО-ВВЕРХ', 'ПОВТ'
+    ],
+    [
+        'Й', 'Ц', 'У', 'К', 'Е', 'Н', 'Г', 'Ш', 'Щ', 'З', 'Х', ':', 'ВЛЕВО', 'В НАЧАЛО', 'ВПРАВО'
+    ],
+    [
+        'Ф', 'Ы', 'В', 'А', 'П', 'Р', 'О', 'Л', 'Д', 'Ж', 'Э', '.', 'ВЛЕВО-ВНИЗ', 'ВНИЗ', 'ВПРАВО-ВНИЗ'
+    ],
+    [
+        'Я', 'Ч', 'С', 'М', 'И', 'Т', 'Ь', 'Б', 'Ю', ',', '/', 'Ъ', 'СДВИЖКА В СТРОКЕ', 'УДАЛЕНИЕ СИМВОЛА', 'РАЗДВИЖКА В СТРОКЕ'
+    ],
+    [
+        'ПР', 'ЗАГЛ', 'РУС', 'РУС', 'ПРОБЕЛ', 'ПРОБЕЛ', 'ПРОБЕЛ', 'ПРОБЕЛ', 'ЛАТ', 'ЛАТ', 'СТР', 'ПР', 'ТАБ', 'ВВОД', 'ВВОД'
+    ]
+]
+
+function flatKey(offsetX, offsetY) {
+    const xStart = 0.021527777777777778
+    const xTotal = 0.9791666666666666 - xStart
+
+    const yStart = 0.056140350877192984
+    const yTotal = 0.9473684210526315 - yStart
+
+    const x = (offsetX / flatKeyboardImg.clientWidth - xStart) / xTotal
+    const y = (offsetY / flatKeyboardImg.clientHeight - yStart) / yTotal
+
+    const column = Math.floor(16 * x)
+    const row = Math.floor(6 * y)
+
+    return flatKeys[row][column]
+}
+
+flatKeyboard.addEventListener('contextmenu', e => {
+    e.preventDefault()
+    e.stopPropagation()
+})
+
+flatKeyboard.addEventListener('touchstart', e => {
+    e.preventDefault()
+    e.stopPropagation()
+})
+
+const activePointers = {}
+
+flatKeyboard.addEventListener('pointerdown', e => {
+    const code = flatKey(e.offsetX, e.offsetY)
+    if (code !== undefined) {
+        activePointers[e.pointerId] = code
+        directKey0010(code, 'close')
+    }
+    e.preventDefault()
+    e.stopPropagation()
+})
+
+flatKeyboard.addEventListener('pointerup', e => {
+    const code = activePointers[e.pointerId]
+    if (code !== undefined) {
+        activePointers[e.pointerId] = undefined
+        directKey0010(code, 'open')
+    }
+    e.preventDefault()
+    e.stopPropagation()
+})
+
+document.body.appendChild(flatKeyboard)
