@@ -369,22 +369,22 @@ const tapes = [
             {
                 name: 'DEMON STALKER II',
                 type: 'bin',
-                url: 'maintape/DemSl.gms.bin'
+                url: 'maintape/DEMSL.GMS.bin'
             },
             {
                 name: 'LEVEL1',
                 type: 'bin',
-                url: 'maintape/DemSl1.bin'
+                url: 'maintape/DEMSL1.bin'
             },
             {
                 name: 'LEVEL2',
                 type: 'bin',
-                url: 'maintape/DemSl2.bin'
+                url: 'maintape/DEMSL2.bin'
             },
             {
                 name: 'LEVEL3',
                 type: 'bin',
-                url: 'maintape/DemSl3.bin'
+                url: 'maintape/DEMSL3.bin'
             },
             {
                 name: 'CAVEMAN',
@@ -404,7 +404,7 @@ const tapes = [
             {
                 name: 'BIGCHESS2',
                 type: 'bin',
-                url: 'maintape/BIGCHESS.bin'
+                url: 'maintape/BIGCHESS.BIN'
             },
             {
                 name: 'BIGCHESS2DOC',
