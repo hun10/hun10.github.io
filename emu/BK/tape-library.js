@@ -720,6 +720,21 @@ const tapes = [
                 name: '45COM LO',
                 type: 'bin',
                 url: 'tools/45com-lo.bin'
+            },
+            {
+                name: 'MULTICOL',
+                type: 'bin',
+                url: 'maintape/MULTICOL.bin'
+            },
+            {
+                name: 'MELMAN',
+                type: 'bin',
+                url: 'maintape/MELMAN.bin'
+            },
+            {
+                name: 'ГОВОРУН',
+                type: 'bin',
+                url: 'maintape/goworun.bin'
             }
         ],
         sideB: [
@@ -752,6 +767,11 @@ const tapes = [
                 name: 'TRON.3CH',
                 type: 'raw',
                 url: 'tools/TRON.3CH.raw.bin'
+            },
+            {
+                name: 'CPUTEST',
+                type: 'bin',
+                url: 'maintape/CPUTEST.bin'
             }
         ]
     },
@@ -797,6 +817,21 @@ const tapes = [
                 name: 'ETAP2B.DAT',
                 type: 'bin',
                 url: 'maintape/ETAP2B.DAT.bin'
+            },
+            {
+                name: 'FLIER',
+                type: 'bin',
+                url: 'maintape/FLIER.bin'
+            },
+            {
+                name: 'ASTRDROM',
+                type: 'bin',
+                url: 'maintape/ASTRDROM.bin'
+            },
+            {
+                name: 'ASTRDROM.OVL',
+                type: 'bin',
+                url: 'maintape/ASTRDROM.OVL.bin'
             }
         ],
         sideB: [
@@ -849,6 +884,232 @@ const tapes = [
                 name: 'ДЕСАНТНИК5',
                 type: 'bin',
                 url: 'maintape/DESANTNIK5.bin'
+            },
+            {
+                name: 'LODE RUNNER',
+                type: 'bin',
+                url: 'maintape/LODERUNNER.bin'
+            },
+            {
+                name: 'LR.OVL',
+                type: 'bin',
+                url: 'maintape/LR.OVL.bin'
+            }
+        ]
+    }, {
+        title: 'Разное',
+        sideA: [
+            {
+                name: 'ZOOM',
+                type: 'bin',
+                url: 'maintape/ZOOM.bin'
+            },
+            {
+                name: 'WAR12',
+                type: 'bin',
+                url: 'maintape/WAR12.bin'
+            },
+            {
+                name: 'ВАМПИР',
+                type: 'bin',
+                url: 'maintape/WAMPIRF.bin'
+            },
+            {
+                name: 'УДАВ',
+                type: 'bin',
+                url: 'maintape/udaw.bin'
+            },
+            {
+                name: 'TRAVEL',
+                type: 'bin',
+                url: 'maintape/TRAVEL.bin'
+            },
+            {
+                name: 'ТЕТРИС',
+                type: 'bin',
+                url: 'maintape/tetris.bin'
+            },
+            {
+                name: 'SPACE WAR',
+                type: 'bin',
+                url: 'maintape/SPACEWAR.bin'
+            },
+            {
+                name: 'SPACE HIT',
+                type: 'bin',
+                url: 'maintape/SPACEHIT.bin'
+            },
+            {
+                name: 'SKIN DIVING',
+                type: 'bin',
+                url: 'maintape/SKINDIVING.bin'
+            },
+            {
+                name: 'ROKI',
+                type: 'bin',
+                url: 'maintape/ROKI.bin'
+            },
+            {
+                name: 'ПОЛИГОН',
+                type: 'bin',
+                url: 'maintape/poligon.bin'
+            },
+            {
+                name: 'ПОЛИГОН2',
+                type: 'bin',
+                url: 'maintape/POLYGON2.bin'
+            },
+            {
+                name: 'ПИФ-ПАФ',
+                type: 'bin',
+                url: 'maintape/pifpaf.bin'
+            },
+            {
+                name: 'PENTIS NEW',
+                type: 'bin',
+                url: 'maintape/pentisnew.bin'
+            },
+            {
+                name: 'КОСИЛКА',
+                type: 'bin',
+                url: 'maintape/kosilka.bin'
+            },
+            {
+                name: 'JETMAN',
+                type: 'bin',
+                url: 'maintape/JETMAN.bin'
+            },
+            {
+                name: 'DIAMOND',
+                type: 'bin',
+                url: 'maintape/DIAMOND.bin'
+            },
+            {
+                name: 'DIAMOND2',
+                type: 'bin',
+                url: 'maintape/DIAMOND2.bin'
+            },
+            {
+                name: 'COLUMNS',
+                type: 'bin',
+                url: 'maintape/COLUMNS.bin'
+            },
+            {
+                name: 'CIRCLER',
+                type: 'bin',
+                url: 'maintape/CIRCLER.bin'
+            },
+            {
+                name: 'BREAKING BALL',
+                type: 'bin',
+                url: 'maintape/BREAKINGBALL.bin'
+            }
+        ],
+        sideB: [
+            {
+                name: 'ДВА НЕГРА',
+                type: 'audio',
+                url: 'realtape/Dva-Negra.wav'
+            },
+            {
+                name: 'ЗАМОК',
+                type: 'bin',
+                url: 'maintape/zamok.bin'
+            },
+            {
+                name: 'ПОЛЕ ЧУДЕС',
+                type: 'bin',
+                url: 'maintape/POLECHUDES.bin'
+            },
+            {
+                name: 'СЛОВАРЬ1',
+                type: 'bin',
+                url: 'maintape/slowarx1.bin'
+            },
+            {
+                name: 'СЛОВАРЬ2',
+                type: 'bin',
+                url: 'maintape/slowarx2.bin'
+            },
+            {
+                name: 'TARZAN',
+                type: 'bin',
+                url: 'maintape/TARZAN.bin'
+            },
+            {
+                name: 'SUPER RALLY',
+                type: 'bin',
+                url: 'maintape/SUPERRALLY.bin'
+            },
+            {
+                name: 'STAR',
+                type: 'bin',
+                url: 'maintape/STAR.bin'
+            },
+            {
+                name: 'ШПИОН',
+                type: 'bin',
+                url: 'maintape/SPY.bin'
+            },
+            {
+                name: 'PANGO',
+                type: 'bin',
+                url: 'maintape/PANGO.bin'
+            },
+            {
+                name: 'НЕЧИСТЬ',
+                type: 'bin',
+                url: 'maintape/NECHIST.bin'
+            },
+            {
+                name: 'ЛЕОПОЛЬД',
+                type: 'bin',
+                url: 'maintape/leopold.bin'
+            },
+            {
+                name: 'GOAT',
+                type: 'bin',
+                url: 'maintape/GOAT.bin'
+            },
+            {
+                name: 'GOAT.GME',
+                type: 'bin',
+                url: 'maintape/GOAT.GME.bin'
+            },
+            {
+                name: 'FORT',
+                type: 'bin',
+                url: 'maintape/fort.bin'
+            },
+            {
+                name: 'DROP ZONA',
+                type: 'bin',
+                url: 'maintape/DROPZONA.bin'
+            },
+            {
+                name: 'ДОРОГА',
+                type: 'bin',
+                url: 'maintape/doroga.bin'
+            },
+            {
+                name: 'DIZZY1',
+                type: 'bin',
+                url: 'maintape/DIZZY1.bin'
+            },
+            {
+                name: 'ДОРОГА',
+                type: 'bin',
+                url: 'maintape/DIZZY.GME.bin'
+            },
+            {
+                name: 'COURIER',
+                type: 'bin',
+                url: 'maintape/COURIER.bin'
+            },
+            {
+                name: 'BALLY',
+                type: 'bin',
+                url: 'maintape/BALLY.bin'
             }
         ]
     }
