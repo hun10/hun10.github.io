@@ -1,0 +1,11 @@
+{
+    "name": "БК 0010-01",
+    "display": "standalone",
+    "icons": [
+        {
+            "src": "512.png",
+            "type": "image/png",
+            "sizes": "512x512"
+        }
+    ]
+}
