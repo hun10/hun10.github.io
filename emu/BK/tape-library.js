@@ -955,7 +955,7 @@ const tapes = [
                 url: 'maintape/poligon.bin'
             },
             {
-                name: 'ПОЛИГОН2',
+                name: 'POLYGON 2',
                 type: 'bin',
                 url: 'maintape/POLYGON2.bin'
             },
@@ -1072,7 +1072,7 @@ const tapes = [
                 url: 'maintape/GOAT.bin'
             },
             {
-                name: 'GOAT.GME',
+                name: 'GOAT#',
                 type: 'bin',
                 url: 'maintape/GOAT.GME.bin'
             },
@@ -1097,7 +1097,7 @@ const tapes = [
                 url: 'maintape/DIZZY1.bin'
             },
             {
-                name: 'ДОРОГА',
+                name: 'DIZZY.GME',
                 type: 'bin',
                 url: 'maintape/DIZZY.GME.bin'
             },
