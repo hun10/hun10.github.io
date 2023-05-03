@@ -856,11 +856,6 @@ const tapes = [
                 url: 'maintape/DESANTNIK.DOC.bin'
             },
             {
-                name: 'ДЕСАНТНИК',
-                type: 'bin',
-                url: 'maintape/DESANTNIK.bin'
-            },
-            {
                 name: 'ДЕСАНТНИК1',
                 type: 'bin',
                 url: 'maintape/DESANTNIK1.bin'
