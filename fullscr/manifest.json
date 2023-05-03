@@ -1,0 +1,11 @@
+{
+    "name": "Full Screen",
+    "display": "standalone",
+    "icons": [
+        {
+            "src": "512.png",
+            "type": "image/png",
+            "sizes": "512x512"
+        }
+    ]
+}
