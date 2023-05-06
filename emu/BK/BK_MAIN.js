@@ -4,14 +4,26 @@ const emulator = new Worker('./main-worker.js', {
 	type: 'module'
 })
 
-let movieCallback
+let movie = []
 
-export function getMovie(frames, callback) {
-	movieCallback = callback
+function addMovieFrame(frame) {
+	movie.push(frame)
+}
+
+export function startMovieRec() {
+	movie = []
 
 	emulator.postMessage({
-		getMovie: frames
+		recMovie: true
 	})
+}
+
+export function endMovieRec() {
+	emulator.postMessage({
+		recMovie: false
+	})
+
+	return movie
 }
 
 export function saveState() {
@@ -117,7 +129,7 @@ emulator.onmessage = ({ data: {
 	motorRunning,
 	ffChanged,
 	bkState,
-	movie
+	newMovieFrame
 } }) => {
 	if (printerPaper !== undefined) {
 		const uri = `data:text/plain;charset=koi8-r;base64,${btoa(processPrinterStream(printerPaper))}`
@@ -145,9 +157,8 @@ emulator.onmessage = ({ data: {
 	if (bkState !== undefined) {
 		localStorage.setItem('bkState-0', JSON.stringify(bkState))
 	}
-	if (movie !== undefined && movieCallback !== undefined) {
-		movieCallback(movie)
-		movieCallback = undefined
+	if (newMovieFrame !== undefined) {
+		addMovieFrame(newMovieFrame)
 	}
 }
 

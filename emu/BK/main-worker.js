@@ -16,6 +16,68 @@ const audioBufState = {
 	received: { ptr: 0, buf: new Float64Array(audioBufSize) },
 }
 
+let sendMovieFramesOut = false
+
+const movieFrame = {
+	initialized: false,
+	video: {
+		buf: new Uint16Array(256 * 32),
+		ptr: 0
+	},
+	audio: {
+		buf: new Int32Array(3e6),
+		state: false,
+		curLen: 0,
+		ptr: 0
+	}
+}
+
+function movieFrameCut() {
+	if (movieFrame.initialized) {
+		if (movieFrame.audio.curLen > 0) {
+			movieFrame.audio.buf[movieFrame.audio.ptr++] = movieFrame.audio.curLen * (movieFrame.audio.state ? -1 : 1)
+		}
+
+		if (sendMovieFramesOut) {
+			const video = new Uint16Array(movieFrame.video.buf)
+			const audio = new Int32Array(movieFrame.audio.ptr)
+			audio.set(movieFrame.audio.buf.subarray(0, movieFrame.audio.ptr))
+			postMessage({
+				newMovieFrame: {
+					video,
+					audio
+				}
+			}, [video.buffer, audio.buffer])
+		}
+	}
+
+	movieFrame.video.ptr = 0
+
+	movieFrame.audio.ptr = 0
+	movieFrame.audio.curLen = 0
+
+	movieFrame.initialized = true
+}
+function movieFrameAdvance(cycles) {
+	if (movieFrame.initialized) {
+		movieFrame.audio.curLen += cycles
+	}
+}
+function movieFrameWti(word) {
+	if (movieFrame.initialized) {
+		movieFrame.video.buf[movieFrame.video.ptr++] = word
+	}
+}
+function movieFrameBeep(state) {
+	if (movieFrame.initialized) {
+		if (state !== movieFrame.audio.state) {
+			movieFrame.audio.buf[movieFrame.audio.ptr++] = movieFrame.audio.curLen * (movieFrame.audio.state ? 1 : -1)
+			movieFrame.audio.state = state
+			movieFrame.audio.curLen = 0
+		}
+	}
+}
+
 function acceptAudioBuffer(buf) {
 	audioStarted = true
 	if (audioBufState.received !== null) {
@@ -80,11 +142,6 @@ const videoBufState = {
 	received: null
 }
 
-const movie = {
-	storage: new Uint16Array(videoBufSize * 5000),
-	ptr: 0
-}
-
 function acceptVideoBuffer(buf) {
 	if (videoBufState.received !== null) {
 		return
@@ -108,9 +165,6 @@ function hasNotFullBuffers() {
 }
 
 function putVideo(word) {
-	movie.storage[movie.ptr] = word
-	movie.ptr = (movie.ptr + 1) % movie.storage.length
-
 	if (videoBufState.write.ptr < videoBufSize) {
 		videoBufState.write.buf[videoBufState.write.ptr++] = word
 	}
@@ -137,6 +191,10 @@ function simulateWtiPulse() {
 	}
 
 	if (vp037state.hGate && vp037state.vGate) {
+		if (vp037state.lowerBits === 0 && vp037state.line === 255) {
+			movieFrameCut()
+		}
+		movieFrameWti(vWord)
 		putVideo(vWord)
 	}
 
@@ -193,7 +251,9 @@ function emulateTillBuffersAreFull() {
 		cpu.exec_insn();
 
 		const sTime = cpu.Cycles - prevCyc
+		movieFrameAdvance(sTime)
 		const wSound = base.getSoundReg()
+		movieFrameBeep(wSound)
 
 		cTime += sTime
 		if (wSound !== pSound) {
@@ -334,7 +394,7 @@ onmessage = ({ data: {
 	setVideoSpeedup,
 	loadState,
 	saveState,
-	getMovie
+	recMovie
 } }) => {
 	if (portForVideo !== undefined) {
 		videoPort = portForVideo
@@ -445,22 +505,7 @@ onmessage = ({ data: {
 		base.keyboard.setInterruptAllowed(loadState.keyInt)
 	}
 
-	if (getMovie !== undefined) {
-		const len = getMovie * 256 * 32
-
-		if (len <= movie.storage.length) {
-			const stor = new Uint16Array(len)
-
-			const sp = (Math.floor(movie.ptr / (256 * 32)) * 256 * 32 - len + movie.storage.length) % movie.storage.length
-			for (let i = 0; i < len; i++) {
-				stor[i] = movie.storage[(i + sp) % movie.storage.length]
-			}
-
-			postMessage({
-				movie: {
-					storage: stor
-				}
-			}, [stor.buffer])
-		}
+	if (recMovie !== undefined) {
+		sendMovieFramesOut = recMovie
 	}
 }
