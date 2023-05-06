@@ -12,8 +12,9 @@ import {
     getVideoFrame,
     saveState,
     loadState,
-    getMovie,
-    directKey0010
+    directKey0010,
+    startMovieRec,
+    endMovieRec
 } from './BK/BK_MAIN.js'
 import { createTapeControls } from './BK/tape-library.js'
 import buffersGl from './buffers-gl.js'
@@ -102,20 +103,25 @@ const resolution = 1040 / Math.pow(2, 0)
 let averageMs = 0.0
 let lastT0 = performance.now()
 
-const framesCtrl = number('Frames', 150)
-button('Download Movie', () => {
-    getMovie(framesCtrl.value, movie => {
-        movie.storage = Array.from(movie.storage)
-        const blob = new Blob(
-            [JSON.stringify(movie)],
-            {type: 'application/json'}
-        )
-        const uri = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = uri
-        a.download = 'movie.json'
-        a.click()
+button('Start Rec', () => {
+    startMovieRec()
+})
+button('End Rec', () => {
+    const movie = endMovieRec()
+
+    movie.forEach(frame => {
+        frame.video = Array.from(frame.video)
+        frame.audio = Array.from(frame.audio)
     })
+    const blob = new Blob(
+        [JSON.stringify(movie)],
+        {type: 'application/json'}
+    )
+    const uri = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = uri
+    a.download = 'movie.json'
+    a.click()
 })
 
 button('Save State', () => saveState())
