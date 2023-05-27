@@ -485,10 +485,19 @@ const tapes = [
                 url: 'maintape/tanker.bin'
             },
             {
-                name: 'CAZINO.COD'
+                name: 'CASINO.DOC',
+                type: 'bin',
+                url: 'maintape/CASINO.DOC.bin'
             },
             {
-                name: 'SPCAZ.BIN'
+                name: 'CASINO',
+                type: 'bin',
+                url: 'maintape/CASINO.bin'
+            },
+            {
+                name: 'CASINO.PIC',
+                type: 'bin',
+                url: 'maintape/CASINO.PIC.bin'
             }
         ]
     },
@@ -735,6 +744,16 @@ const tapes = [
                 name: 'ГОВОРУН',
                 type: 'bin',
                 url: 'maintape/goworun.bin'
+            },
+            {
+                name: 'ШЕФ',
+                type: 'bin',
+                url: 'maintape/CHIEF.bin'
+            },
+            {
+                name: 'CHIEF.OVL',
+                type: 'bin',
+                url: 'maintape/CHIEF.OVL.bin'
             }
         ],
         sideB: [

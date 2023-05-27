@@ -35,7 +35,7 @@ const movieFrame = {
 function movieFrameCut() {
 	if (movieFrame.initialized) {
 		if (movieFrame.audio.curLen > 0) {
-			movieFrame.audio.buf[movieFrame.audio.ptr++] = movieFrame.audio.curLen * (movieFrame.audio.state ? -1 : 1)
+			movieFrame.audio.buf[movieFrame.audio.ptr++] = movieFrame.audio.curLen * (movieFrame.audio.state ? 1 : -1)
 		}
 
 		if (sendMovieFramesOut) {
@@ -251,7 +251,7 @@ function emulateTillBuffersAreFull() {
 		cpu.exec_insn();
 
 		const sTime = cpu.Cycles - prevCyc
-		movieFrameAdvance(sTime)
+		movieFrameAdvance(sTime) // may diverge from the video stream
 		const wSound = base.getSoundReg()
 		movieFrameBeep(wSound)
 
