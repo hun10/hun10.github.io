@@ -82,6 +82,8 @@ export function getVideoFrame(copier) {
 	return false
 }
 
+let firstStart = true
+
 videoChannel.port1.onmessage = ({ data }) => {
 	video.receivedBuffer = data
 
@@ -96,6 +98,11 @@ videoChannel.port1.onmessage = ({ data }) => {
 			video.vFull[cur] = true
 			break
 		}
+	}
+
+	if (firstStart) {
+		firstStart = false
+		loadState()
 	}
 }
 
@@ -437,4 +444,7 @@ const revive = () => {
 
 document.body.onclick = revive
 document.body.onfocus = revive
-document.body.onblur = () => audioCtx.suspend()
+document.body.onblur = () => {
+	saveState()
+	audioCtx.suspend()
+}

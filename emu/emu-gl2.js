@@ -124,9 +124,6 @@ button('End Rec', () => {
     a.click()
 })
 
-button('Save State', () => saveState())
-button('Load State', () => loadState())
-
 let encodedSignal1, encodedSignal2, encodedBuffer, encodedBuffer2
 
 animateImageData(resolution, resolution * 4 / 5, gl => {
