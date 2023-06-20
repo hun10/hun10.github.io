@@ -18,7 +18,7 @@ import {
 } from './BK/BK_MAIN.js'
 import { createTapeControls } from './BK/tape-library.js'
 import buffersGl from './buffers-gl.js'
-import { numericControl, button, binaryControl, selectControl, number } from './controls.js'
+import { numericControl, button, binaryControl, selectControl, file } from './controls.js'
 
 button('Toggle Joystick', toggleJoystick)
 
@@ -121,6 +121,30 @@ button('End Rec', () => {
     const a = document.createElement('a')
     a.href = uri
     a.download = 'movie.json'
+    a.click()
+})
+
+file('Upload State', (file) => {
+    if (file.type === 'application/json') {
+        const reader = new FileReader()
+        reader.onload = () => {
+            localStorage.setItem('bkState-0', reader.result)
+            loadState()
+        }
+        reader.readAsText(file)
+    }
+})
+button('Download State', () => {
+    saveState()
+
+    const blob = new Blob(
+        [localStorage.getItem('bkState-0')],
+        {type: 'application/json'}
+    )
+    const uri = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = uri
+    a.download = 'state.json'
     a.click()
 })
 

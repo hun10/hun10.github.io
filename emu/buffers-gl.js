@@ -6,14 +6,80 @@ export default function (gl) {
     let lastTextureUnit
     let vertexShader
 
-    const screen = ({
-        width = gl.drawingBufferWidth,
-        height = gl.drawingBufferHeight
-    } = {}) => {
+    const screen = () => {
         return {
             out: () => {
                 gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-                gl.viewport(0, 0, width, height)
+                gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight)
+            }
+        }
+    }
+
+    const sampler3D = ({
+        width,
+        height,
+        depth,
+        filter = gl.NEAREST,
+        format = gl.RGBA8,
+        access = gl.RGBA,
+        store = gl.UNSIGNED_BYTE
+    }) => {
+        if (lastTextureUnit === undefined) {
+            lastTextureUnit = gl.TEXTURE0
+        } else {
+            lastTextureUnit++
+        }
+
+        const thisTextureUnit = lastTextureUnit
+
+        const texture = gl.createTexture()
+        gl.activeTexture(thisTextureUnit)
+        gl.bindTexture(gl.TEXTURE_3D, texture)
+        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, filter)
+        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, filter)
+        gl.texImage3D(
+            gl.TEXTURE_3D,
+            0,
+            format,
+            width,
+            height,
+            depth,
+            0,
+            access,
+            store,
+            null
+        )
+
+        const zeroTextureUnit = thisTextureUnit - gl.TEXTURE0
+
+        return {
+            update: data => {
+                gl.activeTexture(thisTextureUnit)
+
+                gl.texImage3D(
+                    gl.TEXTURE_3D,
+                    0,
+                    format,
+                    width,
+                    height,
+                    depth,
+                    0,
+                    access,
+                    store,
+                    data
+                )
+            },
+
+            width,
+            height,
+            depth,
+            size: width * height * depth,
+            bufferSize: width * height * depth * 4,
+
+            textureUnit: () => {
+                return zeroTextureUnit
             }
         }
     }
@@ -66,26 +132,26 @@ export default function (gl) {
 
         const zeroTextureUnit = thisTextureUnit - gl.TEXTURE0
 
-        return {
+        const self = {
             update: data => {
                 gl.activeTexture(thisTextureUnit)
 
                 gl.texImage2D(
                     gl.TEXTURE_2D,
                     0,
-                    gl.RGBA,
-                    width,
-                    height,
+                    format,
+                    self.width,
+                    self.height,
                     0,
-                    gl.RGBA,
-                    gl.UNSIGNED_BYTE,
+                    access,
+                    store,
                     data
                 )
             },
 
             copy: () => {
                 gl.activeTexture(thisTextureUnit)
-                gl.copyTexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 0, 0, width, height, 0)
+                gl.copyTexImage2D(gl.TEXTURE_2D, 0, format, 0, 0, self.width, self.height, 0)
             },
 
             width,
@@ -93,15 +159,34 @@ export default function (gl) {
             size: width * height,
             bufferSize: width * height * 4,
 
+            resize: ({
+                width = gl.drawingBufferWidth,
+                height = gl.drawingBufferHeight
+            } = {}) => {
+                if (self.width === width && self.height === height) {
+                    return false
+                }
+
+                self.width = width
+                self.height = height
+                self.size = self.width * self.height
+                self.bufferSize = self.size * 4
+
+                self.update(null)
+                return true
+            },
+
             textureUnit: () => {
                 return zeroTextureUnit
             },
 
             out: (params) => {
                 gl.bindFramebuffer(gl.FRAMEBUFFER, fb)
-                gl.viewport(params.x, params.y, params.width ?? width, params.height ?? height)
+                gl.viewport(params.x, params.y, params.width ?? self.width, params.height ?? self.height)
             }
         }
+
+        return self
     }
 
     const nPixelBuffer = n => params => {
@@ -114,11 +199,30 @@ export default function (gl) {
         let b1 = nBufs[currentIdx]
         let b2 = nBufs[(currentIdx + 1) % nBufs.length]
 
-        return {
+        const self = {
             width: b1.width,
             height: b1.height,
             size: b1.width * b1.height,
             bufferSize: b1.width * b1.height * 4,
+
+            resize: ({
+                width = gl.drawingBufferWidth,
+                height = gl.drawingBufferHeight
+            } = {}) => {
+                if (self.width === width && self.height === height) {
+                    return false
+                }
+
+                self.width = width
+                self.height = height
+                self.size = self.width * self.height
+                self.bufferSize = self.size * 4
+
+                for (let i = 0; i < n; i++) {
+                    nBufs[i].resize({ width, height })
+                }
+                return true
+            },
 
             update: data => b1.update(data),
             textureUnit: () => b1.textureUnit(),
@@ -130,6 +234,8 @@ export default function (gl) {
                 b2 = nBufs[(currentIdx + 1) % nBufs.length]
             }
         }
+
+        return self
     }
 
     const doublePixelBuffer = nPixelBuffer(2)
@@ -387,6 +493,7 @@ export default function (gl) {
         pixelBuffer,
         doublePixelBuffer,
         nPixelBuffer,
-        shader
+        shader,
+        sampler3D
     }
 }

@@ -17,7 +17,7 @@ root.style.right = '10px'
 root.style.overflow = 'scroll'
 overlay.appendChild(root)
 
-export function numericControl(name, min, max, step, defaultValue) {
+export function numericControl(name, min, max, step, defaultValue, callback = () => {}) {
     const div = document.createElement("div");
 
     const span = document.createElement("span");
@@ -55,17 +55,20 @@ export function numericControl(name, min, max, step, defaultValue) {
             valueContainer.value = value
             input.value = value
             slider.value = value
+            callback()
         }
     };
 
     input.onchange = () => {
         slider.value = input.value;
         valueContainer.value = Number(input.value);
+        callback()
     };
 
     slider.oninput = () => {
         input.value = slider.value;
         valueContainer.value = Number(slider.value);
+        callback()
     };
 
     div.appendChild(span);
@@ -82,13 +85,17 @@ export function binaryControl(name, defaultValue, callback) {
     const span = document.createElement("span");
     span.innerText = name;
     
-    const valueContainer = {
-        value: defaultValue
-    };
-
     const input = document.createElement("input");
     input.checked = defaultValue;
     input.type = "checkbox";
+
+    const valueContainer = {
+        value: defaultValue,
+        toggle: () => {
+            input.click()
+        }
+    };
+
     input.onchange = () => {
         valueContainer.value = input.checked;
         if (callback !== undefined) {
