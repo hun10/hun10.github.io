@@ -50,25 +50,26 @@ export function numericControl(name, min, max, step, defaultValue, callback = ()
         },
         setMax: value => {
             slider.max = value
+            callback()
         },
         setValue: value => {
+            if (valueContainer.value !== value) {
+                callback()
+            }
             valueContainer.value = value
             input.value = value
             slider.value = value
-            callback()
         }
     };
 
     input.onchange = () => {
         slider.value = input.value;
-        valueContainer.value = Number(input.value);
-        callback()
+        valueContainer.setValue(Number(input.value))
     };
 
     slider.oninput = () => {
         input.value = slider.value;
-        valueContainer.value = Number(slider.value);
-        callback()
+        valueContainer.setValue(Number(slider.value));
     };
 
     div.appendChild(span);

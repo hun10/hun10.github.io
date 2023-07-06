@@ -754,6 +754,11 @@ const tapes = [
                 name: 'CHIEF.OVL',
                 type: 'bin',
                 url: 'maintape/CHIEF.OVL.bin'
+            },
+            {
+                name: 'АФРИКА',
+                type: 'bin',
+                url: 'maintape/Africa.bin'
             }
         ],
         sideB: [
@@ -766,6 +771,26 @@ const tapes = [
                 name: 'MADGHOST_SCR',
                 type: 'bin',
                 url: 'maintape/MadGhost_Scr.bin'
+            },
+            {
+                name: 'BARBAR',
+                type: 'bin',
+                url: 'maintape/BARBAR.bin'
+            },
+            {
+                name: 'BARB.OV1',
+                type: 'bin',
+                url: 'maintape/BARB.OV1.bin'
+            },
+            {
+                name: 'BARB.OV2',
+                type: 'bin',
+                url: 'maintape/BARB.OV2.bin'
+            },
+            {
+                name: 'BARB.OV3',
+                type: 'bin',
+                url: 'maintape/BARB.OV3.bin'
             },
             {
                 name: 'LOG CABIN DIZZY',
@@ -851,6 +876,16 @@ const tapes = [
                 name: 'ASTRDROM.OVL',
                 type: 'bin',
                 url: 'maintape/ASTRDROM.OVL.bin'
+            },
+            {
+                name: 'BABY',
+                type: 'bin',
+                url: 'maintape/BABY.bin'
+            },
+            {
+                name: 'NEW YEAR',
+                type: 'bin',
+                url: 'maintape/NEW YEAR.bin'
             }
         ],
         sideB: [

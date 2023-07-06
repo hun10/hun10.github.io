@@ -134,19 +134,25 @@ export default function (gl) {
 
         const self = {
             update: data => {
-                gl.activeTexture(thisTextureUnit)
+                if (data) {
+                    gl.activeTexture(thisTextureUnit)
 
-                gl.texImage2D(
-                    gl.TEXTURE_2D,
-                    0,
-                    format,
-                    self.width,
-                    self.height,
-                    0,
-                    access,
-                    store,
-                    data
-                )
+                    gl.texSubImage2D(
+                        gl.TEXTURE_2D,
+                        0,
+                        0,
+                        0,
+                        self.width,
+                        self.height,
+                        access,
+                        store,
+                        data
+                    )
+                } else {
+                    self.out({ x: 0, y: 0 })
+                    gl.clearColor(0, 0, 0, 0)
+                    gl.clear(gl.COLOR_BUFFER_BIT)
+                }
             },
 
             copy: () => {
@@ -172,7 +178,18 @@ export default function (gl) {
                 self.size = self.width * self.height
                 self.bufferSize = self.size * 4
 
-                self.update(null)
+                gl.activeTexture(thisTextureUnit)
+                gl.texImage2D(
+                    gl.TEXTURE_2D,
+                    0,
+                    format,
+                    self.width,
+                    self.height,
+                    0,
+                    access,
+                    store,
+                    null
+                )
                 return true
             },
 
@@ -359,6 +376,10 @@ export default function (gl) {
             float random( vec3  v ) { return floatConstruct(hash(floatBitsToUint(v))); }
             float random( vec4  v ) { return floatConstruct(hash(floatBitsToUint(v))); }
 
+            float random() {
+                return random(vec3(gl_FragCoord.xy, u_seed));
+            }
+
             float uniformWhite() {
                 return random(vec3(gl_FragCoord.xy, u_seed)) - 0.5;
             }
@@ -373,6 +394,22 @@ export default function (gl) {
             float triangularBlue() {
                 return random(vec3(gl_FragCoord.xy, u_seed))
                      - random(vec3(gl_FragCoord.xy, u_prev_seed));
+            }
+
+            float triangularBlue(float idx) {
+                return random(vec4(gl_FragCoord.xy, u_seed, idx))
+                     - random(vec4(gl_FragCoord.xy, u_prev_seed, idx));
+            }
+
+            float randomBlue(float idx) {
+                float tri = triangularBlue(idx);
+
+                // [0, 1)
+                return tri + (1.0 - tri * tri * sign(tri)) / 2.0;
+            }
+
+            float randomWhite(float idx) {
+                return random(vec4(gl_FragCoord.xy, u_seed, idx));
             }
 
             vec4 dither(vec3 color)
