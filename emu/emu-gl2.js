@@ -20,20 +20,23 @@ import { createTapeControls } from './BK/tape-library.js'
 import buffersGl from './buffers-gl.js'
 import { numericControl, button, binaryControl, selectControl, file } from './controls.js'
 
-button('Toggle Joystick', toggleJoystick)
 
-let blackPadding = false
-button('Black Padding', () => {
-    const canvas = document.getElementsByTagName('canvas')[0]
-    if (!blackPadding) {
-        canvas.style.padding = '400px'
-        canvas.style.background = 'black'
-    } else {
-        canvas.style.padding = '27px'
-        canvas.style.background = 'black'
-    }
-    blackPadding = !blackPadding
-})
+const canvas = document.createElement("canvas")
+document.body.appendChild(canvas)
+
+const fpsDiv = document.createElement("div")
+document.body.appendChild(fpsDiv)
+
+const flatKeyboard = document.createElement('div')
+
+const flatKeyboardImg = document.createElement('img')
+flatKeyboardImg.src = 'flat_keyboard.png'
+flatKeyboardImg.style.width = '100vw'
+flatKeyboard.appendChild(flatKeyboardImg)
+document.body.appendChild(flatKeyboard)
+
+
+button('Toggle Joystick', toggleJoystick)
 
 button('Debug', () => mode('DEBUG'))
 button('Basic', () => mode('BASIC'))
@@ -47,6 +50,7 @@ const aSoundFac = numericControl("Sound LPF Cutoff (first order, 0 to turn off)"
 const aSoundButtFac = numericControl("Sound LPF Cutoff (Butterworth)", 0.0, 24000.0, 1, 7444)
 const aSoundButtOrd = numericControl("Sound LPF Order", 0.0, 40.0, 1, 8)
 
+const pixelDensityCtrl = numericControl("Pixel Density", 0.25, 3, 0.25, devicePixelRatio)
 const heightCtrl = numericControl("Height", 0.5, 3.0, 0.00001, 1.11);
 const widthCtrl = numericControl("Width", 0.5, 4.0, 0.00001, 1.54);
 const brightCtrl = numericControl("Brightness", -1, 0.5, 0.0001, 0.12);
@@ -99,7 +103,6 @@ registerTapeControls(createTapeControls(({ pwm, audio, state }) => {
     }
 }))
 
-const resolution = 1040 / Math.pow(2, 0)
 let averageMs = 0.0
 let lastT0 = performance.now()
 
@@ -150,7 +153,7 @@ button('Download State', () => {
 
 let encodedSignal1, encodedSignal2, encodedBuffer, encodedBuffer2
 
-animateImageData(resolution, resolution * 4 / 5, gl => {
+animateImageData(gl => {
     gl.disable(gl.BLEND)
     gl.disable(gl.CULL_FACE)
     gl.disable(gl.DEPTH_TEST)
@@ -186,7 +189,7 @@ animateImageData(resolution, resolution * 4 / 5, gl => {
     })
 
     const scanlinesBuffer = doublePixelBuffer({
-        width: resolution * 2,
+        width: gl.drawingBufferWidth * 2,
         height: 256,
         filter: gl.LINEAR
     })
@@ -195,8 +198,9 @@ animateImageData(resolution, resolution * 4 / 5, gl => {
         const float ALPHA = 0.14;
         const float INV_ALPHA = 1.0 / ALPHA;
         const float K = 2.0 / (PI * ALPHA);
-        const vec2 resolution = vec2(${scanlinesBuffer.width.toFixed(1)}, ${scanlinesBuffer.height.toFixed(1)});
-        const vec2 finalRes = vec2(${gl.drawingBufferWidth.toFixed(1)}, ${gl.drawingBufferHeight.toFixed(1)});
+
+        uniform vec2 u_resolution;
+        uniform vec2 u_finalRes;
 
         float inv_error_function(float x)
         {
@@ -256,8 +260,8 @@ animateImageData(resolution, resolution * 4 / 5, gl => {
             vec2 speed = vec2(1.0 / 80.0, -1.0 / (288.0 * 96.0)) * vec2(u_width, u_height);
             float factor = 1.0 / length(speed * 40.0);
 
-            float resWidth = finalRes.x / finalRes.y;
-            vec2 uv = gl_FragCoord.xy / resolution;
+            float resWidth = u_finalRes.x / u_finalRes.y;
+            vec2 uv = gl_FragCoord.xy / u_resolution;
             uv.x -= 0.5;
             uv.x *= resWidth / u_width;
 
@@ -276,8 +280,8 @@ animateImageData(resolution, resolution * 4 / 5, gl => {
 
     const finalBuffer = doublePixelBuffer()
     const finalPass = shader(`
-        const vec2 scan_res = vec2(${scanlinesBuffer.width.toFixed(1)}, ${scanlinesBuffer.height.toFixed(1)});
-        const vec2 resolution = vec2(${finalBuffer.width.toFixed(1)}, ${finalBuffer.height.toFixed(1)});
+        uniform vec2 u_scan_res;
+        uniform vec2 u_resolution;
 
         out vec4 outColor;
 
@@ -289,8 +293,8 @@ animateImageData(resolution, resolution * 4 / 5, gl => {
         uniform float u_height;
 
         void main() {
-            vec2 uv = gl_FragCoord.xy / resolution.y;
-            float resWidth = resolution.x / resolution.y;
+            vec2 uv = gl_FragCoord.xy / u_resolution.y;
+            float resWidth = u_resolution.x / u_resolution.y;
             uv.x -= resWidth / 2.0;
 
             vec2 speed = vec2(1.0 / 80.0, -1.0 / (288.0 * 96.0)) * vec2(u_width, u_height);
@@ -316,7 +320,7 @@ animateImageData(resolution, resolution * 4 / 5, gl => {
                 
                 if (d < u_gauss_cutoff) {
                     float xPos = len * dir.x;
-                    s += u_exposure * exp(-dp / u_gauss / u_gauss) * texLerp(u_scanlines, vec2(0, 0), scan_res, vec2((xPos / resWidth + 0.5) * scan_res.x, i + 128.5));
+                    s += u_exposure * exp(-dp / u_gauss / u_gauss) * texLerp(u_scanlines, vec2(0, 0), u_scan_res, vec2((xPos / resWidth + 0.5) * u_scan_res.x, i + 128.5));
                 }
             }
 
@@ -452,7 +456,17 @@ animateImageData(resolution, resolution * 4 / 5, gl => {
 
     returnVideoBuffer()
 
+    scanlinesBuffer.resize({
+        width: gl.drawingBufferWidth * 2,
+        height: 256
+    })
     scanlines.draw({
+        u_resolution: [
+            gl.drawingBufferWidth * 2, 256
+        ],
+        u_finalRes: [
+            gl.drawingBufferWidth, gl.drawingBufferHeight
+        ],
         u_encoded: encodedSignal2,
         u_lookup: byteLookup,
         u_count: repeatsCtrl.value,
@@ -470,6 +484,12 @@ animateImageData(resolution, resolution * 4 / 5, gl => {
     encodedSignal2 = tes
 
     finalPass.draw({
+        u_scan_res: [
+            gl.drawingBufferWidth * 2, 256
+        ],
+        u_resolution: [
+            gl.drawingBufferWidth, gl.drawingBufferHeight
+        ],
         u_scanlines: scanlinesBuffer,
         u_gauss: gaussCtrl.value,
         u_gauss_cutoff: gaussCutoffCtrl.value,
@@ -492,13 +512,9 @@ animateImageData(resolution, resolution * 4 / 5, gl => {
     info(`${averageMs.toFixed(1)} ms, between frames ${sinceLast.toFixed(1)} ms, average FPS ${(1000 / avFps).toFixed(1)}`)
 })
 
-function animateImageData(width, height, init, animator) {
-    const canvas = document.createElement("canvas")
-    canvas.width = width
-    canvas.height = height
-    canvas.style.padding = '27px'
+function animateImageData(init, animator) {
+    canvas.style.padding = '0px'
     canvas.style.backgroundColor = 'black'
-    canvas.style.float = 'left'
 
     const gl = canvas.getContext(
         "webgl2",
@@ -510,15 +526,25 @@ function animateImageData(width, height, init, animator) {
 
     const ext = init(gl)
 
-    document.body.appendChild(canvas)
-
-    const div = document.createElement("div")
-    document.body.appendChild(div)
-
     function draw(ts) {
         requestAnimationFrame(draw)
 
-        animator(gl, ext, f => div.innerText = f)
+        const windowWidth = document.documentElement.clientWidth
+        const windowHeight = document.documentElement.clientHeight
+
+        canvas.style.width = `${windowWidth}px`
+        const threshold = 5 / 4
+        canvas.style.height = `${windowWidth / windowHeight < threshold ? windowWidth / threshold : windowHeight}px`
+
+        const desiredWidth = Math.ceil(canvas.clientWidth * pixelDensityCtrl.value)
+        const desiredHeight = Math.ceil(canvas.clientHeight * pixelDensityCtrl.value)
+
+        if (desiredWidth !== canvas.width || desiredHeight !== canvas.height) {
+            canvas.width = desiredWidth
+            canvas.height = desiredHeight
+        }
+
+        animator(gl, ext, f => fpsDiv.innerText = f)
 
         updateParams({
             lpfCutoff: aSoundFac.value,
@@ -538,15 +564,6 @@ function animateImageData(width, height, init, animator) {
 
     draw()
 }
-
-const flatKeyboard = document.createElement('div')
-
-const flatKeyboardImg = document.createElement('img')
-flatKeyboardImg.src = 'flat_keyboard.png'
-flatKeyboardImg.style.width = '100vw'
-flatKeyboard.appendChild(flatKeyboardImg)
-// flatKeyboard.style.webkitTouchCallout = 'none'
-// flatKeyboard.style.webkitUserSelect = 'none'
 
 const flatKeys = [
     [
@@ -616,5 +633,3 @@ flatKeyboard.addEventListener('pointerup', e => {
     e.preventDefault()
     e.stopPropagation()
 })
-
-document.body.appendChild(flatKeyboard)

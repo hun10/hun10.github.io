@@ -1,5 +1,5 @@
 import { binaryControl, selectControl } from '../controls.js'
-import { bin2tape, raw2bin } from './tape.js'
+import { bin2tape, raw2bin, named2bin } from './tape.js'
 
 function createSidesTable() {
     const table = document.createElement('table')
@@ -164,6 +164,20 @@ export function createTapeControls(callback) {
                     .then(array => callback({ pwm: bin2tape(
                         koi8(recording.name.padEnd(16)),
                         new Uint8Array(array)
+                    ) }))
+                    .then(() => {
+                        if (run) {
+                            state.mode = 'play'
+                            callback({ state })
+                            refresh()
+                        }
+                    })
+            } else if (recording.type === 'named-bin') {
+                fetch(recording.url)
+                    .then(response => response.arrayBuffer())
+                    .then(array => callback({ pwm: bin2tape(
+                        koi8(recording.name.padEnd(16)),
+                        named2bin(new Uint8Array(array))
                     ) }))
                     .then(() => {
                         if (run) {
@@ -945,6 +959,51 @@ const tapes = [
                 url: 'maintape/LR.OVL.bin'
             }
         ]
+    }, {
+        title: 'Добытое',
+        sideA: [
+            {
+                name: 'BILREK',
+                type: 'named-bin',
+                url: 'maintape/BILREK.bin'
+            },
+            {
+                name: 'BYCOP2',
+                type: 'named-bin',
+                url: 'maintape/BYCOP2.bin'
+            },
+            {
+                name: 'CHEC',
+                type: 'named-bin',
+                url: 'maintape/CHEC.bin'
+            },
+            {
+                name: 'CHECK',
+                type: 'named-bin',
+                url: 'maintape/CHECK.bin'
+            },
+            {
+                name: 'COLDOC',
+                type: 'named-bin',
+                url: 'maintape/COLDOC.bin'
+            },
+            {
+                name: 'PODDAW',
+                type: 'named-bin',
+                url: 'maintape/PODDAW.bin'
+            },
+            {
+                name: 'UNIC4',
+                type: 'named-bin',
+                url: 'maintape/UNIC4.bin'
+            },
+            {
+                name: 'UNIDOC',
+                type: 'named-bin',
+                url: 'maintape/UNIDOC.bin'
+            }
+        ],
+        sideB: []
     }, {
         title: 'Разное',
         sideA: [

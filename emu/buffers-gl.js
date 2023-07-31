@@ -196,6 +196,9 @@ export default function (gl) {
             textureUnit: () => {
                 return zeroTextureUnit
             },
+            texture: () => {
+                return texture
+            },
 
             out: (params) => {
                 gl.bindFramebuffer(gl.FRAMEBUFFER, fb)
@@ -243,6 +246,15 @@ export default function (gl) {
 
             update: data => b1.update(data),
             textureUnit: () => b1.textureUnit(),
+            swap: () => {
+                const pb2 = b2
+
+                currentIdx = (currentIdx + 1) % nBufs.length
+                b1 = nBufs[currentIdx]
+                b2 = nBufs[(currentIdx + 1) % nBufs.length]
+
+                return pb2
+            },
             out: (params) => {
                 b2.out(params)
 
@@ -256,6 +268,63 @@ export default function (gl) {
     }
 
     const doublePixelBuffer = nPixelBuffer(2)
+
+    const multiOutput = (...buffers) => {
+        const cache = {}
+
+        while (true) {
+            let textures = []
+            let cacheKey = ''
+
+            for (let i = 0; i < buffers.length; i++) {
+                const tu = buffers[i].swap()
+                textures.push(tu.texture())
+                cacheKey += `:${tu.textureUnit()}`
+            }
+
+            if (cache[cacheKey] === undefined) {
+                const drawArray = []
+
+                const fb = gl.createFramebuffer()
+                cache[cacheKey] = fb
+
+                gl.bindFramebuffer(gl.FRAMEBUFFER, fb)
+
+                for (let i = 0; i < textures.length; i++) {
+                    const tex = textures[i]
+                    const attach = gl.COLOR_ATTACHMENT0 + i
+                    drawArray.push(attach)
+
+                    gl.framebufferTexture2D(
+                        gl.FRAMEBUFFER,
+                        attach,
+                        gl.TEXTURE_2D,
+                        tex,
+                        0
+                    )
+                }
+
+                gl.drawBuffers(drawArray)
+            } else {
+                break
+            }
+        }
+
+        const self = {
+            out: (params) => {
+                let cacheKey = ''
+                for (let i = 0; i < buffers.length; i++) {
+                    const tu = buffers[i].swap()
+                    cacheKey += `:${tu.textureUnit()}`
+                }
+
+                gl.bindFramebuffer(gl.FRAMEBUFFER, cache[cacheKey])
+                gl.viewport(params.x, params.y, params.width ?? buffers[0].width, params.height ?? buffers[0].height)
+            }
+        }
+
+        return self
+    }
 
     const shader = src => {
         if (vertexShader === undefined) {
@@ -408,10 +477,6 @@ export default function (gl) {
                 return tri + (1.0 - tri * tri * sign(tri)) / 2.0;
             }
 
-            float randomWhite(float idx) {
-                return random(vec4(gl_FragCoord.xy, u_seed, idx));
-            }
-
             vec4 dither(vec3 color)
             {
                 color = max(vec3(0), color);
@@ -531,6 +596,7 @@ export default function (gl) {
         doublePixelBuffer,
         nPixelBuffer,
         shader,
-        sampler3D
+        sampler3D,
+        multiOutput
     }
 }

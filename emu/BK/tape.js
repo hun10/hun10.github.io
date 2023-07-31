@@ -15,6 +15,23 @@ export function raw2bin(unsignedBytes) {
     return bin
 }
 
+export function named2bin(unsignedBytes) {
+    const address = unsignedBytes[0] | (unsignedBytes[1] << 8)
+    const length = unsignedBytes[2] | (unsignedBytes[3] << 8)
+
+    const bin = new Uint8Array(length + 4)
+    bin[0] = address & 0xFF
+    bin[1] = (address >> 8) & 0xFF
+    bin[2] = length & 0xFF
+    bin[3] = (length >> 8) & 0xFF
+
+    for (let i = 0; i < length; i++) {
+        bin[i + 4] = unsignedBytes[i + 20]
+    }
+
+    return bin
+}
+
 export function bin2tape(nameUnsignedBytesKoi8, unsignedBytes) {
     const length = unsignedBytes[2] | (unsignedBytes[3] << 8)
     let checksum = 0
