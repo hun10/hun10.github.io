@@ -512,9 +512,29 @@ animateImageData(gl => {
     info(`${averageMs.toFixed(1)} ms, between frames ${sinceLast.toFixed(1)} ms, average FPS ${(1000 / avFps).toFixed(1)}`)
 })
 
+let overlaidHeldDown = 0
+
 function animateImageData(init, animator) {
     canvas.style.padding = '0px'
     canvas.style.backgroundColor = 'black'
+
+    let overlaidController = false
+    let overlaidTtl = 0
+    const overlaidInit = 2000
+    const overlaidMax = 0.5
+    const overlaidMin = 0.05
+    const overlaidDropFactor = 0.95
+    canvas.addEventListener('click', () => {
+        if (overlaidController) {
+            if (overlaidTtl < overlaidMin) {
+                overlaidTtl = overlaidInit
+            } else {
+                overlaidTtl = 0
+            }
+        }
+
+        overlaidHeldDown = 0
+    })
 
     const gl = canvas.getContext(
         "webgl2",
@@ -534,7 +554,29 @@ function animateImageData(init, animator) {
 
         canvas.style.width = `${windowWidth}px`
         const threshold = 5 / 4
-        canvas.style.height = `${windowWidth / windowHeight < threshold ? windowWidth / threshold : windowHeight}px`
+        if (windowWidth / windowHeight < threshold) {
+            canvas.style.height = `${windowWidth / threshold}px`
+            overlaidController = false
+        } else {
+            canvas.style.height = `${windowHeight}px`
+            overlaidController = true
+        }
+
+        if (!overlaidController || overlaidTtl < overlaidMin) {
+            flatKeyboard.style.position = ''
+            flatKeyboard.style.bottom = ''
+            flatKeyboard.style.opacity = ''
+        } else {
+            flatKeyboard.style.position = 'fixed'
+            flatKeyboard.style.bottom = '0px'
+            flatKeyboard.style.opacity = `${Math.min(overlaidMax, overlaidTtl) * 100}%`
+
+            if (overlaidHeldDown === 0) {
+                overlaidTtl *= overlaidDropFactor
+            } else {
+                overlaidTtl = overlaidInit
+            }
+        }
 
         const desiredWidth = Math.ceil(canvas.clientWidth * pixelDensityCtrl.value)
         const desiredHeight = Math.ceil(canvas.clientHeight * pixelDensityCtrl.value)
@@ -619,6 +661,7 @@ flatKeyboard.addEventListener('pointerdown', e => {
     if (code !== undefined) {
         activePointers[e.pointerId] = code
         directKey0010(code, 'close')
+        overlaidHeldDown++
     }
     e.preventDefault()
     e.stopPropagation()
@@ -629,6 +672,7 @@ flatKeyboard.addEventListener('pointerup', e => {
     if (code !== undefined) {
         activePointers[e.pointerId] = undefined
         directKey0010(code, 'open')
+        overlaidHeldDown--
     }
     e.preventDefault()
     e.stopPropagation()
