@@ -38,6 +38,12 @@ document.body.appendChild(flatKeyboard)
 
 button('Toggle Joystick', toggleJoystick)
 
+const fsRadius = numericControl('Touch Radius', 1, 100, 1, 20)
+const fsCtrls = selectControl('Full-screen Controls', [
+    'Keyboard',
+    'Touch Arrows',
+], () => {}, 'Keyboard')
+
 button('Debug', () => mode('DEBUG'))
 button('Basic', () => mode('BASIC'))
 button('Focal', () => mode('FOCAL'))
@@ -536,6 +542,15 @@ function animateImageData(init, animator) {
         overlaidHeldDown = 0
     })
 
+    let blockDblClick = false
+
+    canvas.addEventListener('touchstart', e => {
+        if (blockDblClick) {
+            e.preventDefault()
+            e.stopPropagation()
+        }
+    })
+
     const gl = canvas.getContext(
         "webgl2",
         {
@@ -557,9 +572,15 @@ function animateImageData(init, animator) {
         if (windowWidth / windowHeight < threshold) {
             canvas.style.height = `${windowWidth / threshold}px`
             overlaidController = false
+            blockDblClick = false
         } else {
             canvas.style.height = `${windowHeight}px`
             overlaidController = true
+            blockDblClick = (fsCtrls.value === 'Touch Arrows')
+        }
+
+        if (fsCtrls.value !== 'Keyboard') {
+            overlaidController = false
         }
 
         if (!overlaidController || overlaidTtl < overlaidMin) {
@@ -676,4 +697,103 @@ flatKeyboard.addEventListener('pointerup', e => {
     }
     e.preventDefault()
     e.stopPropagation()
+})
+
+const joystickPointers = {}
+
+canvas.addEventListener('pointerdown', e => {
+    if (fsCtrls.value === 'Touch Arrows') {
+        joystickPointers[e.pointerId] = {
+            baseX: e.offsetX,
+            baseY: e.offsetY
+        }
+
+        const horPart = e.offsetX / canvas.clientWidth
+        const verPart = e.offsetY / canvas.clientHeight
+
+        if (verPart < 0.3) {
+            let code
+            if (horPart < 0.2 || horPart > 0.8) {
+                code = 'ВВОД'
+            } else {
+                code = 'ПРОБЕЛ'
+            }
+
+            joystickPointers[e.pointerId].code = code
+            directKey0010(code, 'close')
+        }
+
+        e.preventDefault()
+        e.stopPropagation()
+    }
+})
+
+canvas.addEventListener('pointermove', e => {
+    if (joystickPointers[e.pointerId] !== undefined) {
+        const { baseX, baseY } = joystickPointers[e.pointerId]
+
+        let dx = e.offsetX - baseX
+        let dy = e.offsetY - baseY
+        const ln = Math.sqrt(dx * dx + dy * dy)
+
+        let left = false
+        let right = false
+        let up = false
+        let down = false
+
+        if (ln > devicePixelRatio * fsRadius.value) {
+            dx /= ln
+            dy /= ln
+
+            const thr = 0.5
+            if (dx > thr) {
+                right = true
+            }
+            if (dx < -thr) {
+                left = true
+            }
+            if (dy > thr) {
+                down = true
+            }
+            if (dy < -thr) {
+                up = true
+            }
+        }
+
+        const prevCode = joystickPointers[e.pointerId].code
+        let code
+
+        if (left) {
+            code = 'ВЛЕВО'
+        }
+        if (right) {
+            code = 'ВПРАВО'
+        }
+        if (down) {
+            code = 'ВНИЗ'
+        }
+        if (up) {
+            code = 'ВВЕРХ'
+        }
+
+        if (prevCode !== code) {
+            directKey0010(prevCode, 'open')
+            directKey0010(code, 'close')
+        }
+
+        joystickPointers[e.pointerId].code = code
+
+        e.preventDefault()
+        e.stopPropagation()
+    }
+})
+
+canvas.addEventListener('pointerup', e => {
+    if (fsCtrls.value === 'Touch Arrows') {
+        directKey0010(joystickPointers[e.pointerId].code, 'open')
+        joystickPointers[e.pointerId] = undefined
+
+        e.preventDefault()
+        e.stopPropagation()
+    }
 })
