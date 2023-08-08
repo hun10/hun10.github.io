@@ -75,13 +75,15 @@ const vRgbCtrl = binaryControl('RGB output', false, v => {
 
 let avFps = 0
 
-selectControl('Animation Smoothing', [
+const animationSmoothingCtrl = selectControl('Animation Smoothing', [
     'Video Output Speed-Up Only',
     'Whole Emulation Speed-Up',
     'None',
-], option => {
+], () => {}, 'Video Output Speed-Up Only')
+
+setInterval(() => {
     const fact = 1000 / avFps * 320 / 15625
-    switch (option) {
+    switch (animationSmoothingCtrl.value) {
         case 'None':
             setCpuSpeed(3000000, 1)
             break;
@@ -95,7 +97,7 @@ selectControl('Animation Smoothing', [
         default:
             break;
     }
-}, 'Video Output Speed-Up Only')
+}, 10000)
 
 registerTapeControls(createTapeControls(({ pwm, audio, state }) => {
     if (pwm !== undefined) {
