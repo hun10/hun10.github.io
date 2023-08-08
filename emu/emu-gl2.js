@@ -38,7 +38,7 @@ document.body.appendChild(flatKeyboard)
 
 button('Toggle Joystick', toggleJoystick)
 
-const fsRadius = numericControl('Touch Radius', 1, 100, 1, 20)
+const fsRadius = numericControl('Touch Radius', 1, 100, 1, 10)
 const fsCtrls = selectControl('Full-screen Controls', [
     'Keyboard',
     'Touch Arrows',
@@ -56,7 +56,7 @@ const aSoundFac = numericControl("Sound LPF Cutoff (first order, 0 to turn off)"
 const aSoundButtFac = numericControl("Sound LPF Cutoff (Butterworth)", 0.0, 24000.0, 1, 7444)
 const aSoundButtOrd = numericControl("Sound LPF Order", 0.0, 40.0, 1, 8)
 
-const pixelDensityCtrl = numericControl("Pixel Density", 0.25, 3, 0.25, devicePixelRatio)
+const pixelDensityCtrl = numericControl("Pixel Density", 0.25, 3, 0.25, 1)
 const heightCtrl = numericControl("Height", 0.5, 3.0, 0.00001, 1.11);
 const widthCtrl = numericControl("Width", 0.5, 4.0, 0.00001, 1.54);
 const brightCtrl = numericControl("Brightness", -1, 0.5, 0.0001, 0.12);
@@ -76,9 +76,9 @@ const vRgbCtrl = binaryControl('RGB output', false, v => {
 let avFps = 0
 
 selectControl('Animation Smoothing', [
-    'None',
     'Video Output Speed-Up Only',
-    'Whole Emulation Speed-Up'
+    'Whole Emulation Speed-Up',
+    'None',
 ], option => {
     const fact = 1000 / avFps * 320 / 15625
     switch (option) {
@@ -95,7 +95,7 @@ selectControl('Animation Smoothing', [
         default:
             break;
     }
-}, 'None')
+}, 'Video Output Speed-Up Only')
 
 registerTapeControls(createTapeControls(({ pwm, audio, state }) => {
     if (pwm !== undefined) {
