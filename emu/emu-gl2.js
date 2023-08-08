@@ -40,9 +40,9 @@ button('Toggle Joystick', toggleJoystick)
 
 const fsRadius = numericControl('Touch Radius', 1, 100, 1, 10)
 const fsCtrls = selectControl('Full-screen Controls', [
-    'Keyboard',
     'Touch Arrows',
-], () => {}, 'Keyboard')
+    'Keyboard',
+], () => {}, 'Touch Arrows')
 
 button('Debug', () => mode('DEBUG'))
 button('Basic', () => mode('BASIC'))
