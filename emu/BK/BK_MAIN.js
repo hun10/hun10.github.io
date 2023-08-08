@@ -351,6 +351,8 @@ function ensureLayout(rus, action, fallback) {
 }
 
 export function directKey0010(code, action) {
+	audioCtx.resume()
+
 	const bkKey = bk0010[code]
 
 	emulator.postMessage({
