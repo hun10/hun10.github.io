@@ -445,7 +445,7 @@ const tapes = [
             {
                 name: 'БАТИСКАФ',
                 type: 'bin',
-                url: 'maintape/batiskaf.bin'
+                url: 'maintape/БАТИСКАФ.bin'
             },
             {
                 name: 'БАТ2.ГМЕ',
@@ -1001,6 +1001,11 @@ const tapes = [
                 name: 'UNIDOC',
                 type: 'named-bin',
                 url: 'maintape/UNIDOC.bin'
+            },
+            {
+                name: 'БАТИСКАФ',
+                type: 'bin',
+                url: 'maintape/БАТИСКАФ.bin'
             }
         ],
         sideB: []

@@ -73,7 +73,17 @@ const vRgbCtrl = binaryControl('RGB output', false, v => {
     lastVideoParam = null
 })
 
-let avFps = 0
+const fpsSamples = {
+    samples: new Float64Array(64),
+    head: 0,
+    add: s => {
+        fpsSamples.samples[fpsSamples.head++] = s
+        fpsSamples.head %= fpsSamples.samples.length
+    },
+    avg: () => {
+        return fpsSamples.samples.reduce((a, b) => a + b) / fpsSamples.samples.length
+    }
+}
 
 const animationSmoothingCtrl = selectControl('Animation Smoothing', [
     'Video Output Speed-Up Only',
@@ -82,7 +92,7 @@ const animationSmoothingCtrl = selectControl('Animation Smoothing', [
 ], () => {}, 'Video Output Speed-Up Only')
 
 setInterval(() => {
-    const fact = 1000 / avFps * 320 / 15625
+    const fact = 1000 / fpsSamples.avg() * 320 / 15625
     switch (animationSmoothingCtrl.value) {
         case 'None':
             setCpuSpeed(3000000, 1)
@@ -97,7 +107,7 @@ setInterval(() => {
         default:
             break;
     }
-}, 10000)
+}, 1000)
 
 registerTapeControls(createTapeControls(({ pwm, audio, state }) => {
     if (pwm !== undefined) {
@@ -361,11 +371,7 @@ animateImageData(gl => {
     const sinceLast = t0 - lastT0
     lastT0 = t0
 
-    {
-        const cFpr = sinceLast
-        const trust = 0.99
-        avFps = avFps * trust + cFpr * (1 - trust)
-    }
+    fpsSamples.add(sinceLast)
 
     const expVideo = -2 * Math.PI * vFilterCtrl.value
 
@@ -517,7 +523,7 @@ animateImageData(gl => {
         averageMs = averageMs * trust + t1 * (1 - trust)
     }
 
-    info(`${averageMs.toFixed(1)} ms, between frames ${sinceLast.toFixed(1)} ms, average FPS ${(1000 / avFps).toFixed(1)}`)
+    info(`${averageMs.toFixed(1)} ms, between frames ${sinceLast.toFixed(1)} ms, average FPS ${(1000 / fpsSamples.avg()).toFixed(1)}`)
 })
 
 let overlaidHeldDown = 0
@@ -690,7 +696,7 @@ flatKeyboard.addEventListener('pointerdown', e => {
     e.stopPropagation()
 })
 
-flatKeyboard.addEventListener('pointerup', e => {
+const cancelFlatKey = e => {
     const code = activePointers[e.pointerId]
     if (code !== undefined) {
         activePointers[e.pointerId] = undefined
@@ -699,7 +705,12 @@ flatKeyboard.addEventListener('pointerup', e => {
     }
     e.preventDefault()
     e.stopPropagation()
-})
+}
+
+flatKeyboard.addEventListener('pointerup', cancelFlatKey)
+flatKeyboard.addEventListener('pointerleave', cancelFlatKey)
+flatKeyboard.addEventListener('pointercancel', cancelFlatKey)
+flatKeyboard.addEventListener('pointerout', cancelFlatKey)
 
 const joystickPointers = {}
 
@@ -790,7 +801,7 @@ canvas.addEventListener('pointermove', e => {
     }
 })
 
-canvas.addEventListener('pointerup', e => {
+const cancelCanvasKey = e => {
     if (fsCtrls.value === 'Touch Arrows') {
         directKey0010(joystickPointers[e.pointerId].code, 'open')
         joystickPointers[e.pointerId] = undefined
@@ -798,4 +809,9 @@ canvas.addEventListener('pointerup', e => {
         e.preventDefault()
         e.stopPropagation()
     }
-})
+}
+
+canvas.addEventListener('pointerup', cancelCanvasKey)
+canvas.addEventListener('pointerleave', cancelCanvasKey)
+canvas.addEventListener('pointercancel', cancelCanvasKey)
+canvas.addEventListener('pointerout', cancelCanvasKey)
