@@ -38,7 +38,7 @@ document.body.appendChild(flatKeyboard)
 
 button('Toggle Joystick', toggleJoystick)
 
-const fsRadius = numericControl('Touch Radius', 1, 100, 1, 10)
+const fsRadius = numericControl('Touch Radius', 1, 100, 1, 20)
 const fsCtrls = selectControl('Full-screen Controls', [
     'Touch Arrows',
     'Keyboard',
@@ -733,7 +733,10 @@ canvas.addEventListener('pointerdown', e => {
             }
 
             joystickPointers[e.pointerId].code = code
+            joystickPointers[e.pointerId].mayBeJoystick = false
             directKey0010(code, 'close')
+        } else {
+            joystickPointers[e.pointerId].mayBeJoystick = true
         }
 
         e.preventDefault()
@@ -742,7 +745,7 @@ canvas.addEventListener('pointerdown', e => {
 })
 
 canvas.addEventListener('pointermove', e => {
-    if (joystickPointers[e.pointerId] !== undefined) {
+    if (joystickPointers[e.pointerId] !== undefined && joystickPointers[e.pointerId].mayBeJoystick) {
         const { baseX, baseY } = joystickPointers[e.pointerId]
 
         let dx = e.offsetX - baseX
@@ -754,7 +757,7 @@ canvas.addEventListener('pointermove', e => {
         let up = false
         let down = false
 
-        if (ln > devicePixelRatio * fsRadius.value) {
+        if (ln > fsRadius.value) {
             dx /= ln
             dy /= ln
 
@@ -776,16 +779,21 @@ canvas.addEventListener('pointermove', e => {
         const prevCode = joystickPointers[e.pointerId].code
         let code
 
-        if (left) {
+        if (left && up) {
+            code = 'ВЛЕВО-ВВЕРХ'
+        } else if (left && down) {
+            code = 'ВЛЕВО-ВНИЗ'
+        } else if (right && up) {
+            code = 'ВПРАВО-ВВЕРХ'
+        } else if (right && down) {
+            code = 'ВПРАВО-ВНИЗ'
+        } else if (left) {
             code = 'ВЛЕВО'
-        }
-        if (right) {
+        } else if (right) {
             code = 'ВПРАВО'
-        }
-        if (down) {
+        } else if (down) {
             code = 'ВНИЗ'
-        }
-        if (up) {
+        } else if (up) {
             code = 'ВВЕРХ'
         }
 
