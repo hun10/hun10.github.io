@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>
+        RAW Camera
+    </title>
+</head>
+
+<body>
+    <script>
+        const photo = document.createElement('input')
+        photo.type = 'file'
+        photo.capture = 'environment'
+        photo.hidden = true
+
+        document.body.appendChild(photo)
+
+        photo.addEventListener('change', e => {
+            const img = document.createElement('img')
+            img.src = URL.createObjectURL(e.target.files[0])
+            document.body.appendChild(img)
+        })
+
+        document.addEventListener('dblclick', () => {
+            photo.click()
+        })
+    </script>
+</body>
+
+</html>
