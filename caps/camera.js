@@ -4,6 +4,9 @@ document.body.appendChild(select)
 const pre = document.createElement('pre')
 document.body.appendChild(pre)
 
+const vid = document.createElement('video')
+document.body.appendChild(vid)
+
 async function main() {
     const devices = await navigator.mediaDevices.enumerateDevices()
 
@@ -25,6 +28,7 @@ async function choose() {
             deviceId: select.value
         }
     })
+    vid.srcObject = stream
 
     const caps = stream.getVideoTracks().map(track => ({[track.label]: track.getCapabilities()}))
 
