@@ -28,7 +28,9 @@ async function choose() {
             deviceId: select.value
         }
     })
+
     vid.srcObject = stream
+    vid.play()
 
     const caps = stream.getVideoTracks().map(track => ({[track.label]: track.getCapabilities()}))
 
