@@ -11,7 +11,7 @@ async function main() {
         const option = document.createElement('option')
         select.appendChild(option)
 
-        option.label = device.label
+        option.innerText = device.label
         option.value = device.deviceId
     })
 
