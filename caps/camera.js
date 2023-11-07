@@ -33,9 +33,11 @@ async function choose() {
     vid.play()
 
     const caps = stream.getVideoTracks().map(track => ({[track.label]: track.getCapabilities()}))
-
-    console.log(caps)
     pre.innerText = JSON.stringify(caps, null, 2)
+
+    const sets = stream.getVideoTracks().map(track => ({[track.label]: track.getSettings()}))
+    pre.innerText = JSON.stringify(sets, null, 2)
+
 }
 
 main()
