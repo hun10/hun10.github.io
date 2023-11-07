@@ -9,7 +9,7 @@ document.body.appendChild(vid)
 
 async function main() {
     const devices = await navigator.mediaDevices.enumerateDevices()
-
+h
     devices.filter(dev => dev.kind === 'videoinput').forEach(device => {
         const option = document.createElement('option')
         select.appendChild(option)
