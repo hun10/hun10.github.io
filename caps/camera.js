@@ -36,7 +36,7 @@ async function choose() {
     pre.innerText = JSON.stringify(caps, null, 2)
 
     const sets = stream.getVideoTracks().map(track => ({[track.label]: track.getSettings()}))
-    pre.innerText = JSON.stringify(sets, null, 2)
+    pre.innerText += JSON.stringify(sets, null, 2)
 
 }
 
