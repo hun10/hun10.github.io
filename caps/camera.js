@@ -40,4 +40,4 @@ async function choose() {
 
 }
 
-main()
+main().catch(alert)
