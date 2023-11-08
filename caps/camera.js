@@ -42,4 +42,4 @@ async function choose() {
 
 }
 
-main().catch(alert)
+window.onload = () => main().catch(alert)
