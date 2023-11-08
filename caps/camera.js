@@ -29,7 +29,7 @@ async function choose() {
         }
     })
 
-    vid.srcObject = stream
+    vid.src = window.URL.createObjectURL(stream)
     vid.onloadedmetadata = function(e) {
         vid.play()
     }
