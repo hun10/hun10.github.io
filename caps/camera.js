@@ -5,6 +5,7 @@ const pre = document.createElement('pre')
 document.body.appendChild(pre)
 
 const vid = document.createElement('video')
+vid.muted = ''
 document.body.appendChild(vid)
 
 async function main() {
@@ -29,17 +30,14 @@ async function choose() {
         }
     })
 
-    vid.srcObject = stream
-    vid.onloadedmetadata = function(e) {
-        vid.play()
-    }
-
     const caps = stream.getVideoTracks().map(track => ({[track.label]: track.getCapabilities()}))
     pre.innerText = JSON.stringify(caps, null, 2)
 
     const sets = stream.getVideoTracks().map(track => ({[track.label]: track.getSettings()}))
     pre.innerText += JSON.stringify(sets, null, 2)
 
+    vid.srcObject = stream
+    await vid.play()
 }
 
 window.onload = () => main().catch(alert)
