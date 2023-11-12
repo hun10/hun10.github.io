@@ -5,7 +5,6 @@ const pre = document.createElement('pre')
 document.body.appendChild(pre)
 
 const vid = document.createElement('video')
-vid.muted = true
 document.body.appendChild(vid)
 
 async function main() {
@@ -37,6 +36,7 @@ async function choose() {
     pre.innerText += JSON.stringify(sets, null, 2)
 
     vid.srcObject = stream
+    vid.muted = true
     await vid.play()
 }
 
