@@ -4,9 +4,6 @@ document.body.appendChild(select)
 const pre = document.createElement('pre')
 document.body.appendChild(pre)
 
-const vid = document.createElement('video')
-document.body.appendChild(vid)
-
 async function main() {
     const devices = await navigator.mediaDevices.enumerateDevices()
 
@@ -35,8 +32,11 @@ async function choose() {
     const sets = stream.getVideoTracks().map(track => ({[track.label]: track.getSettings()}))
     pre.innerText += JSON.stringify(sets, null, 2)
 
+    const vid = document.createElement('video')
     vid.srcObject = stream
     vid.muted = true
+    document.body.appendChild(vid)
+
     await vid.play()
 }
 
