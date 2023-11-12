@@ -5,7 +5,7 @@ const pre = document.createElement('pre')
 document.body.appendChild(pre)
 
 const vid = document.createElement('video')
-vid.muted = ''
+vid.muted = true
 document.body.appendChild(vid)
 
 async function main() {
