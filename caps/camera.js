@@ -42,7 +42,7 @@ async function main() {
     gl.getExtension('EXT_color_buffer_float')
     gl.getExtension('OES_texture_float_linear')
 
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+    // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
 
     const {
         screen,
@@ -81,9 +81,10 @@ async function main() {
         precision highp sampler2D;
         uniform sampler2D u_source;
         uniform sampler2D u_back;
+        uniform vec2 u_resolution;
 
         void main() {
-            vec4 sRgbSource = texelFetch(u_source, ivec2(gl_FragCoord.xy), 0);
+            vec4 sRgbSource = texelFetch(u_source, ivec2(gl_FragCoord.x, u_resolution.y - gl_FragCoord.y), 0);
             vec4 linearBack = texelFetch(u_back, ivec2(gl_FragCoord.xy), 0);
 
             vec3 linearRgb = toLinear(sRgbSource.rgb);
@@ -296,6 +297,7 @@ async function main() {
         accumulate.draw({
             u_source: sourceBuffer,
             u_back: finalBuffer,
+            u_resolution: [finalBuffer.width, finalBuffer.height]
         }, finalBuffer)
 
         toDitheredSrgb.draw({
