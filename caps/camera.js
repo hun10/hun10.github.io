@@ -64,6 +64,17 @@ async function main() {
         store: gl.FLOAT
     })
 
+    const justCopy = shader(`
+        out vec4 verbatim;
+
+        precision highp sampler2D;
+        uniform sampler2D u_source;
+
+        void main() {
+            verbatim = texelFetch(u_source, ivec2(gl_FragCoord.xy), 0);
+        }
+    `)
+
     const accumulate = shader(`
         out vec4 rgbc;
 
@@ -107,6 +118,167 @@ async function main() {
     let accumulation = false
     button('Toggle Accumulation', () => {
         accumulation = !accumulation
+    })
+
+    button('Save as OpenEXR', () => {
+        const stream = []
+        function int(size, num) {
+            for (let i = 0; i < size; i++) {
+                stream.push(num & 0xFF)
+                num = num >> 8
+            }
+        }
+        function string(txt) {
+            for (let c of txt) {
+                stream.push(c.charCodeAt(0))
+            }
+            stream.push(0)
+        }
+        function compression(mode) {
+            string('compression')
+            int(4, 1)
+            int(1, mode)
+        }
+        function box2i(xMin, yMin, xMax, yMax) {
+            string('box2i')
+            int(4, 16)
+            int(4, xMin)
+            int(4, yMin)
+            int(4, xMax)
+            int(4, yMax)
+        }
+        function chlist(channels) {
+            string('chlist')
+            let size = 1
+            for (let channel of channels) {
+                const {
+                    name
+                } = channel
+                size += name.length + 1
+                size += 4
+                size += 4
+                size += 4
+                size += 4
+            }
+            int(4, size)
+            for (let channel of channels) {
+                const {
+                    name,
+                    pixelType = 2, // FLOAT 32-bit
+                    pLinear = 0,
+                    xSampling = 1,
+                    ySampling = 1
+                } = channel
+                string(name)
+                int(4, pixelType)
+                int(4, pLinear)
+                int(4, xSampling)
+                int(4, ySampling)
+            }
+            int(1, 0)
+        }
+        function lineOrder(mode) {
+            string('lineOrder')
+            int(4, 1)
+            int(1, mode) // INCREASING_Y = 0, DECREASING_Y = 1
+        }
+        function float(num) {
+            string('float')
+            int(4, 4)
+            const f = new Float32Array([num])
+            const b = new Uint8Array(f.buffer)
+            for (let x of b) {
+                stream.push(x)
+            }
+        }
+        function v2f(f1, f2) {
+            string('v2f')
+            int(4, 8)
+            const f = new Float32Array([f1, f2])
+            const b = new Uint8Array(f.buffer)
+            for (let x of b) {
+                stream.push(x)
+            }
+        }
+        function chromaticities(redX, redY, greenX, greenY, blueX, blueY, whiteX, whiteY) {
+            string('chromaticities')
+            int(4, 8 * 4)
+            const f = new Float32Array([redX, redY, greenX, greenY, blueX, blueY, whiteX, whiteY])
+            const b = new Uint8Array(f.buffer)
+            for (let x of b) {
+                stream.push(x)
+            }
+        }
+
+        int(4, 20000630) // magic number
+        int(4, 2) // version and flags
+
+        string('channels')
+        chlist([
+            { name: 'R' },
+            { name: 'G' },
+            { name: 'B' },
+        ])
+
+        // string('chromaticities')
+        // chromaticities(
+        //     1, 0,
+        //     0, 1,
+        //     0, 0,
+        //     1/3, 1/3
+        // )
+
+        string('compression')
+        compression(0) // NO_COMPRESSION
+
+        string('dataWindow')
+        box2i(0, 0, finalBuffer.width - 1, finalBuffer.height - 1)
+
+        string('displayWindow')
+        box2i(0, 0, finalBuffer.width - 1, finalBuffer.height - 1)
+
+        string('lineOrder')
+        lineOrder(1)
+
+        string('pixelAspectRatio')
+        float(1)
+
+        string('screenWindowCenter')
+        v2f(0, 0)
+
+        string('screenWindowWidth')
+        float(1)
+
+        int(1, 0) // end of header
+
+        for (let y = 0, o = stream.length + 8 * finalBuffer.height; y < finalBuffer.height; y++) {
+            int(8, o)
+            o += 3 * finalBuffer.width * 4 + 8
+        }
+
+        justCopy.draw({ u_source: finalBuffer }, finalBuffer)
+        const pixels = new Float32Array(finalBuffer.width * finalBuffer.height * 4);
+        gl.readPixels(0, 0, finalBuffer.width, finalBuffer.height, gl.RGBA, gl.FLOAT, pixels)
+        const byteView = new Uint8Array(pixels.buffer)
+
+        for (let y = 0; y < finalBuffer.height; y++) {
+            int(4, y)
+            int(4, 3 * finalBuffer.width * 4)
+            for (let c = 0; c < 3; c++) {
+                for (let x = 0; x < finalBuffer.width; x++) {
+                    for (let i = 0; i < 4; i++) {
+                        int(1, byteView[((y * finalBuffer.width + x) * 4 + c) * 4 + i])
+                    }
+                }
+            }
+        }
+
+        const blob = new Blob([new Uint8Array(stream)])
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'photo.exr'
+        a.click()
     })
 
     while (true) {
