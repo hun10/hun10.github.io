@@ -113,7 +113,9 @@ async function main() {
         await frame()
 
         sourceBuffer.resize()
-        sourceBuffer.update(video)
+        if (video.readyState >= 2) {
+            sourceBuffer.update(video)
+        }
 
         finalBuffer.resize()
         if (!accumulation) {
