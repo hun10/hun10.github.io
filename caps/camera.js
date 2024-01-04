@@ -310,8 +310,8 @@ async function choose() {
         video: {
             deviceId: select.value,
             frameRate: 60,
-            width: 1e9,
-            height: 1e9
+            width: 1024,
+            height: 1024
         }
     })
 
