@@ -2,6 +2,7 @@ import buffersGl from './buffers-gl.js'
 import { numericControl, button } from './controls.js'
 
 const canvas = document.createElement('canvas')
+canvas.style.width = `95vw`
 document.body.appendChild(canvas)
 
 const select = document.createElement('select')
@@ -52,12 +53,15 @@ async function main() {
     } = buffersGl(gl)
 
     const sourceBuffer = pixelBuffer({
+        filter: gl.NEAREST
+    })
+    const finalBuffer = doublePixelBuffer({
         filter: gl.NEAREST,
         format: gl.RGBA32F,
         access: gl.RGBA,
         store: gl.FLOAT
     })
-    const finalBuffer = doublePixelBuffer({
+    const tmpBuffer = pixelBuffer({
         filter: gl.NEAREST,
         format: gl.RGBA32F,
         access: gl.RGBA,
@@ -69,9 +73,10 @@ async function main() {
 
         precision highp sampler2D;
         uniform sampler2D u_source;
+        uniform float u_exposure;
 
         void main() {
-            verbatim = texelFetch(u_source, ivec2(gl_FragCoord.xy), 0);
+            verbatim = u_exposure * texelFetch(u_source, ivec2(gl_FragCoord.xy), 0);
         }
     `)
 
@@ -115,12 +120,8 @@ async function main() {
     const video = document.getElementById('preview')
 
     const exposure = numericControl('Exposure', -10, 10, 0.001, 0)
-    let accumulation = false
-    button('Toggle Accumulation', () => {
-        accumulation = !accumulation
-    })
 
-    button('Save as OpenEXR', () => {
+    const saveExr = () => {
         const stream = []
         function int(size, num) {
             for (let i = 0; i < size; i++) {
@@ -256,7 +257,12 @@ async function main() {
             o += 3 * finalBuffer.width * 4 + 8
         }
 
-        justCopy.draw({ u_source: finalBuffer }, finalBuffer)
+        tmpBuffer.resize()
+        justCopy.draw({
+            u_source: finalBuffer,
+            u_exposure: Math.pow(2, exposure.value)
+        }, tmpBuffer)
+
         const pixels = new Float32Array(finalBuffer.width * finalBuffer.height * 4);
         gl.readPixels(0, 0, finalBuffer.width, finalBuffer.height, gl.RGBA, gl.FLOAT, pixels)
         const byteView = new Uint8Array(pixels.buffer)
@@ -279,6 +285,26 @@ async function main() {
         a.href = url
         a.download = 'photo.exr'
         a.click()
+    }
+
+    let accumulation = -1
+    button('Toggle Accumulation', () => {
+        if (accumulation < 0) {
+            accumulation = performance.now()
+        } else {
+            accumulation = -1
+        }
+    })
+    button('Save EXR', saveExr)
+    canvas.addEventListener('click', () => {
+        if (accumulation < 0) {
+            accumulation = performance.now()
+        } else {
+            if (performance.now() - accumulation > 1000) {
+                saveExr()
+            }
+            accumulation = -1
+        }
     })
 
     while (true) {
@@ -290,7 +316,7 @@ async function main() {
         }
 
         finalBuffer.resize()
-        if (!accumulation) {
+        if (accumulation < 0) {
             finalBuffer.update()
         }
         accumulate.draw({
