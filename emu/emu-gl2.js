@@ -65,7 +65,7 @@ const gammaCtrl = numericControl("Gamma", 1, 5, 0.1, 2.8);
 const exposureCtrl = numericControl("Exposure", 0.02, 2, 0.0001, 0.64);
 const gaussCtrl = numericControl("Gauss Width", 0.001, 0.02, 0.0001, 0.0025);
 const gaussCutoffCtrl = numericControl("Gauss Cutoff", 1e-6, 1, 1e-6, 0.007);
-const repeatsCtrl = numericControl("Repeats", 1, 500, 1, 31);
+const repeatsCtrl = numericControl("Repeats", 1, 500, 1, 25);
 const vFilterCtrl = numericControl("Video Signal Filter", 10000, 12e6, 1, 1500000);
 
 let lastVideoParam
