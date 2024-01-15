@@ -448,7 +448,7 @@ const tapes = [
                 url: 'maintape/БАТИСКАФ.bin'
             },
             {
-                name: 'БАТ2.ГМЕ',
+                name: 'БАТИСКАФ2',
                 type: 'bin',
                 url: 'maintape/batiskaf2.bin'
             },
