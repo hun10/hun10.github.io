@@ -6,12 +6,10 @@ export default function (gl) {
     let lastTextureUnit
     let vertexShader
 
-    const screen = () => {
-        return {
-            out: () => {
-                gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-                gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight)
-            }
+    const screen = {
+        out: () => {
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+            gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight)
         }
     }
 
@@ -311,6 +309,11 @@ export default function (gl) {
         }
 
         const self = {
+            swap: () => {
+                for (let i = 0; i < buffers.length; i++) {
+                    buffers[i].swap()
+                }
+            },
             out: (params) => {
                 let cacheKey = ''
                 for (let i = 0; i < buffers.length; i++) {
