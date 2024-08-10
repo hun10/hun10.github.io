@@ -369,6 +369,28 @@ export default function (gl) {
             uniform float u_seed;
             uniform float u_prev_seed;
 
+            vec3 unitXyzFromXy(vec2 xy) {
+                return vec3(
+                    xy.x / xy.y,
+                    1,
+                    (1.0 - xy.x - xy.y) / xy.y
+                );
+            }
+
+            mat3 rgbToXyz(vec2 red, vec2 green, vec2 blue, vec2 white) {
+                vec3 s = inverse(mat3(
+                    unitXyzFromXy(red),
+                    unitXyzFromXy(green),
+                    unitXyzFromXy(blue)
+                )) * unitXyzFromXy(white);
+
+                return mat3(
+                    s.r * unitXyzFromXy(red),
+                    s.g * unitXyzFromXy(green),
+                    s.b * unitXyzFromXy(blue)
+                );
+            }
+
             vec3 fromLinear(vec3 linearRgb) {
                 bvec3 cutoff = lessThan(linearRgb, vec3(0.0031308));
                 vec3 higher = vec3(1.055) * pow(linearRgb, vec3(1.0 / 2.4)) - vec3(0.055);
@@ -578,6 +600,8 @@ export default function (gl) {
                                 uniforms[input] = ([x, y, z]) => gl.uniform3f(location, x, y, z)
                             } else if (value.length === 4) {
                                 uniforms[input] = ([x, y, z, w]) => gl.uniform4f(location, x, y, z, w)
+                            } else if (input.startsWith('u_i_')) {
+                                uniforms[input] = gl.uniform1ui.bind(gl, location)
                             } else {
                                 uniforms[input] = gl.uniform1f.bind(gl, location)
                             }

@@ -355,7 +355,7 @@ animateImageData(gl => {
         scanlines,
         finalBuffer,
         finalPass,
-        screen
+        screen: screen
     }
 }, (gl, {
     byteLookup,

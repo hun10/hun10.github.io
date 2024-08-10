@@ -1489,7 +1489,8 @@ function animateImageData(init, animator) {
         "webgl2",
         {
             depth: false,
-            antialias: false
+            antialias: false,
+            preserveDrawingBuffer: true
         }
     )
 

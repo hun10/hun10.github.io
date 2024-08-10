@@ -106,7 +106,7 @@ export function bin2tape(nameUnsignedBytesKoi8, unsignedBytes) {
 
     put(ending)
 
-    return tape.map(v => Math.round(v / 2))
+    return tape
 }
 
 const zero = new Int16Array([

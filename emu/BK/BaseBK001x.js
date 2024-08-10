@@ -172,9 +172,9 @@ export default function () {
       return false
     }
 
-    // if (!!(syswritereg & 0x40)) {
-    //   syswritereg -= 0x40
-    // }
+     if (!!(syswritereg & 0x40)) {
+       syswritereg -= 0x40
+     }
 
     const realTapeState = this.realTapeState
     const samplePos = realTapeState.time
@@ -189,7 +189,7 @@ export default function () {
         realTapeState.pwmIterator++
       }
       if (realTapeState.pwmData[realTapeState.pwmIterator] > 0) {
-        // syswritereg |= 0x40
+         syswritereg |= 0x40
         realTapeState.input = true
       } else {
         realTapeState.input = false
