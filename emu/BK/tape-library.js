@@ -1006,6 +1006,16 @@ const tapes = [
                 name: 'БАТИСКАФ',
                 type: 'bin',
                 url: 'maintape/БАТИСКАФ.bin'
+            },
+            {
+                name: 'INDIANA',
+                type: 'bin',
+                url: 'maintape/INDIANA.bin'
+            },
+            {
+                name: 'хмдх',
+                type: 'bin',
+                url: 'maintape/INDIANA.GME.bin'
             }
         ],
         sideB: []

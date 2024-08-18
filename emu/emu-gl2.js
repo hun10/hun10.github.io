@@ -810,7 +810,7 @@ canvas.addEventListener('pointermove', e => {
 })
 
 const cancelCanvasKey = e => {
-    if (fsCtrls.value === 'Touch Arrows') {
+    if (fsCtrls.value === 'Touch Arrows' && joystickPointers[e.pointerId]) {
         directKey0010(joystickPointers[e.pointerId].code, 'open')
         joystickPointers[e.pointerId] = undefined
 
