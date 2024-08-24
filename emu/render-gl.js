@@ -7,6 +7,7 @@ import glassData from './clear-glass.js'
 import waterData from './water.js'
 import mirrorData from './silver.js'
 import { numericControl, button, selectControl, binaryControl } from './controls.js'
+import { dngFromRows } from './dng.js'
 
 function parseParameters() {
     try {
@@ -282,7 +283,6 @@ async function main() {
         uniform float u_use_luma;
 
         uniform highp sampler3D u_tony_mc_mapface;
-        uniform float u_mosaic_mode;
         uniform float u_demosaic;
 
         uniform float u_show_counts;
@@ -316,16 +316,14 @@ async function main() {
         }
 
         vec4 fetch(ivec2 scr) {
-            vec4 fetched = texelFetch(u_source, scr, 0);
+            vec4 fetched = texelFetch(u_source, scr, 0).rrra;
 
-            if (u_mosaic_mode == 1.0) {
-                fetched *= vec4(
-                    ((scr.x + 1) % 2) * ((scr.y + 1) % 2),
-                    (scr.x + scr.y) % 2,
-                    (scr.x % 2) * (scr.y % 2),
-                    1
-                );
-            }
+            fetched *= vec4(
+                ((scr.x + 1) % 2) * ((scr.y + 1) % 2),
+                (scr.x + scr.y) % 2,
+                (scr.x % 2) * (scr.y % 2),
+                1
+            );
 
             return fetched;
         }
@@ -348,9 +346,15 @@ async function main() {
                 float n = acc.a;
                 float variance = fetched.a / (n - 1.0) / n;
 
-                fetched.rgb = variance <= u_target_variance ? vec3(0, 0, 1) : vec3(variance);
+                if (variance <= 0.0) {
+                    fetched.rgb = vec3(1, 1, 0);
+                } else if (variance <= u_target_variance) {
+                    fetched.rgb = vec3(0, 0, 1);
+                } else {
+                    fetched.rgb = vec3(variance);
+                }
             } else {
-                if (u_demosaic == 1.0 && u_mosaic_mode == 1.0) {
+                if (u_demosaic == 1.0) {
                     vec4 a = fetch(ivec2(gl_FragCoord.xy) + ivec2(-1, -1));
                     vec4 b = fetch(ivec2(gl_FragCoord.xy) + ivec2(0, -1));
                     vec4 c = fetch(ivec2(gl_FragCoord.xy) + ivec2(1, -1));
@@ -367,7 +371,7 @@ async function main() {
 
                     fetched.rb += 0.5 * (b.rb + d.rb + f.rb + h.rb) + 0.25 * (a.rb + c.rb + g.rb + i.rb);
                     fetched.g += 0.25 * (b.g + d.g + f.g + h.g);
-                } else if (u_demosaic == 2.0 && u_mosaic_mode == 1.0) {
+                } else if (u_demosaic == 2.0) {
                     vec4 a = fetch(ivec2(gl_FragCoord.xy) + ivec2(0, -2));
 
                     vec4 b = fetch(ivec2(gl_FragCoord.xy) + ivec2(-1, -1));
@@ -395,7 +399,7 @@ async function main() {
                     bool r_col = (int(gl_FragCoord.x) % 2 == 0);
                     fetched.r += 1.5 * (r_col ? e.g + i.g : a.g + m.g) / 8.0;
                     fetched.b += 1.5 * (r_col ? a.g + m.g : e.g + i.g) / 8.0;
-                } else if (u_demosaic == 3.0 && u_mosaic_mode == 1.0) {
+                } else if (u_demosaic == 3.0) {
                     fetched = fetch(ivec2(gl_FragCoord.xy));
                     fetched.rgb = vec3(fetched.r + fetched.g + fetched.b);
                 } else {
@@ -440,7 +444,6 @@ async function main() {
 
         uniform float u_xyz;
 
-        uniform float u_mosaic_mode;
         uniform float u_demosaic;
 
         vec3 wavelengthToXyz(float wavelength) {
@@ -448,23 +451,21 @@ async function main() {
         }
 
         vec4 fetch(ivec2 scr) {
-            vec4 fetched = texelFetch(u_source, scr, 0);
+            vec4 fetched = texelFetch(u_source, scr, 0).rrra;
 
-            if (u_mosaic_mode == 1.0) {
-                fetched *= vec4(
-                    ((scr.x + 1) % 2) * ((scr.y + 1) % 2),
-                    (scr.x + scr.y) % 2,
-                    (scr.x % 2) * (scr.y % 2),
-                    1
-                );
-            }
+            fetched *= vec4(
+                ((scr.x + 1) % 2) * ((scr.y + 1) % 2),
+                (scr.x + scr.y) % 2,
+                (scr.x % 2) * (scr.y % 2),
+                1
+            );
 
             return fetched;
         }
 
         void main() {
             vec4 fetched;
-            if (u_demosaic == 1.0 && u_mosaic_mode == 1.0) {
+            if (u_demosaic == 1.0) {
                 vec4 a = fetch(ivec2(gl_FragCoord.xy) + ivec2(-1, -1));
                 vec4 b = fetch(ivec2(gl_FragCoord.xy) + ivec2(0, -1));
                 vec4 c = fetch(ivec2(gl_FragCoord.xy) + ivec2(1, -1));
@@ -481,7 +482,7 @@ async function main() {
 
                 fetched.rb += 0.5 * (b.rb + d.rb + f.rb + h.rb) + 0.25 * (a.rb + c.rb + g.rb + i.rb);
                 fetched.g += 0.25 * (b.g + d.g + f.g + h.g);
-            } else if (u_demosaic == 2.0 && u_mosaic_mode == 1.0) {
+            } else if (u_demosaic == 2.0) {
                 vec4 a = fetch(ivec2(gl_FragCoord.xy) + ivec2(0, -2));
 
                 vec4 b = fetch(ivec2(gl_FragCoord.xy) + ivec2(-1, -1));
@@ -509,7 +510,7 @@ async function main() {
                 bool r_col = (int(gl_FragCoord.x) % 2 == 0);
                 fetched.r += 1.5 * (r_col ? e.g + i.g : a.g + m.g) / 8.0;
                 fetched.b += 1.5 * (r_col ? a.g + m.g : e.g + i.g) / 8.0;
-            } else if (u_demosaic == 3.0 && u_mosaic_mode == 1.0) {
+            } else if (u_demosaic == 3.0) {
                 fetched = fetch(ivec2(gl_FragCoord.xy));
                 fetched.rgb = vec3(fetched.r + fetched.g + fetched.b);
             } else {
@@ -555,18 +556,11 @@ async function main() {
         access: gl.RGBA,
         store: gl.FLOAT
     })
-    const restirBuffer = doublePixelBuffer({
-        filter: gl.NEAREST,
-        format: gl.RGBA32F,
-        access: gl.RGBA,
-        store: gl.FLOAT
-    })
     const deferredBuffer = multiOutput(
         finalBuffer,
         rayThroughputBuffer,
         rayStartBuffer,
         rayDirectionBuffer,
-        restirBuffer,
     )
 
     const render = shader(`
@@ -615,7 +609,6 @@ async function main() {
         layout(location = 1) out vec4 throughputOut;
         layout(location = 2) out vec4 startOut;
         layout(location = 3) out vec4 directionOut;
-        layout(location = 4) out vec4 restirOut;
 
         precision highp sampler2D;
         uniform sampler2D u_source;
@@ -624,7 +617,6 @@ async function main() {
         uniform sampler2D u_source_throughput;
         uniform sampler2D u_source_start;
         uniform sampler2D u_source_direction;
-        uniform sampler2D u_source_restir;
 
         uniform float u_magnification;
         uniform vec2 u_offset;
@@ -1573,28 +1565,6 @@ async function main() {
             return vec2(texelFetch(u_cmf, ivec2(L, 1), 0).w + rnd_uniform() * 0.1, dot(texelFetch(u_cmf, ivec2(L, 0), 0), selector) / maxRnd * float(8300 - 3900 + 1));
         }
 
-        vec2 sampleVisible() {
-            float rnd = rnd_uniform();
-
-            return vec2(rnd * (830.0 - 390.0 + 0.1) + 390.0, 1);
-        }
-
-        vec2 sampleAsInPbrBook() {
-            float rnd = rnd_uniform();
-
-            float wave = 538.0 - 138.888889 * atanh(0.85691062 - 1.82750197 * rnd);
-            float pdf;
-
-            if (wave < 360.0 || wave > 830.0) {
-                pdf = 0.0;
-            } else {
-                float tos = cosh(0.0072 * (wave - 538.0));
-                pdf = 0.0039398042 / (tos * tos);
-            }
-
-            return vec2(wave, pdf * (830.0 - 390.0 + 0.1));
-        }
-
         uniform sampler2D u_srgb_reflect;
 
         float sampleSrgb(vec3 rgb, float wavelength) {
@@ -1672,12 +1642,10 @@ async function main() {
         uniform float u_pin_hole_radius;
         uniform float u_vignette;
 
-        uniform float u_mosaic_mode;
-
-        void pass(inout vec4 accumulator, inout vec4 throughput, inout vec4 start, inout vec4 direction, inout vec4 restir, vec4 restirNeigh, uint refresh_seed) {
+        void pass(inout vec2 accumulator, inout vec4 throughput, inout vec4 start, inout vec4 direction, uint refresh_seed) {
             vec4 filterMask = vec4(0, 1, 0, 0);
 
-            if (u_mosaic_mode > 0.0) {
+            {
                 vec2 scr = floor(gl_FragCoord.xy);
                 filterMask = sign(vec4(
                     mod(scr.x + 1.0, 2.0) * mod(scr.y + 1.0, 2.0),
@@ -1693,11 +1661,7 @@ async function main() {
                 uint tmp_seed = rnd_seed;
                 rnd_seed = floatBitsToUint(direction.a);
 //                rnd_seed = hash2(uvec3(gl_FragCoord.xy, rnd_seed));
-                if (u_mosaic_mode > 0.0) {
-                    currentWs = sampleXyz(filterMask);
-                } else {
-                    currentWs = sampleAsInPbrBook();
-                }
+                currentWs = sampleXyz(filterMask);
                 rnd_uniform(); // time sample
                 timeSample = rnd_uniform();
                 rnd_seed = tmp_seed;
@@ -1721,36 +1685,17 @@ async function main() {
                 float x, mean;
 
                 vec3 tmp;
-                if (u_mosaic_mode > 0.0) {
-                    tmp = throughput.b * (filterMask.rgb * texelFetch(u_cmf, ivec2(8300 - 3900 + 1 - 1, 1), 0).rgb / float(8300 - 3900 + 1));
-                    x = dot(filterMask.rgb, tmp);
-                    mean = dot(filterMask.rgb, accumulator.rgb);
-                } else {
-                    tmp = throughput.b * wavelengthToXyz(currentWs.x);
-                    x = tmp.g;
-                    mean = accumulator.g;
-                }
+                tmp = throughput.b * (filterMask.rgb * texelFetch(u_cmf, ivec2(8300 - 3900 + 1 - 1, 1), 0).rgb / float(8300 - 3900 + 1));
+                x = dot(filterMask.rgb, tmp);
+                mean = accumulator.x;
 
-                accumulator.rgb *= accumulator.w;
-                accumulator.rgb += tmp;
-                accumulator.w += 1.0;
-                accumulator.rgb /= accumulator.w;
-
-                {
-                    restir.z *= restir.w;
-
-                    restir.z += x;
-                    if (rnd_uniform() < x / restir.z) {
-                        restir.x = x;
-                        restir.y = direction.a;
-                    }
-                    restir.w += 1.0;
-
-                    restir.z /= restir.w;
-                }
+                accumulator.x *= accumulator.y;
+                accumulator.x += x;
+                accumulator.y += 1.0;
+                accumulator.x /= accumulator.y;
 
                 float delta = x - mean;
-                mean += delta / accumulator.w;
+                mean += delta / accumulator.y;
                 float delta2 = x - mean;
                 throughput.a += delta * delta2;
             }
@@ -1758,20 +1703,12 @@ async function main() {
             rnd_seed = refresh_seed;
             direction.a = uintBitsToFloat(rnd_seed);
 
-            if (u_mosaic_mode > 0.0) {
-                currentWs = sampleXyz(filterMask);
-            } else {
-                currentWs = sampleAsInPbrBook();
-            }
+            currentWs = sampleXyz(filterMask);
             {
                 uint tmp_seed = rnd_seed;
                 rnd_seed = floatBitsToUint(direction.a);
 //                rnd_seed = hash2(uvec3(gl_FragCoord.xy, rnd_seed));
-                if (u_mosaic_mode > 0.0) {
-                    currentWs = sampleXyz(filterMask);
-                } else {
-                    currentWs = sampleAsInPbrBook();
-                }
+                currentWs = sampleXyz(filterMask);
                 rnd_seed = tmp_seed;
             }
 
@@ -1799,10 +1736,6 @@ async function main() {
 
             throughput.r = u_vignette > 0.0 ? (cameraCos * cameraCos / (cameraD2 * cameraD2) * ${Math.PI}) : 1.0;
 
-            if (u_mosaic_mode == 0.0) {
-                throughput.r /= currentWs.y;
-            }
-
             throughput.b = 0.0;
 
             if (isnan(throughput.r) || isinf(throughput.r)) {
@@ -1822,39 +1755,39 @@ async function main() {
         uniform uint u_i_seed;
 
         void main() {
-            vec4 accumulator = texelFetch(u_source, ivec2(gl_FragCoord.xy), 0);
+            vec2 accumulator = texelFetch(u_source, ivec2(gl_FragCoord.xy), 0).ra;
             vec4 throughput = texelFetch(u_source_throughput, ivec2(gl_FragCoord.xy), 0);
             vec4 start = texelFetch(u_source_start, ivec2(gl_FragCoord.xy), 0);
             vec4 direction = texelFetch(u_source_direction, ivec2(gl_FragCoord.xy), 0);
-            vec4 restir = texelFetch(u_source_restir, ivec2(gl_FragCoord.xy), 0);
-            vec4 restirNeigh = texelFetch(u_source_restir, ivec2(gl_FragCoord.xy) + 1, 0);
 
-            if ((u_max_samples_per_pixel == 0.0 || accumulator.w < u_max_samples_per_pixel) &&
-                (u_target_variance == 0.0 || accumulator.w < 2.0 || (throughput.a / (accumulator.w - 1.0) / accumulator.w > u_target_variance))
-            ) {
-                uint refresh_seed = u_i_seed;
+            if ((u_max_samples_per_pixel == 0.0 || accumulator.y < u_max_samples_per_pixel)) {
+                if (u_target_variance == 0.0 || accumulator.y < 2.0
+                    || (throughput.a / (accumulator.y - 1.0) / accumulator.y > u_target_variance)
+                    || (throughput.a <= 0.0)
+                    || (hash2(uvec3(gl_FragCoord.xy, u_i_seed)) & 0xFu) == 0u
+                ) {
+                    uint refresh_seed = u_i_seed;
+                    rnd_seed = floatBitsToUint(throughput.g);
 
-                rnd_seed = floatBitsToUint(throughput.g);
+                    int passes = int(u_passes_per_frame);
+                    for (int i = 0; i < passes; i++) {
+                        refresh_seed = hash2(uvec3(gl_FragCoord.xy * u_pixels_correlate, refresh_seed));
 
-                int passes = int(u_passes_per_frame);
-                for (int i = 0; i < passes; i++) {
-                    refresh_seed = hash2(uvec3(gl_FragCoord.xy * u_pixels_correlate, refresh_seed));
+                        pass(accumulator, throughput, start, direction, refresh_seed);
 
-                    pass(accumulator, throughput, start, direction, restir, restirNeigh, refresh_seed);
-
-                    if (u_max_samples_per_pixel > 0.0 && accumulator.w >= u_max_samples_per_pixel) {
-                        break;
+                        if (u_max_samples_per_pixel > 0.0 && accumulator.y >= u_max_samples_per_pixel) {
+                            break;
+                        }
                     }
-                }
 
-                throughput.g = uintBitsToFloat(rnd_seed);
+                    throughput.g = uintBitsToFloat(rnd_seed);
+                }
             }
 
-            linearRgb = accumulator;
+            linearRgb.ra = accumulator;
             throughputOut = throughput;
             startOut = start;
             directionOut = direction;
-            restirOut = restir;
         }
     `)
 
@@ -2003,7 +1936,6 @@ async function main() {
             u_exposure: exposure.value,
             u_cmf: cmf,
             u_xyz: xyzToggle.value ? 1.0 : 0.0,
-            u_mosaic_mode: mosaicMode.value ? 1.0 : 0.0,
             u_demosaic: demosaicModes[demosaicSwitch.value],
         }, finalBuffer)
         finalBuffer.swap()
@@ -2052,26 +1984,15 @@ async function main() {
             u_exposure: exposure.value,
             u_cmf: cmf,
             u_xyz: 1.0,
-            u_mosaic_mode: mosaicMode.value ? 1.0 : 0.0,
             u_demosaic: 3.0,
         }, finalBuffer)
         finalBuffer.swap()
         const pixels = new Float32Array(finalBuffer.width * finalBuffer.height * 4);
         gl.readPixels(0, 0, finalBuffer.width, finalBuffer.height, gl.RGBA, gl.FLOAT, pixels)
 
-        if (mosaicMode.value) {
-            for (let y = finalBuffer.height - 1; y >= 0; y--) {
-                for (let x = 0; x < finalBuffer.width; x++) {
-                    float(pixels[(y * finalBuffer.width + x) * 4]);
-                }
-            }
-        } else {
-            for (let y = finalBuffer.height - 1; y >= 0; y--) {
-                for (let x = 0; x < finalBuffer.width; x++) {
-                    for (let c = 0; c < 3; c++) {
-                        float(pixels[(y * finalBuffer.width + x) * 4 + c]);
-                    }
-                }
+        for (let y = finalBuffer.height - 1; y >= 0; y--) {
+            for (let x = 0; x < finalBuffer.width; x++) {
+                float(pixels[(y * finalBuffer.width + x) * 4]);
             }
         }
 
@@ -2080,6 +2001,70 @@ async function main() {
         const a = document.createElement('a')
         a.href = url
         a.download = 'render.raw'
+        a.click()
+    })
+
+    button('Save as Linear DNG', () => {
+        justCopy.draw({
+            u_source: finalBuffer,
+            u_exposure: exposure.value,
+            u_cmf: cmf,
+            u_xyz: 1.0,
+            u_demosaic: 3.0,
+        }, finalBuffer)
+        finalBuffer.swap()
+        const pixels = new Float32Array(finalBuffer.width * finalBuffer.height * 4);
+        gl.readPixels(0, 0, finalBuffer.width, finalBuffer.height, gl.RGBA, gl.FLOAT, pixels)
+
+        const rows = []
+        for (let y = finalBuffer.height - 1; y >= 0; y--) {
+            const row = new Uint16Array(finalBuffer.width)
+            for (let x = 0; x < finalBuffer.width; x++) {
+                let linVal = pixels[(y * finalBuffer.width + x) * 4]
+                linVal *= (1 << 16) - 1
+                linVal = Math.round(linVal)
+                linVal = Math.min(linVal, (1 << 16) - 1)
+                linVal = Math.max(linVal, 0)
+                row[x] = linVal
+            }
+            rows.push(row)
+        }
+
+        const blob = new Blob([dngFromRows(rows)])
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'render.dng'
+        a.click()
+    })
+
+    button('Save as HDR DNG', () => {
+        justCopy.draw({
+            u_source: finalBuffer,
+            u_exposure: exposure.value,
+            u_cmf: cmf,
+            u_xyz: 1.0,
+            u_demosaic: 3.0,
+        }, finalBuffer)
+        finalBuffer.swap()
+        const pixels = new Float32Array(finalBuffer.width * finalBuffer.height * 4);
+        gl.readPixels(0, 0, finalBuffer.width, finalBuffer.height, gl.RGBA, gl.FLOAT, pixels)
+
+        const rows = []
+        for (let y = finalBuffer.height - 1; y >= 0; y--) {
+            const row = new Float32Array(finalBuffer.width)
+            for (let x = 0; x < finalBuffer.width; x++) {
+                let linVal = pixels[(y * finalBuffer.width + x) * 4]
+                row[x] = linVal
+            }
+            rows.push(row)
+        }
+
+        const blob = new Blob([dngFromRows(rows)])
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'render.dng'
         a.click()
     })
 
@@ -2129,7 +2114,6 @@ async function main() {
         rayThroughputBuffer.update()
         rayStartBuffer.update()
         rayDirectionBuffer.update()
-        restirBuffer.update()
 
         if (sensor) {
             controller.sensor = sensor
@@ -2229,15 +2213,20 @@ async function main() {
             if (controller.sampleCount < controller.maxSamples) {
                 controller.maxSamples = controller.sampleCount + 1
             }
+        } else {
+            if (controller.maxSamples < maxSamples) {
+                controller.maxSamples = maxSamples
+            } else {
+                controller.maxSamples = Number.MAX_VALUE
+            }
         }
     })
 
     const tilesProgress = binaryControl('Show Tiles Progress', false)
     const tweakedTileSize = numericControl('Tile Size', 1, resolution, 1, resolution)
-    const mosaicMode = binaryControl('Mosaic', false)
     const demosaicModes = {
-        'Bilinear': 1,
         'Malvar-He-Cutler': 2,
+        'Bilinear': 1,
         'None': 0,
         'Mono': 3,
     }
@@ -2274,14 +2263,12 @@ async function main() {
                 u_glass_data: limeGlass,
                 u_i_seed: Math.floor(Math.random() * Math.pow(2, 32)),
 
-                u_mosaic_mode: mosaicMode.value ? 1.0 : 0.0,
                 u_pixels_correlate: pixelsCorrelate.value,
 
                 u_source: finalBuffer,
                 u_source_throughput: rayThroughputBuffer,
                 u_source_start: rayStartBuffer,
                 u_source_direction: rayDirectionBuffer,
-                u_source_restir: restirBuffer,
                 u_resolution: [finalBuffer.width, finalBuffer.height],
 
                 u_passes_per_frame: passesToDo,
@@ -2348,7 +2335,6 @@ async function main() {
             u_tonemap: tmOperators.indexOf(tonemapping.value),
             u_use_luma: lumaBasedTm.value ? 1.0 : 0.0,
             u_tony_mc_mapface: tonemapBuffer,
-            u_mosaic_mode: mosaicMode.value ? 1.0 : 0.0,
             u_demosaic: demosaicModes[demosaicSwitch.value],
         }, screen)
         if (tilesProgress.value && controller.splitsFinished > 0) {
