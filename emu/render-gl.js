@@ -112,17 +112,17 @@ async function main() {
         shader(`
             out float result;
 
-//            const float half_eps = (uintBitsToFloat(floatBitsToUint(1.0) + 1u) - 1.0) * 0.5;
+            const float half_eps = (uintBitsToFloat(floatBitsToUint(1.0) + 1u) - 1.0) * 0.5;
 
             void main() {
-                mat3 rec2020 = inverse(rgbToXyz(
-                        vec2(0.7080, 0.2920),
-                        vec2(0.1700, 0.7970),
-                        vec2(0.1310, 0.0460),
-                        vec2(0.3127, 0.3290)
-                ));
-                result = rec2020[int(gl_FragCoord.x)][int(gl_FragCoord.y)];
-//                result = half_eps;
+//                mat3 rec2020 = inverse(rgbToXyz(
+//                        vec2(0.7080, 0.2920),
+//                        vec2(0.1700, 0.7970),
+//                        vec2(0.1310, 0.0460),
+//                        vec2(0.3127, 0.3290)
+//                ));
+//                result = rec2020[int(gl_FragCoord.x)][int(gl_FragCoord.y)];
+                result = half_eps;
             }
         `).draw({}, testBuffer)
         const output = new Float32Array(9)
