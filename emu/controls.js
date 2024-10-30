@@ -54,11 +54,11 @@ export function numericControl(name, min, max, step, defaultValue, callback = ()
         },
         setValue: value => {
             if (valueContainer.value !== value) {
+                valueContainer.value = value
+                input.value = value
+                slider.value = value
                 callback()
             }
-            valueContainer.value = value
-            input.value = value
-            slider.value = value
         }
     };
 
