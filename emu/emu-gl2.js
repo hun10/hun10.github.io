@@ -58,7 +58,7 @@ const aSoundButtOrd = numericControl("Sound LPF Order", 0.0, 40.0, 1, 8)
 
 const pixelDensityCtrl = numericControl("Pixel Density", 0.25, 3, 0.25, 1)
 const heightCtrl = numericControl("Height", 0.5, 3.0, 0.00001, 1.11);
-const widthCtrl = numericControl("Width", 0.5, 4.0, 0.00001, 1.54);
+const widthCtrl = numericControl("Width", 0.5, 4.0, 0.00001, 1.64);
 const brightCtrl = numericControl("Brightness", -1, 0.5, 0.0001, 0.12);
 const contrastCtrl = numericControl("Contrast", 0, 2, 0.0001, 1.5);
 const gammaCtrl = numericControl("Gamma", 1, 5, 0.1, 2.8);
