@@ -576,7 +576,7 @@ function animateImageData(init, animator) {
         const windowHeight = document.documentElement.clientHeight
 
         canvas.style.width = `${windowWidth}px`
-        const threshold = 5 / 4
+        const threshold = 4 / 3
         if (windowWidth / windowHeight < threshold) {
             canvas.style.height = `${windowWidth / threshold}px`
             overlaidController = false
