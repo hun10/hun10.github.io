@@ -39,7 +39,7 @@ document.body.appendChild(flatKeyboard)
 button('Toggle Joystick', toggleJoystick)
 
 const fsRadius = numericControl('Touch Radius', 1, 100, 1, 20)
-const fsCtrls = selectControl('Full-screen Controls', [
+const fsCtrls = await selectControl('Full-screen Controls', [
     'Touch Arrows',
     'Keyboard',
 ], () => {}, 'Touch Arrows')
@@ -85,7 +85,7 @@ const fpsSamples = {
     }
 }
 
-const animationSmoothingCtrl = selectControl('Animation Smoothing', [
+const animationSmoothingCtrl = await selectControl('Animation Smoothing', [
     'Video Output Speed-Up Only',
     'Whole Emulation Speed-Up',
     'None',

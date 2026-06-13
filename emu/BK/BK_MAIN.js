@@ -301,7 +301,18 @@ const joystick = {
 	'KeyQ': 1,
 	'MetaLeft': 1,
 	'KeyE': 16384,
-	'MetaRight': 16384
+	'MetaRight': 16384,
+
+	'ВВЕРХ': 1024,
+	'ВЛЕВО': 512,
+	'ВНИЗ': 32,
+	'ВПРАВО': 16,
+        'ВЛЕВО-ВВЕРХ': 512 + 1024,
+        'ВЛЕВО-ВНИЗ': 512 + 32,
+        'ВПРАВО-ВВЕРХ': 16 + 1024,
+        'ВПРАВО-ВНИЗ': 16 + 32,
+	'ПРОБЕЛ': 2,
+	'ВВОД': 1,
 }
 
 let classicKeyboard = true
@@ -353,14 +364,28 @@ function ensureLayout(rus, action, fallback) {
 export function directKey0010(code, action) {
 	audioCtx.resume()
 
-	const bkKey = bk0010[code]
-
-	emulator.postMessage({
-		keyboard: {
-			...bkKey,
-			action
+	if (overJoystick && joystick[code]) {
+		if (action === 'open') {
+			joystick.port &= ~joystick[code]
 		}
-	})
+
+		if (action === 'close') {
+			joystick.port |= joystick[code]
+		}
+
+		emulator.postMessage({
+			ioRegister: joystick.port
+		})
+	} else {
+		const bkKey = bk0010[code]
+
+		emulator.postMessage({
+			keyboard: {
+				...bkKey,
+				action
+			}
+		})
+	}
 }
 
 let lastCapsState = null
