@@ -710,9 +710,19 @@ const tapes = [
         title: 'Modern Stuff',
         sideA: [
             {
-                name: 'SCROLLER',
+                name: 'RAYCITY',
                 type: 'bin',
-                url: 'maintape/SCROLLER.bin'
+                url: 'maintape/raycity.bin'
+            },
+            {
+                name: 'BK3DA.EXE',
+                type: 'bin',
+                url: 'maintape/BK3DA.EXE.bin'
+            },
+            {
+                name: 'BK3DA.DARK',
+                type: 'bin',
+                url: 'maintape/BK3DA.DARK.bin'
             },
             {
                 name: 'INF',
@@ -776,6 +786,21 @@ const tapes = [
             }
         ],
         sideB: [
+            {
+                name: 'ФОТОРОБОТ',
+                type: 'bin',
+                url: 'maintape/fotorobot.bin'
+            },
+            {
+                name: 'paint.bin',
+                type: 'bin',
+                url: 'maintape/paint.bin'
+            },
+            {
+                name: 'p10k.bin',
+                type: 'bin',
+                url: 'maintape/p10k.bin'
+            },
             {
                 name: 'MADDOC.BIN',
                 type: 'bin',
@@ -1223,6 +1248,51 @@ const tapes = [
                 name: 'DIZZY.GME',
                 type: 'bin',
                 url: 'maintape/DIZZY.GME.bin'
+            },
+            {
+                name: 'DIZZY2_DOC',
+                type: 'bin',
+                url: 'maintape/DIZZY2_DOC.bin'
+            },
+            {
+                name: 'DIZZY2',
+                type: 'bin',
+                url: 'maintape/DIZZY2.bin'
+            },
+            {
+                name: 'DIZZY2A',
+                type: 'bin',
+                url: 'maintape/DIZZY2A.bin'
+            },
+            {
+                name: 'DIZZY2B',
+                type: 'bin',
+                url: 'maintape/DIZZY2B.bin'
+            },
+            {
+                name: 'DIZZY2C',
+                type: 'bin',
+                url: 'maintape/DIZZY2C.bin'
+            },
+            {
+                name: 'DIZZY2D',
+                type: 'bin',
+                url: 'maintape/DIZZY2D.bin'
+            },
+            {
+                name: 'DIZZY2E',
+                type: 'bin',
+                url: 'maintape/DIZZY2E.bin'
+            },
+            {
+                name: 'DIZZY2F',
+                type: 'bin',
+                url: 'maintape/DIZZY2F.bin'
+            },
+            {
+                name: 'DIZZY2G',
+                type: 'bin',
+                url: 'maintape/DIZZY2G.bin'
             },
             {
                 name: 'COURIER',

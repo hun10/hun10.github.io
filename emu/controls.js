@@ -111,7 +111,7 @@ export function binaryControl(name, defaultValue, callback) {
     return valueContainer;
 }
 
-export function selectControl(name, options, callback, defaultValue) {
+export async function selectControl(name, options, callback, defaultValue) {
     const div = document.createElement("div");
 
     const span = document.createElement("span");
@@ -130,14 +130,19 @@ export function selectControl(name, options, callback, defaultValue) {
         value: defaultValue
     };
 
-    select.oninput = e => {
+    select.oninput = async e => {
         valueContainer.value = e.target.value
-        callback(e.target.value)
+        await callback(e.target.value)
     }
 
     div.appendChild(span);
     div.appendChild(select);
     root.appendChild(div);
+
+    select.value = defaultValue;
+    if (defaultValue) {
+        await callback(defaultValue);
+    }
 
     return valueContainer
 }

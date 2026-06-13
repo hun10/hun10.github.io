@@ -314,6 +314,11 @@ export default function (gl) {
                     buffers[i].swap()
                 }
             },
+            update: data => {
+                for (let i = 0; i < buffers.length; i++) {
+                    buffers[i].update(data)
+                }
+            },
             out: (params) => {
                 let cacheKey = ''
                 for (let i = 0; i < buffers.length; i++) {
