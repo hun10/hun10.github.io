@@ -436,21 +436,22 @@ export default function () {
     return 0;
   }
 
+  let m_vec_int = -1
 
   /*boolean*/this.gotInterrupt = function () {
+    m_vec_int = -1
     for (var /*QBusSlave*/ pli in plugins) {
       var plugin = plugins[pli];
-      if (plugin.gotInterrupt()) return true;
+      if (plugin.gotInterrupt()) {
+        m_vec_int = plugin.interruptVector();
+        return true;
+      }
     }
     return false;
   }
 
   /*byte*/this.interruptVector = function () {
-    for (var /*QBusSlave*/ pli in plugins) {
-      var plugin = plugins[pli];
-      if (plugin.gotInterrupt()) return plugin.interruptVector();
-    }
-    return -1;
+    return m_vec_int;
   }
 
   /*void*/this.reset = function () {

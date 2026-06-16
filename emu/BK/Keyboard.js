@@ -132,8 +132,12 @@ export default function () {
     return false;
   }
 
+  let got_int_cnt = 0
+
   /*boolean*/this.gotInterrupt = function () {
-    return hasInterrupt > 0
+    got_int_cnt += 1
+    got_int_cnt %= 5
+    return (got_int_cnt === 0) ? hasInterrupt > 0 : false
   }
 
   /*byte*/this.interruptVector = function () {

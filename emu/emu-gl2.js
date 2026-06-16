@@ -726,7 +726,9 @@ canvas.addEventListener('pointerdown', e => {
 
         if (verPart < 0.3) {
             let code
-            if (horPart < 0.2 || horPart > 0.8) {
+            if (horPart < 0.2) {
+                code = 'В'
+            } else if (horPart > 0.8) {
                 code = 'ВВОД'
             } else {
                 code = 'ПРОБЕЛ'
