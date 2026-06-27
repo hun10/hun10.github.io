@@ -49,6 +49,10 @@ button('Basic', () => mode('BASIC'))
 button('Focal', () => mode('FOCAL'))
 
 button('Toggle Printer', () => togglePrinter())
+button('Hard Reset', () => {
+    localStorage.removeItem('bkState-0')
+    location.reload()
+})
 
 const aSoundGain = numericControl("Sound Gain", 0, 4, 1e-3, 0.1)
 const aSoundHpf = numericControl("Sound HPF Cutoff (0 to turn off)", 20, 5000, 1, 60)
